@@ -1,14 +1,12 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowDown } from "lucide-react";
-
 const Hero = () => {
   const scrollToRoadmaps = () => {
-    document.getElementById('roadmaps')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('roadmaps')?.scrollIntoView({
+      behavior: 'smooth'
+    });
   };
-
-  return (
-    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+  return <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5QzkyQUMiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
       
       <div className="container mx-auto px-4 text-center relative z-10">
@@ -26,18 +24,10 @@ const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-200"
-              onClick={scrollToRoadmaps}
-            >
+            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-200" onClick={scrollToRoadmaps}>
               Start Your Journey
             </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="border-2 border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm"
-            >
+            <Button variant="outline" size="lg" className="border-2 border-white/20 hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm text-sky-300">
               Explore Careers
             </Button>
           </div>
@@ -59,14 +49,9 @@ const Hero = () => {
         </div>
         
         <div className="animate-bounce">
-          <ArrowDown 
-            className="mx-auto text-white/60 w-8 h-8 cursor-pointer hover:text-white transition-colors" 
-            onClick={scrollToRoadmaps}
-          />
+          <ArrowDown className="mx-auto text-white/60 w-8 h-8 cursor-pointer hover:text-white transition-colors" onClick={scrollToRoadmaps} />
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
