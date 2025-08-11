@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="banner1.png" alt="ArcadeLearn Banner" width="100%">
+  <img src="dist/banner1.png" alt="ArcadeLearn Banner" width="100%">
 </p>
 
 <div align="center">
