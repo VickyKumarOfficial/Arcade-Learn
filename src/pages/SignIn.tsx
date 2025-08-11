@@ -53,8 +53,8 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600">
-      <div className="bg-white/90 p-8 rounded-xl shadow-xl w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-800 dark:to-purple-800">
+      <div className="bg-white/90 dark:bg-gray-800/90 p-8 rounded-xl shadow-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center gradient-text">
           {isRegister ? "Create your account" : "Sign in to SkillPath"}
         </h2>

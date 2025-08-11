@@ -7,9 +7,11 @@ import { careerOptions } from "@/data/careers";
 import { roadmaps } from "@/data/roadmaps";
 import Navigation from "@/components/Navigation";
 import { Briefcase, Search } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const Careers = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const navigate = useNavigate();
   
   const categories = ['all', ...new Set(careerOptions.map(career => 
     career.roadmapIds.map(id => roadmaps.find(r => r.id === id)?.category).filter(Boolean)
@@ -24,7 +26,7 @@ const Careers = () => {
       );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
       <Navigation />
       
       <div className="pt-20 pb-12">
@@ -34,11 +36,11 @@ const Careers = () => {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
               <Briefcase className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
               Career 
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Opportunities</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Discover career paths that match your skills and interests. Each role includes salary insights, 
               required skills, and top companies hiring for these positions.
             </p>
@@ -54,7 +56,7 @@ const Careers = () => {
                 className={`capitalize ${
                   selectedCategory === category 
                     ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg" 
-                    : "bg-white hover:bg-gray-50"
+                    : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
                 }`}
               >
                 {category}
@@ -65,33 +67,33 @@ const Careers = () => {
           {/* Career Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredCareers.map((career) => (
-              <Card key={career.id} className="h-full hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 backdrop-blur-sm">
+              <Card key={career.id} className="h-full hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
                       <Briefcase className="w-6 h-6 text-white" />
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600">{career.averageSalary.split(' - ')[0]}</div>
-                      <div className="text-sm text-gray-500">avg. salary</div>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">{career.averageSalary.split(' - ')[0]}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">avg. salary</div>
                     </div>
                   </div>
                   
-                  <CardTitle className="text-xl font-bold text-gray-900 mb-2">
+                  <CardTitle className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                     {career.title}
                   </CardTitle>
                   
-                  <CardDescription className="text-gray-600 leading-relaxed">
+                  <CardDescription className="text-gray-600 dark:text-gray-300 leading-relaxed">
                     {career.description}
                   </CardDescription>
                 </CardHeader>
                 
                 <CardContent className="pt-0 space-y-6">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Required Skills</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Required Skills</h4>
                     <div className="flex flex-wrap gap-2">
                       {career.requiredSkills.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+                        <Badge key={skill} variant="secondary" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50">
                           {skill}
                         </Badge>
                       ))}
@@ -99,23 +101,23 @@ const Careers = () => {
                   </div>
                   
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Top Companies</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Top Companies</h4>
                     <div className="flex flex-wrap gap-2">
                       {career.companies.slice(0, 3).map((company) => (
-                        <Badge key={company} variant="outline" className="border-purple-200 text-purple-700">
+                        <Badge key={company} variant="outline" className="border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300">
                           {company}
                         </Badge>
                       ))}
                       {career.companies.length > 3 && (
-                        <Badge variant="outline" className="border-gray-200 text-gray-600">
+                        <Badge variant="outline" className="border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400">
                           +{career.companies.length - 3} more
                         </Badge>
                       )}
                     </div>
                   </div>
                   
-                  <div className="pt-4 border-t border-gray-100">
-                    <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400 mb-4">
                       <span>Relevant Roadmaps</span>
                       <span>{career.roadmapIds.length} available</span>
                     </div>
@@ -139,9 +141,9 @@ const Careers = () => {
                 </p>
                 <Button 
                   className="bg-white text-blue-600 hover:bg-gray-100 font-medium"
-                  onClick={() => window.scrollTo(0, 0)}
-                >
-                  Explore Roadmaps
+                  onClick={() => navigate("/roadmaps")}
+                  >
+                   Explore Roadmap 
                 </Button>
               </CardContent>
             </Card>
