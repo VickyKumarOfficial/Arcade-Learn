@@ -1,7 +1,7 @@
-
 import Hero from "@/components/Hero";
 import Navigation from "@/components/Navigation";
 import RoadmapsSection from "@/components/RoadmapsSection";
+import SignIn from "./SignIn";
 
 const Index = () => {
   return (

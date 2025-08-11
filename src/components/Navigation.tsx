@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -23,8 +22,13 @@ const Navigation = () => {
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">🚀</span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              SkillPath
+            <span className="text-xl font-bold">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Arcade
+              </span>
+              <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent ml-1">
+              Learn
+              </span>
             </span>
           </div>
           
@@ -49,14 +53,16 @@ const Navigation = () => {
               variant="outline" 
               size="sm"
               className="hidden sm:inline-flex"
+              onClick={() => navigate('/signin')}
             >
-              Sign In
+              Log In
             </Button>
             <Button 
               size="sm"
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              onClick={() => navigate('/signin')}
             >
-              Get Started
+              Sign up
             </Button>
           </div>
         </div>

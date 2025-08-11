@@ -7,15 +7,18 @@ const jwt = require('jsonwebtoken');
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
-    let user = await User.findOne({ email });
+    const { email, password, firstName, lastName, phone } = req.body;
+    if (!email || !password || !firstName || !phone) {
+      return res.status(400).json({ error: 'All required fields must be provided.' });
+    }
+    let user = await User.findOne({ $or: [ { email }, { phone } ] });
     if (user) return res.status(400).json({ error: 'User already exists' });
     const hashed = await bcrypt.hash(password, 10);
-    user = new User({ email, password: hashed, name });
+    user = new User({ email, password: hashed, firstName, lastName, phone });
     await user.save();
     res.status(201).json({ message: 'User registered' });
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
@@ -32,6 +35,17 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+// OAuth stubs
+router.post('/google', (req, res) => {
+  // TODO: Implement Google OAuth
+  res.status(501).json({ error: 'Google OAuth not implemented' });
+});
+
+router.post('/github', (req, res) => {
+  // TODO: Implement GitHub OAuth
+  res.status(501).json({ error: 'GitHub OAuth not implemented' });
 });
 
 module.exports = router;

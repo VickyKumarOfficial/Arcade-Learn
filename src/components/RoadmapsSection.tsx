@@ -17,6 +17,11 @@ const RoadmapsSection = () => {
             Curated learning roadmaps designed by industry experts to take you from beginner to professional. 
             Each roadmap includes hands-on projects, real-world resources, and career guidance.
           </p>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 mt-10">
+            Some Popular 
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Courses</span>
+          </h2>
+
         </div>
 
         <div className="mb-12">
