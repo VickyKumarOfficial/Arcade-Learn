@@ -52,19 +52,41 @@ const Navigation = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
+            {/* Dark Mode Toggle Switch */}
+            <div 
               onClick={toggleDarkMode}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className={`relative inline-flex items-center w-14 h-7 rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 ${
+                isDarkMode 
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg hover:shadow-xl' 
+                  : 'bg-gray-300 dark:bg-gray-600 shadow-md hover:shadow-lg'
+              }`}
               aria-label="Toggle dark mode"
             >
-              {isDarkMode ? (
-                <Sun className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              ) : (
-                <Moon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              )}
-            </Button>
+              {/* Slider Circle */}
+              <div
+                className={`absolute w-5 h-5 bg-white rounded-full shadow-lg transform transition-all duration-300 ease-in-out flex items-center justify-center hover:scale-110 ${
+                  isDarkMode ? 'translate-x-8' : 'translate-x-1'
+                }`}
+              >
+                {/* Icon inside the slider */}
+                {isDarkMode ? (
+                  <Moon className="h-3 w-3 text-purple-600 animate-pulse" />
+                ) : (
+                  <Sun className="h-3 w-3 text-yellow-500 animate-pulse" />
+                )}
+              </div>
+              
+              {/* Background Icons */}
+              <div className="absolute inset-0 flex items-center justify-between px-2">
+                <Sun className={`h-3 w-3 transition-all duration-300 ${
+                  isDarkMode ? 'opacity-40 text-white scale-90' : 'opacity-0 scale-75'
+                }`} />
+                <Moon className={`h-3 w-3 transition-all duration-300 ${
+                  isDarkMode ? 'opacity-0 scale-75' : 'opacity-40 text-gray-600 scale-90'
+                }`} />
+              </div>
+            </div>
+            
             <Button 
               variant="outline" 
               size="sm"
