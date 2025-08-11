@@ -1,14 +1,16 @@
-# 🎮 ArcadeLearn
+<p align="center">
+  <img src="banner1.png" alt="ArcadeLearn Banner" width="100%">
+</p>
 
 <div align="center">
 
-![ArcadeLearn Logo](https://img.shields.io/badge/ArcadeLearn-Educational%20Platform-blue?style=for-the-badge&logo=graduation-cap)
+# 🎮 ArcadeLearn: Your Path to a Tech Career 🚀
 
 **Transforming tech education with structured roadmaps, gamification, and career-focused insights.**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-success?style=for-the-badge)](https://lovable.dev/projects/9f593e79-c9cb-413b-8e21-03235e70fbdb)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
-[![Contributors](https://img.shields.io/badge/Contributors-6-orange?style=for-the-badge)](#team)
+[![Frontend](https://img.shields.io/badge/FRONTEND-REACT%20+%20VITE-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![Styling](https://img.shields.io/badge/STYLING-TAILWINDCSS-06B6D4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
+[![Backend](https://img.shields.io/badge/BACKEND-FIREBASE-FFCA28?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
 
 *An innovative platform designed to guide learners from foundational knowledge to career success through gamified learning experiences.*
 
@@ -114,7 +116,16 @@ npm i
 npm run dev
 ```
 
-#### **Method 2: GitHub Codespaces**
+#### **Method 2: Development Setup**
+
+```bash
+# Alternative setup for different environments
+npm install --legacy-peer-deps  # If you face dependency conflicts
+npm run build                   # Build for production
+npm run preview                 # Preview production build
+```
+
+#### **Method 3: GitHub Codespaces**
 
 1. Navigate to the repository's main page
 2. Click the "Code" button (green button)
@@ -122,7 +133,7 @@ npm run dev
 4. Click "New codespace"
 5. Edit files directly and commit changes
 
-#### **Method 3: Direct GitHub Editing**
+#### **Method 4: Direct GitHub Editing**
 
 1. Navigate to desired files in the repository
 2. Click the "Edit" button (pencil icon)
@@ -152,6 +163,8 @@ graph TD
     D --> E[Get Certified]
     E --> F[View Job Matches]
     F --> G[Apply for Jobs]
+    F --> J[Mentor Career Guidance]
+    J --> G
     
     B --> H[Join Live Sessions]
     H --> I[Ask Doubts]
@@ -203,6 +216,52 @@ graph TD
 
 ---
 
+## 🚀 **Deployment**
+
+### **Deploy to Production**
+
+```bash
+# Build the project
+npm run build
+
+# Deploy to your preferred hosting platform
+# (Vercel, Netlify, GitHub Pages, etc.)
+```
+
+### **Custom Domain Setup**
+
+1. Configure your hosting platform's domain settings
+2. Update DNS records to point to your deployment
+3. Enable HTTPS for secure connections
+
+---
+
+## 🤝 **Contributing**
+
+We welcome contributions from the community! Here's how you can help:
+
+1. **🍴 Fork** the repository
+2. **🌿 Create** a feature branch (`git checkout -b feature/AmazingFeature`)
+3. **💾 Commit** your changes (`git commit -m 'Add some AmazingFeature'`)
+4. **📤 Push** to the branch (`git push origin feature/AmazingFeature`)
+5. **🔄 Open** a Pull Request
+
+### **Contribution Guidelines**
+
+- Follow existing code style and conventions
+- Write clear commit messages
+- Add tests for new features
+- Update documentation as needed
+- Be respectful in all interactions
+
+---
+
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
 ## 📞 **Contact & Support**
 
 - **📧 Email**: [team@arcadelearn.com](mailto:team@arcadelearn.com)
@@ -217,6 +276,7 @@ graph TD
 - Thanks to all contributors and beta testers
 - Special thanks to our mentors and industry experts
 - Firebase for backend infrastructure
+- Lovable platform for seamless deployment
 - Open source community for amazing tools and libraries
 
 ---
@@ -224,6 +284,8 @@ graph TD
 <div align="center">
 
 **⭐ Star this repository if you find it helpful!**
+
+**🚀 Ready to transform your learning journey? [Get Started Now!](#getting-started)**
 
 ---
 
