@@ -9,7 +9,7 @@ const RoadmapsSection = () => {
     <section id="roadmaps" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-normal md:leading-normal">
             Choose Your 
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Path</span>
           </h2>
@@ -17,7 +17,7 @@ const RoadmapsSection = () => {
             Curated learning roadmaps designed by industry experts to take you from beginner to professional. 
             Each roadmap includes hands-on projects, real-world resources, and career guidance.
           </p>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 mt-10">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 mt-10 leading-normal md:leading-normal">
             Some Popular 
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Courses</span>
           </h2>
@@ -29,9 +29,9 @@ const RoadmapsSection = () => {
             {categories.map((category) => (
               <div
                 key={category}
-                className="px-6 py-3 bg-white rounded-full shadow-md border-2 border-transparent hover:border-blue-200 transition-all duration-200"
+                className="px-6 py-3 bg-white dark:bg-gray-800 rounded-full shadow-md border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-400 transition-all duration-200"
               >
-                <span className="font-medium text-gray-700">{category}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{category}</span>
               </div>
             ))}
           </div>
