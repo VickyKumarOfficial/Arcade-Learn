@@ -25,9 +25,9 @@ const RoadmapDetail = () => {
 
   if (!roadmap) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Roadmap not found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Roadmap not found</h1>
           <Button onClick={() => navigate('/')}>Go Home</Button>
         </div>
       </div>
@@ -49,7 +49,7 @@ const RoadmapDetail = () => {
   const totalHours = roadmap.components.reduce((total, component) => total + component.estimatedHours, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
       <Navigation />
       
       <div className="pt-20 pb-12">
@@ -57,14 +57,14 @@ const RoadmapDetail = () => {
           <Button 
             variant="ghost" 
             onClick={() => navigate('/')}
-            className="mb-6 hover:bg-white/50"
+            className="mb-6 hover:bg-white/50 dark:hover:bg-gray-800/50"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Roadmaps
           </Button>
 
           {/* Header Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border-0">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border-0">
             <div className="flex flex-col lg:flex-row items-start gap-8">
               <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${roadmap.color} flex items-center justify-center text-3xl shadow-lg`}>
                 {roadmap.icon}
@@ -72,36 +72,36 @@ const RoadmapDetail = () => {
               
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-4 mb-4">
-                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{roadmap.title}</h1>
-                  <Badge className={`${roadmap.difficulty === 'Beginner' ? 'bg-green-100 text-green-800' : 
-                    roadmap.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-800' : 
-                    'bg-red-100 text-red-800'}`}>
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{roadmap.title}</h1>
+                  <Badge className={`${roadmap.difficulty === 'Beginner' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
+                    roadmap.difficulty === 'Intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
+                    'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'}`}>
                     {roadmap.difficulty}
                   </Badge>
                 </div>
                 
-                <p className="text-lg text-gray-600 mb-6 leading-relaxed">{roadmap.description}</p>
+                <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">{roadmap.description}</p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                  <div className="text-center p-4 bg-blue-50 rounded-xl">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">{roadmap.components.length}</div>
-                    <div className="text-sm text-gray-600">Components</div>
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">{roadmap.components.length}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Components</div>
                   </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-xl">
-                    <div className="text-2xl font-bold text-purple-600 mb-1">{totalHours}h</div>
-                    <div className="text-sm text-gray-600">Total Time</div>
+                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/30 rounded-xl">
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">{totalHours}h</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Total Time</div>
                   </div>
-                  <div className="text-center p-4 bg-green-50 rounded-xl">
-                    <div className="text-2xl font-bold text-green-600 mb-1">{Math.round(progressPercentage)}%</div>
-                    <div className="text-sm text-gray-600">Complete</div>
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/30 rounded-xl">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">{Math.round(progressPercentage)}%</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Complete</div>
                   </div>
                 </div>
                 
                 {progressPercentage > 0 && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Overall Progress</span>
-                      <span className="font-medium">{roadmap.completedComponents}/{roadmap.components.length} completed</span>
+                      <span className="text-gray-600 dark:text-gray-400">Overall Progress</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{roadmap.completedComponents}/{roadmap.components.length} completed</span>
                     </div>
                     <Progress value={progressPercentage} className="h-3" />
                   </div>
@@ -112,10 +112,10 @@ const RoadmapDetail = () => {
 
           {/* Components Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Learning Components</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Learning Components</h2>
             
             {roadmap.components.map((component, index) => (
-              <Card key={component.id} className="bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <Card key={component.id} className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                 <CardHeader className="pb-4">
                   <div className="flex items-start gap-4">
                     <button
@@ -131,19 +131,19 @@ const RoadmapDetail = () => {
                     
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
+                        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
                           {index + 1}
                         </div>
-                        <CardTitle className={`text-xl ${component.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                        <CardTitle className={`text-xl ${component.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                           {component.title}
                         </CardTitle>
                       </div>
                       
-                      <CardDescription className="text-gray-600 mb-3">
+                      <CardDescription className="text-gray-600 dark:text-gray-300 mb-3">
                         {component.description}
                       </CardDescription>
                       
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           <span>{component.estimatedHours} hours</span>
@@ -159,7 +159,7 @@ const RoadmapDetail = () => {
                         onClick={() => setExpandedComponent(
                           expandedComponent === component.id ? null : component.id
                         )}
-                        className="mt-3 text-blue-600 hover:text-blue-700 p-0 h-auto font-medium"
+                        className="mt-3 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-0 h-auto font-medium"
                       >
                         {expandedComponent === component.id ? 'Hide Resources' : 'View Resources'}
                       </Button>
@@ -170,25 +170,25 @@ const RoadmapDetail = () => {
                 {expandedComponent === component.id && (
                   <CardContent className="pt-0">
                     <div className="space-y-3">
-                      <h4 className="font-medium text-gray-900 mb-3">Learning Resources:</h4>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-3">Learning Resources:</h4>
                       {component.resources.map((resource) => (
-                        <div key={resource.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div key={resource.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-gray-900">{resource.title}</span>
+                              <span className="font-medium text-gray-900 dark:text-white">{resource.title}</span>
                               <Badge variant="secondary" className="text-xs">
                                 {resource.type}
                               </Badge>
                             </div>
                             {resource.duration && (
-                              <p className="text-sm text-gray-600">Duration: {resource.duration}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Duration: {resource.duration}</p>
                             )}
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => window.open(resource.url, '_blank')}
-                            className="text-blue-600 hover:text-blue-700"
+                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </Button>
