@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Menu, X } from "lucide-react";
 import { useDarkMode } from "@/hooks/use-dark-mode";
+import { useState } from "react";
 
 const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const navItems = [
     { label: 'Home', path: '/' },
@@ -25,16 +27,17 @@ const Navigation = () => {
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">🚀</span>
             </div>
-            <span className="text-xl font-bold">
+            <span className="text-lg sm:text-xl font-bold">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Arcade
               </span>
-              <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent ml-1">
+              <span className="bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent ml-1">
               Learn
               </span>
             </span>
           </div>
           
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
               <button
@@ -51,11 +54,11 @@ const Navigation = () => {
             ))}
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Dark Mode Toggle Switch */}
             <div 
               onClick={toggleDarkMode}
-              className={`relative inline-flex items-center w-14 h-7 rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 ${
+              className={`relative inline-flex items-center w-12 sm:w-14 h-6 sm:h-7 rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 ${
                 isDarkMode 
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg hover:shadow-xl' 
                   : 'bg-gray-300 dark:bg-gray-600 shadow-md hover:shadow-lg'
@@ -64,29 +67,45 @@ const Navigation = () => {
             >
               {/* Slider Circle */}
               <div
-                className={`absolute w-5 h-5 bg-white rounded-full shadow-lg transform transition-all duration-300 ease-in-out flex items-center justify-center hover:scale-110 ${
-                  isDarkMode ? 'translate-x-8' : 'translate-x-1'
+                className={`absolute w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full shadow-lg transform transition-all duration-300 ease-in-out flex items-center justify-center hover:scale-110 ${
+                  isDarkMode ? 'translate-x-6 sm:translate-x-8' : 'translate-x-1'
                 }`}
               >
                 {/* Icon inside the slider */}
                 {isDarkMode ? (
-                  <Moon className="h-3 w-3 text-purple-600 animate-pulse" />
+                  <Moon className="h-2 sm:h-3 w-2 sm:w-3 text-purple-600 animate-pulse" />
                 ) : (
-                  <Sun className="h-3 w-3 text-yellow-500 animate-pulse" />
+                  <Sun className="h-2 sm:h-3 w-2 sm:w-3 text-yellow-500 animate-pulse" />
                 )}
               </div>
               
               {/* Background Icons */}
-              <div className="absolute inset-0 flex items-center justify-between px-2">
-                <Sun className={`h-3 w-3 transition-all duration-300 ${
+              <div className="absolute inset-0 flex items-center justify-between px-1 sm:px-2">
+                <Sun className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${
                   isDarkMode ? 'opacity-40 text-white scale-90' : 'opacity-0 scale-75'
                 }`} />
-                <Moon className={`h-3 w-3 transition-all duration-300 ${
+                <Moon className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${
                   isDarkMode ? 'opacity-0 scale-75' : 'opacity-40 text-gray-600 scale-90'
                 }`} />
               </div>
             </div>
             
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden p-2"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle mobile menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              ) : (
+                <Menu className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              )}
+            </Button>
+            
+            {/* Desktop Buttons */}
             <Button 
               variant="outline" 
               size="sm"
@@ -97,13 +116,60 @@ const Navigation = () => {
             </Button>
             <Button 
               size="sm"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="hidden sm:inline-flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               onClick={() => navigate('/signin')}
             >
               Sign up
             </Button>
           </div>
         </div>
+        
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.path}
+                  onClick={() => {
+                    navigate(item.path);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    location.pathname === item.path
+                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+              
+              {/* Mobile Buttons */}
+              <div className="pt-4 space-y-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  onClick={() => {
+                    navigate('/signin');
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  Log In
+                </Button>
+                <Button 
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  onClick={() => {
+                    navigate('/signin');
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  Sign up
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
