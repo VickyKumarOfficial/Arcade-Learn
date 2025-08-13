@@ -54,7 +54,7 @@ const Roadmaps = () => {
     
     return (
       <Card 
-        className="h-full hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm cursor-pointer"
+        className="h-full hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm cursor-pointer flex flex-col"
         onClick={() => handleRoadmapClick(roadmap)}
       >
         <CardHeader className="pb-3">
@@ -72,8 +72,8 @@ const Roadmaps = () => {
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="pt-0">
-          <div className="space-y-4">
+        <CardContent className="pt-0 flex-1 flex flex-col">
+          <div className="space-y-4 flex-1">
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-600 dark:text-gray-400">Duration</span>
               <span className="font-medium text-gray-900 dark:text-white">{roadmap.estimatedDuration}</span>
@@ -93,10 +93,10 @@ const Roadmaps = () => {
                 <Progress value={progressPercentage} className="h-2" />
               </div>
             )}
-            
-            <div className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-center`}>
-              {roadmap.completedComponents > 0 ? 'Continue Learning' : 'Start Roadmap'}
-            </div>
+          </div>
+          
+          <div className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-center mt-4`}>
+            {roadmap.completedComponents > 0 ? 'Continue Learning' : 'Start Roadmap'}
           </div>
         </CardContent>
       </Card>

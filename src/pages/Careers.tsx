@@ -67,7 +67,7 @@ const Careers = () => {
           {/* Career Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-4">
             {filteredCareers.map((career) => (
-              <Card key={career.id} className="h-full hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+              <Card key={career.id} className="h-full hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm flex flex-col">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
@@ -88,7 +88,7 @@ const Careers = () => {
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent className="pt-0 space-y-6">
+                <CardContent className="pt-0 space-y-6 flex-1 flex flex-col">
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-3">Required Skills</h4>
                     <div className="flex flex-wrap gap-2">
@@ -116,7 +116,7 @@ const Careers = () => {
                     </div>
                   </div>
                   
-                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
                     <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400 mb-4">
                       <span>Relevant Roadmaps</span>
                       <span>{career.roadmapIds.length} available</span>
