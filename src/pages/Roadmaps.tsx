@@ -8,6 +8,8 @@ import { roadmaps } from "@/data/roadmaps";
 import { Roadmap, RoadmapComponent } from "@/types";
 import Navigation from "@/components/Navigation";
 import { useGame } from "@/contexts/GameContext";
+import { XPDisplay } from "@/components/XPDisplay";
+import { AchievementPopup } from "@/components/AchievementPopup";
 
 const Roadmaps = () => {
   const [selectedRoadmap, setSelectedRoadmap] = useState<Roadmap | null>(null);
@@ -293,33 +295,53 @@ const Roadmaps = () => {
   };
 
   // Main render - show list or detail view
-  if (selectedRoadmap) {
-    return <RoadmapDetailView />;
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <Navigation />
-      <div className="container mx-auto px-4 py-8 pt-24">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 leading-normal md:leading-normal">
-            Learning Roadmaps
-          </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Choose your learning path and master new skills with our curated roadmaps. 
-            Each roadmap is designed to take you from beginner to expert level.
-          </p>
-        </div>
+    <>
+      {/* Achievement Popups - Always visible */}
+      {state.newlyUnlockedAchievements.map((achievement) => (
+        <AchievementPopup
+          key={achievement.id}
+          achievement={achievement}
+          onClose={() => dispatch({ type: 'DISMISS_ACHIEVEMENT', payload: { achievementId: achievement.id } })}
+        />
+      ))}
 
-        {/* Roadmaps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {roadmaps.map((roadmap) => (
-            <RoadmapCard key={roadmap.id} roadmap={roadmap} />
-          ))}
+      {/* XP Animation - Always visible */}
+      <XPDisplay 
+        xpGained={state.recentXPGain}
+        component={state.lastCompletedComponent}
+        isVisible={state.showXPAnimation}
+        levelUp={state.levelUp}
+        newLevel={state.newLevel}
+      />
+      
+      {selectedRoadmap ? (
+        <RoadmapDetailView />
+      ) : (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+          <Navigation />
+          <div className="container mx-auto px-4 py-8 pt-24">
+            {/* Header */}
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 leading-normal md:leading-normal">
+                Learning Roadmaps
+              </h1>
+              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                Choose your learning path and master new skills with our curated roadmaps. 
+                Each roadmap is designed to take you from beginner to expert level.
+              </p>
+            </div>
+
+            {/* Roadmaps Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {roadmaps.map((roadmap) => (
+                <RoadmapCard key={roadmap.id} roadmap={roadmap} />
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
