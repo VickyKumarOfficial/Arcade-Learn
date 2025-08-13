@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Roadmap } from "@/types";
 import { useNavigate } from "react-router-dom";
+import { useGame } from "@/contexts/GameContext";
 
 interface RoadmapCardProps {
   roadmap: Roadmap;
@@ -12,7 +13,13 @@ interface RoadmapCardProps {
 
 const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
   const navigate = useNavigate();
-  const progressPercentage = (roadmap.completedComponents / roadmap.components.length) * 100;
+  const { state } = useGame();
+  
+  // Calculate real-time progress
+  const completedCount = roadmap.components.filter(component => 
+    state.userData.completedComponents.includes(`${roadmap.id}-${component.id}`)
+  ).length;
+  const progressPercentage = (completedCount / roadmap.components.length) * 100;
   
   const handleStartRoadmap = () => {
     navigate(`/roadmap/${roadmap.id}`);
@@ -60,11 +67,11 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
             <span className="font-medium text-gray-900 dark:text-white">{roadmap.components.length} modules</span>
           </div>
           
-          {roadmap.completedComponents > 0 && (
+          {completedCount > 0 && (
             <div className="space-y-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Progress</span>
-                <span className="font-medium text-gray-900 dark:text-white">{roadmap.completedComponents}/{roadmap.components.length}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{completedCount}/{roadmap.components.length}</span>
               </div>
               <Progress value={progressPercentage} className="h-2" />
             </div>
@@ -74,7 +81,7 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
             onClick={handleStartRoadmap}
             className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg`}
           >
-            {roadmap.completedComponents > 0 ? 'Continue Learning' : 'Start Roadmap'}
+            {completedCount > 0 ? 'Continue Learning' : 'Start Roadmap'}
           </Button>
         </div>
       </CardContent>

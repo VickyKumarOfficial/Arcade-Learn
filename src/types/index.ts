@@ -6,6 +6,7 @@ export interface RoadmapComponent {
   estimatedHours: number;
   resources: Resource[];
   completed: boolean;
+  xpReward: number;
 }
 
 export interface Resource {
@@ -27,6 +28,34 @@ export interface Roadmap {
   completedComponents: number;
   icon: string;
   color: string;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  condition: {
+    type: 'complete_components' | 'complete_roadmap' | 'earn_xp' | 'streak_days' | 'complete_difficulty';
+    value: number;
+    roadmapId?: string;
+    difficulty?: string;
+  };
+  xpReward: number;
+  unlocked: boolean;
+  unlockedAt?: Date;
+}
+
+export interface UserGameData {
+  totalXP: number;
+  level: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastActiveDate: Date;
+  achievements: Achievement[];
+  completedRoadmaps: string[];
+  totalComponentsCompleted: number;
+  completedComponents: string[]; // Track individual component IDs
 }
 
 export interface CareerOption {
