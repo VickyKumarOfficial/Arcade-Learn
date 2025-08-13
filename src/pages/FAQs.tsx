@@ -51,7 +51,7 @@ const FAQs = () => {
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-normal">
               Frequently Asked
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Questions</span>
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-normal md:leading-normal"> Questions</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Find answers to all your questions about SkillPath, our learning roadmaps, and how to make the most of your educational journey.

@@ -32,7 +32,7 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
   };
 
   return (
-    <Card className="h-full hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+    <Card className="h-full hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${roadmap.color} flex items-center justify-center text-2xl mb-4 shadow-lg`}>
@@ -48,8 +48,8 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="pt-0">
-        <div className="space-y-4">
+      <CardContent className="pt-0 flex-1 flex flex-col">
+        <div className="space-y-4 flex-1">
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 dark:text-gray-400">Duration</span>
             <span className="font-medium text-gray-900 dark:text-white">{roadmap.estimatedDuration}</span>
@@ -69,14 +69,14 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
               <Progress value={progressPercentage} className="h-2" />
             </div>
           )}
-          
-          <Button 
-            onClick={handleStartRoadmap}
-            className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg`}
-          >
-            {roadmap.completedComponents > 0 ? 'Continue Learning' : 'Start Roadmap'}
-          </Button>
         </div>
+        
+        <Button 
+          onClick={handleStartRoadmap}
+          className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg mt-4`}
+        >
+          {roadmap.completedComponents > 0 ? 'Continue Learning' : 'Start Roadmap'}
+        </Button>
       </CardContent>
     </Card>
   );
