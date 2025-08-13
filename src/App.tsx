@@ -26,6 +26,7 @@ const App = () => (
             <Route path="/roadmap/:id" element={<RoadmapDetail />} />
             <Route path="/careers" element={<Careers />} />
             <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignIn initialMode="register" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

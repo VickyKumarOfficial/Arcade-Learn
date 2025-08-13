@@ -117,7 +117,7 @@ const Navigation = () => {
             <Button 
               size="sm"
               className="hidden sm:inline-flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              onClick={() => navigate('/signin')}
+              onClick={() => navigate('/signup')}
             >
               Sign up
             </Button>
@@ -160,7 +160,7 @@ const Navigation = () => {
                 <Button 
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   onClick={() => {
-                    navigate('/signin');
+                    navigate('/signup');
                     setIsMobileMenuOpen(false);
                   }}
                 >

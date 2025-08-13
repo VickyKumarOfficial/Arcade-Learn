@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
-const SignIn: React.FC = () => {
-  const [isRegister, setIsRegister] = useState(false);
+interface SignInProps {
+  initialMode?: "login" | "register";
+}
+
+const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
+  const [isRegister, setIsRegister] = useState(initialMode === "register");
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -151,10 +157,23 @@ const SignIn: React.FC = () => {
             New to SkillPath?{' '}
             <button
               className="text-blue-600 hover:underline"
-              onClick={() => setIsRegister(true)}
+              onClick={() => navigate('/signup')}
               type="button"
             >
               Create an account
+            </button>
+          </div>
+        )}
+        {/* Show sign in link when on register mode */}
+        {isRegister && (
+          <div className="mt-6 text-center text-sm">
+            Already have an account?{' '}
+            <button
+              className="text-blue-600 hover:underline"
+              onClick={() => navigate('/signin')}
+              type="button"
+            >
+              Sign in
             </button>
           </div>
         )}
