@@ -10,6 +10,7 @@ import RoadmapDetail from "./pages/RoadmapDetail";
 import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
 import SignIn from "@/pages/SignIn";
+import FAQs from "@/pages/FAQs";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/roadmaps" element={<Roadmaps />} />
             <Route path="/roadmap/:id" element={<RoadmapDetail />} />
             <Route path="/careers" element={<Careers />} />
+            <Route path="/faqs" element={<FAQs />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignIn initialMode="register" />} />
             <Route path="*" element={<NotFound />} />

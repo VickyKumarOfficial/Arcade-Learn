@@ -44,3 +44,10 @@ export interface UserProgress {
   completedComponents: string[];
   lastUpdated: Date;
 }
+
+export interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string;
+}

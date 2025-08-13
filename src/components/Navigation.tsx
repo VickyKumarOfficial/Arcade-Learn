@@ -13,7 +13,8 @@ const Navigation = () => {
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Roadmaps', path: '/roadmaps' },
-    { label: 'Careers', path: '/careers' }
+    { label: 'Careers', path: '/careers' },
+    { label: 'FAQs', path: '/faqs' }
   ];
 
   return (
