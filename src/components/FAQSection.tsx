@@ -19,12 +19,12 @@ const FAQSection = () => {
     );
   };
 
-  const truncateText = (text: string, maxLength: number = 150) => {
+  const truncateText = (text: string, maxLength: number = 180) => {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength);
   };
 
-  const needsReadMore = (text: string, maxLength: number = 150) => {
+  const needsReadMore = (text: string, maxLength: number = 180) => {
     return text.length > maxLength;
   };
 
@@ -70,14 +70,18 @@ const FAQSection = () => {
                   <div className="relative">
                     {needsReadMore(faq.answer) ? (
                       <div className="relative">
-                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                          {truncateText(faq.answer)}
-                        </p>
-                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-50 dark:from-gray-800 to-transparent pointer-events-none"></div>
-                        <div className="mt-3">
+                        <div className="relative overflow-hidden">
+                          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            {truncateText(faq.answer)}
+                          </p>
+                          {/* Blur overlay covering only the last 2-3 lines with stronger gradient */}
+                          <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-gray-50 dark:from-gray-800 via-gray-50/70 dark:via-gray-800/70 to-transparent pointer-events-none"></div>
+                        </div>
+                        {/* Read More button positioned just below the blur area */}
+                        <div className="mt-2 flex justify-start">
                           <Button
                             variant="link"
-                            className="p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                            className="p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                             onClick={() => handleReadMore(faq.id)}
                           >
                             Read More →
