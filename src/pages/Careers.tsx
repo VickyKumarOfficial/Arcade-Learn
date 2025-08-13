@@ -88,31 +88,33 @@ const Careers = () => {
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent className="pt-0 space-y-6 flex-1 flex flex-col">
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Required Skills</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {career.requiredSkills.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50">
-                          {skill}
-                        </Badge>
-                      ))}
+                <CardContent className="pt-0 flex-1 flex flex-col">
+                  <div className="space-y-6 flex-1">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-3">Required Skills</h4>
+                      <div className="flex flex-wrap gap-2 px-1">
+                        {career.requiredSkills.map((skill) => (
+                          <Badge key={skill} variant="secondary" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Top Companies</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {career.companies.slice(0, 3).map((company) => (
-                        <Badge key={company} variant="outline" className="border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300">
-                          {company}
-                        </Badge>
-                      ))}
-                      {career.companies.length > 3 && (
-                        <Badge variant="outline" className="border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400">
-                          +{career.companies.length - 3} more
-                        </Badge>
-                      )}
+                    
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-3">Top Companies</h4>
+                      <div className="flex flex-wrap gap-2 px-1">
+                        {career.companies.slice(0, 3).map((company) => (
+                          <Badge key={company} variant="outline" className="border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300">
+                            {company}
+                          </Badge>
+                        ))}
+                        {career.companies.length > 3 && (
+                          <Badge variant="outline" className="border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400">
+                            +{career.companies.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
