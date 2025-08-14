@@ -101,3 +101,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom slow animations */
+@layer utilities {
+  .animate-slow-pulse {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}

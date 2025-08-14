@@ -25,11 +25,7 @@ export const AchievementPopup = ({ achievement, onClose }: AchievementPopupProps
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
       <Card 
-        className={`pointer-events-auto max-w-md mx-4 transition-all duration-500 transform ${
-          isVisible 
-            ? 'translate-y-0 opacity-100 scale-100' 
-            : 'translate-y-[-20px] opacity-0 scale-95'
-        } bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 text-white border-0 shadow-2xl`}
+        className="pointer-events-auto max-w-md mx-4 bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 text-white border-0 shadow-2xl"
       >
         <CardContent className="p-6 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC4yIi8+Cjwvc3ZnPgo=')] opacity-30" />
@@ -39,7 +35,7 @@ export const AchievementPopup = ({ achievement, onClose }: AchievementPopupProps
               <div className="relative">
                 <div className="text-5xl">{achievement.icon}</div>
                 <div className="absolute -top-2 -right-2">
-                  <Sparkles className="w-6 h-6 text-yellow-200 animate-pulse" />
+                  <Sparkles className="w-6 h-6 text-yellow-200" />
                 </div>
               </div>
             </div>

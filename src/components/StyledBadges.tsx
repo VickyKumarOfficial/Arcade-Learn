@@ -16,13 +16,13 @@ export const StyledBadge = ({
   size = 'md',
   animated = false
 }: StyledBadgeProps) => {
-  const baseStyles = "font-medium transition-all duration-300 border-0 shadow-lg";
+  const baseStyles = "font-medium transition-all duration-1000 border-0 shadow-lg";
   
   const variants = {
     xp: "bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 shadow-purple-500/25",
     level: "bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 shadow-blue-500/25",
     streak: "bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600 shadow-orange-500/25",
-    achievement: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600 shadow-yellow-500/25",
+    achievement: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 text-white shadow-yellow-500/25",
     progress: "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:to-teal-600 shadow-green-500/25",
     completion: "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-600 hover:to-pink-600 shadow-indigo-500/25",
     premium: "bg-gradient-to-r from-gray-900 via-purple-900 to-violet-900 text-white hover:from-gray-800 hover:to-violet-800 shadow-gray-900/25 border border-purple-500/20"
@@ -34,7 +34,11 @@ export const StyledBadge = ({
     lg: "text-base px-4 py-2 h-8"
   };
 
-  const animationClass = animated ? "animate-pulse hover:animate-none hover:scale-105" : "hover:scale-105";
+  const animationClass = variant === 'achievement' 
+    ? "" 
+    : animated 
+      ? "animate-pulse hover:animate-none hover:scale-105 hover:duration-500" 
+      : "hover:scale-105 hover:duration-500";
 
   return (
     <Badge
