@@ -240,7 +240,7 @@ const Dashboard = () => {
                   {completedRoadmaps.map((roadmap) => (
                     <div 
                       key={roadmap.id}
-                      className="flex items-center gap-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                      className="flex items-center gap-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors duration-500"
                       onClick={() => navigate(`/roadmap/${roadmap.id}`)}
                     >
                       <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${roadmap.color} flex items-center justify-center text-xl shadow-lg`}>
@@ -303,7 +303,7 @@ const Dashboard = () => {
                     return (
                       <div 
                         key={roadmap.id}
-                        className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                        className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-500"
                         onClick={() => navigate(`/roadmap/${roadmap.id}`)}
                       >
                         <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${roadmap.color} flex items-center justify-center text-xl shadow-lg`}>

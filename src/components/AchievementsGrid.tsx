@@ -71,7 +71,7 @@ export const AchievementsGrid = ({ achievements, onClose }: AchievementsGridProp
           {filteredAchievements.map((achievement) => (
             <Card 
               key={achievement.id} 
-              className={`relative overflow-hidden transition-all duration-300 ${
+              className={`relative overflow-hidden ${
                 achievement.unlocked 
                   ? 'bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 shadow-lg border-yellow-200 dark:border-yellow-800' 
                   : 'bg-gray-50 dark:bg-gray-800 opacity-75 border-gray-200 dark:border-gray-700'
