@@ -75,9 +75,9 @@ const TestimonialsSection = () => {
     return (
       <Card className={`${
         featured
-          ? "shadow-2xl border-2 border-purple-500/50 dark:border-purple-400/50" 
-          : "shadow-xl"
-      } bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm hover:transform hover:scale-102 group overflow-hidden h-full`}>
+          ? "shadow-2xl border-2 border-purple-500 dark:border-purple-400 ring-2 ring-purple-500/30 dark:ring-purple-400/30" 
+          : "shadow-xl border border-gray-200 dark:border-gray-700"
+      } bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm hover:transform hover:scale-102 group overflow-hidden h-full transition-all duration-300`}>
         <CardContent className="p-6 relative">
           {/* Quote Icon */}
           <div className={`absolute top-4 right-4 ${
@@ -191,17 +191,17 @@ const TestimonialsSection = () => {
             {/* Container with 3 visible cards that slide smoothly */}
             <div className="relative w-full h-full">
               {getCarouselTestimonials().map((testimonial, index) => {
-                // Calculate position for smooth sliding
+                // Calculate position for smooth sliding with increased gaps
                 let translateX = 0;
                 let opacity = 1;
                 let scale = 1;
                 let zIndex = 1;
                 
                 switch (index) {
-                  case 0: // Left card (x)
-                    translateX = -33.333; // -100% / 3
-                    opacity = 0.7;
-                    scale = 0.9;
+                  case 0: // Left card (x) - more exposed
+                    translateX = -70; // Increased from -33.333 to show more of the card
+                    opacity = 0.8; // Slightly more visible
+                    scale = 0.92; // Slightly larger
                     zIndex = 1;
                     break;
                   case 1: // Center card (y) - featured
@@ -210,14 +210,14 @@ const TestimonialsSection = () => {
                     scale = 1.05;
                     zIndex = 10;
                     break;
-                  case 2: // Right card (z)
-                    translateX = 33.333; // 100% / 3
-                    opacity = 0.7;
-                    scale = 0.9;
+                  case 2: // Right card (z) - more exposed
+                    translateX = 70; // Increased from 33.333 to show more of the card
+                    opacity = 0.8; // Slightly more visible
+                    scale = 0.92; // Slightly larger
                     zIndex = 1;
                     break;
                   case 3: // Incoming card (slides in from right)
-                    translateX = 100;
+                    translateX = 120; // Moved further right to give more space
                     opacity = 0;
                     scale = 0.9;
                     zIndex = 1;
