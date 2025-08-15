@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { careerOptions } from "@/data/careers";
 import { roadmaps } from "@/data/roadmaps";
 import Navigation from "@/components/Navigation";
+import BackToTopButton from "@/components/BackToTopButton";
 import { Briefcase, Search } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -152,6 +153,7 @@ const Careers = () => {
           </div>
         </div>
       </div>
+      <BackToTopButton />
     </div>
   );
 };

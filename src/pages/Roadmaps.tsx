@@ -7,6 +7,7 @@ import { CheckCircle, Circle, Clock, ArrowLeft, ExternalLink } from "lucide-reac
 import { roadmaps } from "@/data/roadmaps";
 import { Roadmap, RoadmapComponent } from "@/types";
 import Navigation from "@/components/Navigation";
+import BackToTopButton from "@/components/BackToTopButton";
 
 const Roadmaps = () => {
   const [selectedRoadmap, setSelectedRoadmap] = useState<Roadmap | null>(null);
@@ -250,6 +251,7 @@ const Roadmaps = () => {
             ))}
           </div>
         </div>
+        <BackToTopButton />
       </div>
     );
   };
@@ -281,6 +283,7 @@ const Roadmaps = () => {
           ))}
         </div>
       </div>
+      <BackToTopButton />
     </div>
   );
 };
