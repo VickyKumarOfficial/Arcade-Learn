@@ -265,7 +265,7 @@ const Roadmaps = () => {
       <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8 pt-20 sm:pt-24 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 sm:mb-6 leading-normal md:leading-normal px-2">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 sm:mb-6 leading-relaxed py-2 px-2">
             Learning Roadmaps
           </h1>
           <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-3xl mx-auto px-2 sm:px-4">
