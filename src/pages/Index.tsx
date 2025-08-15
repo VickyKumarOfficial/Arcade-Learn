@@ -1,6 +1,7 @@
 import Hero from "@/components/Hero";
 import Navigation from "@/components/Navigation";
 import RoadmapsSection from "@/components/RoadmapsSection";
+import HowItWorksSection from "@/components/HowItWorksSection";
 import FAQSection from "@/components/FAQSection";
 import SignIn from "./SignIn";
 
@@ -10,6 +11,7 @@ const Index = () => {
       <Navigation />
       <Hero />
       <RoadmapsSection />
+      <HowItWorksSection />
       <FAQSection />
     </div>
   );
