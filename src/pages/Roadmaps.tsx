@@ -54,39 +54,39 @@ const Roadmaps = () => {
     
     return (
       <Card 
-        className="h-full hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm cursor-pointer flex flex-col"
+        className="h-full hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm cursor-pointer flex flex-col overflow-hidden"
         onClick={() => handleRoadmapClick(roadmap)}
       >
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 px-4 sm:px-6">
           <div className="flex items-start justify-between">
-            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${roadmap.color} flex items-center justify-center text-2xl mb-4 shadow-lg`}>
+            <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${roadmap.color} flex items-center justify-center text-lg sm:text-2xl mb-3 sm:mb-4 shadow-lg flex-shrink-0`}>
               {roadmap.icon}
             </div>
-            <Badge className={getDifficultyColor(roadmap.difficulty)}>
+            <Badge className={`${getDifficultyColor(roadmap.difficulty)} text-xs sm:text-sm flex-shrink-0`}>
               {roadmap.difficulty}
             </Badge>
           </div>
-          <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">{roadmap.title}</CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-300 leading-relaxed">
+          <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">{roadmap.title}</CardTitle>
+          <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
             {roadmap.description}
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="pt-0 flex-1 flex flex-col">
-          <div className="space-y-4 flex-1">
-            <div className="flex justify-between items-center text-sm">
+        <CardContent className="pt-0 flex-1 flex flex-col px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="space-y-3 sm:space-y-4 flex-1">
+            <div className="flex justify-between items-center text-xs sm:text-sm">
               <span className="text-gray-600 dark:text-gray-400">Duration</span>
-              <span className="font-medium text-gray-900 dark:text-white">{roadmap.estimatedDuration}</span>
+              <span className="font-medium text-gray-900 dark:text-white text-right">{roadmap.estimatedDuration}</span>
             </div>
             
-            <div className="flex justify-between items-center text-sm">
+            <div className="flex justify-between items-center text-xs sm:text-sm">
               <span className="text-gray-600 dark:text-gray-400">Components</span>
-              <span className="font-medium text-gray-900 dark:text-white">{roadmap.components.length} modules</span>
+              <span className="font-medium text-gray-900 dark:text-white text-right">{roadmap.components.length} modules</span>
             </div>
             
             {roadmap.completedComponents > 0 && (
               <div className="space-y-2">
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex justify-between items-center text-xs sm:text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Progress</span>
                   <span className="font-medium text-gray-900 dark:text-white">{roadmap.completedComponents}/{roadmap.components.length}</span>
                 </div>
@@ -95,9 +95,11 @@ const Roadmaps = () => {
             )}
           </div>
           
-          <div className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-center mt-4`}>
+          <Button 
+            className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 sm:py-2.5 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg mt-3 sm:mt-4 text-sm sm:text-base`}
+          >
             {roadmap.completedComponents > 0 ? 'Continue Learning' : 'Start Roadmap'}
-          </div>
+          </Button>
         </CardContent>
       </Card>
     );
@@ -258,22 +260,22 @@ const Roadmaps = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-x-hidden">
       <Navigation />
-      <div className="container mx-auto px-4 py-8 pt-24">
+      <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8 pt-20 sm:pt-24 max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 leading-normal md:leading-normal">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 sm:mb-6 leading-normal md:leading-normal px-2">
             Learning Roadmaps
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-3xl mx-auto px-2 sm:px-4">
             Choose your learning path and master new skills with our curated roadmaps. 
             Each roadmap is designed to take you from beginner to expert level.
           </p>
         </div>
 
         {/* Roadmaps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2 sm:px-0">
           {roadmaps.map((roadmap) => (
             <RoadmapCard key={roadmap.id} roadmap={roadmap} />
           ))}
