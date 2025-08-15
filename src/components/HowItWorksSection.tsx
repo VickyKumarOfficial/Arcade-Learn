@@ -142,16 +142,9 @@ const HowItWorksSection = () => {
 
         {/* Interactive Journey Map */}
         <div className="mb-16">
-          <div className="relative">
-            {/* Progress Line */}
-            <div className="hidden lg:block absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-800 dark:to-purple-800 transform -translate-y-1/2 z-0"></div>
-            <div 
-              className="hidden lg:block absolute top-1/2 left-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 transform -translate-y-1/2 z-10 transition-all duration-1000"
-              style={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
-            ></div>
-
+          <div className="relative max-w-7xl mx-auto">
             {/* Steps */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-8 lg:gap-4 relative z-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-8 lg:gap-8 xl:gap-12 relative z-20 px-4 mb-8">
               {steps.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = index === activeStep;
@@ -160,12 +153,12 @@ const HowItWorksSection = () => {
                 return (
                   <div
                     key={step.id}
-                    className="flex flex-col items-center cursor-pointer transition-all duration-300"
+                    className="flex flex-col items-center cursor-pointer transition-all duration-300 px-2 py-4"
                     onClick={() => setActiveStep(index)}
                   >
                     {/* Step Icon */}
                     <div className={`
-                      relative w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-all duration-300 transform hover:scale-110
+                      relative w-24 h-24 rounded-full flex items-center justify-center mb-6 transition-all duration-300 transform hover:scale-110
                       ${isActive 
                         ? `bg-gradient-to-r ${step.color} shadow-lg scale-110` 
                         : isCompleted 
@@ -173,37 +166,55 @@ const HowItWorksSection = () => {
                           : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600'
                       }
                     `}>
-                      <Icon className={`w-8 h-8 ${
+                      <Icon className={`w-10 h-10 ${
                         isActive || isCompleted 
                           ? 'text-white' 
                           : 'text-gray-600 dark:text-gray-400'
                       }`} />
                       {isCompleted && !isActive && (
-                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <CheckCircle2 className="w-4 h-4 text-white" />
+                        <div className="absolute -top-1 -right-1 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                          <CheckCircle2 className="w-5 h-5 text-white" />
                         </div>
                       )}
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-2 border-gray-200 dark:border-gray-600">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{step.id}</span>
+                      <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-2 border-gray-200 dark:border-gray-600">
+                        <span className="text-base font-bold text-gray-700 dark:text-gray-300">{step.id}</span>
                       </div>
                     </div>
 
                     {/* Step Title */}
-                    <h3 className={`text-lg font-semibold text-center mb-2 transition-colors ${
+                    <h3 className={`text-lg font-semibold text-center transition-colors px-2 ${
                       isActive 
                         ? 'text-blue-600 dark:text-blue-400' 
                         : 'text-gray-800 dark:text-gray-200'
                     }`}>
                       {step.title}
                     </h3>
-
-                    {/* Step Description */}
-                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center leading-relaxed">
-                      {step.description}
-                    </p>
                   </div>
                 );
               })}
+            </div>
+
+            {/* Progress Line - Now below the steps */}
+            <div className="relative px-8">
+              <div className="hidden lg:block h-2 bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-800 dark:to-purple-800 rounded-full"></div>
+              <div 
+                className="hidden lg:block absolute top-0 left-8 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-1000"
+                style={{ width: `calc(${((activeStep + 1) / steps.length) * 100}% - 64px)` }}
+              ></div>
+              
+              {/* Progress indicators for each step */}
+              <div className="hidden lg:flex justify-between items-center absolute top-1/2 left-8 right-8 transform -translate-y-1/2">
+                {steps.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+                      index <= activeStep
+                        ? 'bg-blue-500 border-blue-500'
+                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
