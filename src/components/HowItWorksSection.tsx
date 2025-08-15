@@ -196,9 +196,9 @@ const HowItWorksSection = () => {
 
             {/* Progress Line - Now below the steps with added spacing */}
             <div className="relative px-4 sm:px-8 mt-6 sm:mt-8 mb-4 sm:mb-6">
-              <div className="hidden md:block h-2 bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-800 dark:to-purple-800 rounded-full"></div>
+              <div className="hidden md:block h-2 bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-800 dark:to-purple-800 rounded-full"></div>
               <div 
-                className="hidden md:block absolute top-0 left-4 sm:left-8 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-1000"
+                className="hidden md:block absolute top-0 left-4 sm:left-0 h-2 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-1000"
                 style={{ width: `calc(${((activeStep + 1) / steps.length) * 100}% - 32px)` }}
               ></div>
               

@@ -4,6 +4,7 @@ import RoadmapsSection from "@/components/RoadmapsSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import FAQSection from "@/components/FAQSection";
+import BackToTopButton from "@/components/BackToTopButton";
 import SignIn from "./SignIn";
 
 const Index = () => {
@@ -15,6 +16,7 @@ const Index = () => {
       <HowItWorksSection />
       <TestimonialsSection />
       <FAQSection />
+      <BackToTopButton />
     </div>
   );
 };
