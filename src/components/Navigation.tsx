@@ -29,7 +29,7 @@ const Navigation = () => {
               <span className="text-white font-bold text-sm">🚀</span>
             </div>
             <span className="text-lg sm:text-xl font-bold">
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
               Arcade
               </span>
               <span className="bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent ml-1">
@@ -61,7 +61,7 @@ const Navigation = () => {
               onClick={toggleDarkMode}
               className={`relative inline-flex items-center w-12 sm:w-14 h-6 sm:h-7 rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 ${
                 isDarkMode 
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg hover:shadow-xl' 
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg hover:shadow-xl' 
                   : 'bg-gray-300 dark:bg-gray-600 shadow-md hover:shadow-lg'
               }`}
               aria-label="Toggle dark mode"
