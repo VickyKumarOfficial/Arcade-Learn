@@ -6,14 +6,14 @@ const Hero = () => {
       behavior: 'smooth'
     });
   };
-  return <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 dark:from-slate-950 dark:via-purple-950 dark:to-slate-950 relative overflow-hidden pt-16">
+  return <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 dark:from-slate-950 dark:via-blue-950 dark:to-slate-950 relative overflow-hidden pt-16">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5QzkyQUMiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20 dark:opacity-10"></div>
       
       <div className="container mx-auto px-2 sm:px-4 text-center relative z-10 max-w-7xl">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
             Your Journey to
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent block mt-1 sm:mt-2 leading-normal md:leading-normal">
+            <span className="bg-gradient-to-r from-orange-400 to-yellow-500 bg-clip-text text-transparent block mt-1 sm:mt-2 leading-normal md:leading-normal">
               Tech Mastery
             </span>
           </h1>
@@ -24,7 +24,7 @@ const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-4">
-            <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-200" onClick={scrollToRoadmaps}>
+            <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-200" onClick={scrollToRoadmaps}>
               Start Your Journey
             </Button>
             <Button variant="outline" size="lg" className="w-full sm:w-auto border-2 border-white/20 dark:border-white/30 hover:bg-white/10 dark:hover:bg-white/20 px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg font-semibold rounded-xl backdrop-blur-sm text-sky-300 dark:text-sky-200">
