@@ -2,6 +2,7 @@ import Hero from "@/components/Hero";
 import Navigation from "@/components/Navigation";
 import RoadmapsSection from "@/components/RoadmapsSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
 import FAQSection from "@/components/FAQSection";
 import SignIn from "./SignIn";
 
@@ -12,6 +13,7 @@ const Index = () => {
       <Hero />
       <RoadmapsSection />
       <HowItWorksSection />
+      <TestimonialsSection />
       <FAQSection />
     </div>
   );
