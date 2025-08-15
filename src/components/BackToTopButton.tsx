@@ -43,9 +43,9 @@ const BackToTopButton = () => {
       }`}
       aria-label="Back to top"
     >
-      <ChevronUp className="w-5 h-5 flex-shrink-0" />
+      <ChevronUp className="w-5 h-5 flex" />
       <span 
-        className={`ml-2 text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+        className={`ml-2 text-sm font-medium whitespace-nowrap transition duration-200 ${
           isHovered 
             ? "opacity-100 max-w-xs" 
             : "opacity-0 max-w-0 overflow-hidden"
