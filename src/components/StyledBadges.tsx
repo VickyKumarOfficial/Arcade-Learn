@@ -164,6 +164,6 @@ export const ComponentXPBadge = ({ component, size = 'sm', completed = false }: 
     >
       <span className="mr-1">{completed ? '✅' : '⭐'}</span>
       {completed ? 'Earned' : '+'}{xp} XP
-    </StyledBadge>
+    </StyledBadge> 
   );
 };
