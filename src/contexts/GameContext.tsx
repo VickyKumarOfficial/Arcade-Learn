@@ -74,6 +74,8 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       // Save to localStorage
       localStorage.setItem('arcade-learn-game-data', JSON.stringify(streakUpdatedData));
 
+      console.log('COMPLETE_COMPONENT: XP gained:', xpGained + achievementXP, 'showXPAnimation:', true);
+
       return {
         ...state,
         userData: streakUpdatedData,
@@ -126,12 +128,15 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         updatedUserData.level = calculateLevel(updatedUserData.totalXP);
       }
 
+      console.log('COMPLETE_ROADMAP: Achievement XP:', achievementXP, 'showXPAnimation preserved:', state.showXPAnimation || achievementXP > 0);
+
       return {
         ...state,
         userData: updatedUserData,
         newlyUnlockedAchievements: [...state.newlyUnlockedAchievements, ...newAchievements],
         recentXPGain: state.recentXPGain + achievementXP,
-        showXPAnimation: achievementXP > 0
+        // Preserve existing showXPAnimation state - don't override it
+        showXPAnimation: state.showXPAnimation || achievementXP > 0
       };
     }
 
@@ -212,16 +217,6 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('arcade-learn-game-data', JSON.stringify(state.userData));
   }, [state.userData]);
-
-  // Auto-hide XP animation after 3 seconds
-  useEffect(() => {
-    if (state.showXPAnimation) {
-      const timer = setTimeout(() => {
-        dispatch({ type: 'HIDE_XP_ANIMATION' });
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.showXPAnimation]);
 
   return (
     <GameContext.Provider value={{ state, dispatch }}>

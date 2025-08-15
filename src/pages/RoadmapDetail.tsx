@@ -9,8 +9,6 @@ import { CheckCircle, Circle, Clock, ArrowLeft, ExternalLink, Trophy, Target } f
 import { roadmaps } from "@/data/roadmaps";
 import { Roadmap, RoadmapComponent } from "@/types";
 import Navigation from "@/components/Navigation";
-import { UserStatsCard } from "@/components/UserStatsCard";
-import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { AchievementPopup } from "@/components/AchievementPopup";
 import { XPDisplay, ComponentXPBadge } from "@/components/XPDisplay";
 import { useGame } from "@/contexts/GameContext";
@@ -20,7 +18,6 @@ const RoadmapDetail = () => {
   const navigate = useNavigate();
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [expandedComponent, setExpandedComponent] = useState<string | null>(null);
-  const [showAchievements, setShowAchievements] = useState(false);
   const { state, dispatch } = useGame();
 
   useEffect(() => {
@@ -117,16 +114,6 @@ const RoadmapDetail = () => {
         levelUp={state.levelUp}
         newLevel={state.newLevel}
       />
-
-      {/* Achievements Modal */}
-      {showAchievements && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <AchievementsGrid 
-            achievements={state.userData.achievements} 
-            onClose={() => setShowAchievements(false)}
-          />
-        </div>
-      )}
       
       <div className="pt-20 pb-12">
         <div className="container mx-auto px-4">
@@ -138,34 +125,6 @@ const RoadmapDetail = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Roadmaps
           </Button>
-
-          {/* Stats and Achievements Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2">
-              <UserStatsCard userData={state.userData} />
-            </div>
-            <div className="space-y-4">
-              <Button 
-                onClick={() => setShowAchievements(true)}
-                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
-              >
-                <Trophy className="w-4 h-4 mr-2" />
-                View Achievements ({state.userData.achievements.filter(a => a.unlocked).length})
-              </Button>
-              <Card className="bg-white/90 dark:bg-gray-800/90">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-purple-500" />
-                    <span className="font-medium text-sm">Roadmap XP</span>
-                  </div>
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {earnedXP} / {totalXP}
-                  </div>
-                  <Progress value={(earnedXP / totalXP) * 100} className="h-2 mt-2" />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
 
           {/* Header Section */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border-0">

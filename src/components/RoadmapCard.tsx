@@ -21,7 +21,9 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
   ).length;
   const progressPercentage = (completedCount / roadmap.components.length) * 100;
   
-  const handleStartRoadmap = () => {
+  const handleStartRoadmap = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     navigate(`/roadmap/${roadmap.id}`);
   };
 
