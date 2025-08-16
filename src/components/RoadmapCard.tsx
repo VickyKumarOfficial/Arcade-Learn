@@ -90,4 +90,4 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
   );
 };
 
-export default RoadmapCard;
+export default RoadmapCard; 

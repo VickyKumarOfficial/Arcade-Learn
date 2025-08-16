@@ -1,9 +1,19 @@
 
+import { useState } from "react";
 import { roadmaps } from "@/data/roadmaps";
 import RoadmapCard from "./RoadmapCard";
 
 const RoadmapsSection = () => {
   const categories = [...new Set(roadmaps.map(roadmap => roadmap.category))];
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  
+  // Add 'All' option to show all roadmaps
+  const allCategories = ['All', ...categories];
+  
+  // Filter roadmaps based on selected category
+  const filteredRoadmaps = selectedCategory === 'All' 
+    ? roadmaps 
+    : roadmaps.filter(roadmap => roadmap.category === selectedCategory);
 
   return (
     <section id="roadmaps" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
@@ -26,19 +36,30 @@ const RoadmapsSection = () => {
 
         <div className="mb-12">
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {categories.map((category) => (
-              <div
+            {allCategories.map((category) => (
+              <button
                 key={category}
-                className="px-6 py-3 bg-white dark:bg-gray-800 rounded-full shadow-md border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-400 transition-all duration-200"
+                onClick={() => setSelectedCategory(category)}
+                className={`px-6 py-3 rounded-full shadow-md border-2 transition-all duration-200 cursor-pointer ${
+                  selectedCategory === category
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white border-blue-300 dark:border-blue-400'
+                    : 'bg-white dark:bg-gray-800 border-transparent hover:border-blue-200 dark:hover:border-blue-400'
+                }`}
               >
-                <span className="font-medium text-gray-700 dark:text-gray-300">{category}</span>
-              </div>
+                <span className={`font-medium ${
+                  selectedCategory === category
+                    ? 'text-white'
+                    : 'text-gray-700 dark:text-gray-300'
+                }`}>
+                  {category}
+                </span>
+              </button>
             ))}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {roadmaps.map((roadmap) => (
+          {filteredRoadmaps.map((roadmap) => (
             <RoadmapCard key={roadmap.id} roadmap={roadmap} />
           ))}
         </div>
