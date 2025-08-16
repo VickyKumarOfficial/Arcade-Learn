@@ -83,7 +83,7 @@ In today's fast-paced tech world, learners face several challenges:
 |-----------|---------------|
 | **Frontend** | React + Vite + TypeScript |
 | **Styling** | Tailwind CSS + shadcn-ui |
-| **Backend** | Firebase (Auth + Firestore) |
+| **Backend** | Supabase (Auth + Database) |
 | **Development** | Node.js + npm |
 
 ---
@@ -112,9 +112,15 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install dependencies
 npm i
 
-# Step 4: Start development server
+# Step 4: Set up Supabase (see SUPABASE_SETUP.md for detailed guide)
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
+
+# Step 5: Start development server
 npm run dev
 ```
+
+> **⚠️ Important**: You need to set up Supabase for authentication and database. See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for the complete setup guide.
 
 #### **Method 2: Development Setup**
 
@@ -275,7 +281,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Thanks to all contributors and beta testers
 - Special thanks to our mentors and industry experts
-- Firebase for backend infrastructure
+- Supabase for backend infrastructure and authentication
 - Lovable platform for seamless deployment
 - Open source community for amazing tools and libraries
 
