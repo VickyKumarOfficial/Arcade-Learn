@@ -1,18 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Sun, Moon, Menu, X } from "lucide-react";
+import { Sun, Moon, Menu, X, Trophy, Star } from "lucide-react";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useState } from "react";
+import { useGame } from "@/contexts/GameContext";
+import { Badge } from "@/components/ui/badge";
+import { LevelBadge, XPBadge, StreakBadge } from "./StyledBadges";
 
 const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { state } = useGame();
   
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Roadmaps', path: '/roadmaps' },
+    { label: 'Dashboard', path: '/dashboard' },
     { label: 'Careers', path: '/careers' },
     { label: 'FAQs', path: '/faqs' }
   ];
@@ -56,6 +61,14 @@ const Navigation = () => {
           </div>
           
           <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* User Stats - Desktop */}
+            <div className="hidden lg:flex items-center space-x-2 mr-2">
+              <LevelBadge level={state.userData.level} size="sm" />
+              <XPBadge xp={state.userData.totalXP} size="sm" />
+              {state.userData.currentStreak > 0 && (
+                <StreakBadge streak={state.userData.currentStreak} size="sm" />
+              )}
+            </div>
             {/* Dark Mode Toggle Switch */}
             <div 
               onClick={toggleDarkMode}

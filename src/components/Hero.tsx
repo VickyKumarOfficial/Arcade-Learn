@@ -1,6 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Trophy, Users } from "lucide-react";
+import { useState } from "react";
+import { useGame } from "@/contexts/GameContext";
+import { Leaderboard } from "./Leaderboard";
+
 const Hero = () => {
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const { state } = useGame();
+  
   const scrollToRoadmaps = () => {
     document.getElementById('roadmaps')?.scrollIntoView({
       behavior: 'smooth'
@@ -27,8 +34,14 @@ const Hero = () => {
             <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-200" onClick={scrollToRoadmaps}>
               Start Your Journey
             </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto border-2 border-white/20 dark:border-white/30 hover:bg-white/10 dark:hover:bg-white/20 px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg font-semibold rounded-xl backdrop-blur-sm text-sky-300 dark:text-sky-200">
-              Explore Careers
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="w-full sm:w-auto border-2 border-white/20 dark:border-white/30 hover:bg-white/10 dark:hover:bg-white/20 px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg font-semibold rounded-xl backdrop-blur-sm text-sky-300 dark:text-sky-200"
+              onClick={() => setShowLeaderboard(true)}
+            >
+              <Trophy className="w-5 h-5 mr-2" />
+              Leaderboard
             </Button>
           </div>
           
@@ -52,6 +65,16 @@ const Hero = () => {
           <ArrowDown className="mx-auto text-white/60 dark:text-white/50 w-8 h-8 cursor-pointer hover:text-white dark:hover:text-white/80 transition-colors" onClick={scrollToRoadmaps} />
         </div>
       </div>
+
+      {/* Leaderboard Modal */}
+      {showLeaderboard && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <Leaderboard 
+            userData={state.userData} 
+            onClose={() => setShowLeaderboard(false)}
+          />
+        </div>
+      )}
     </section>;
 };
 export default Hero;

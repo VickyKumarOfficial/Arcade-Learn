@@ -19,6 +19,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Learn the building blocks of web development',
         estimatedHours: 40,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'html-mdn',
@@ -42,6 +43,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Master JavaScript ES6+ features and concepts',
         estimatedHours: 60,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'js-info',
@@ -65,6 +67,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Learn React components, props, state, and hooks',
         estimatedHours: 50,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'react-docs',
@@ -88,6 +91,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Add type safety to your React applications',
         estimatedHours: 35,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'ts-handbook',
@@ -111,6 +115,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Learn Redux, Zustand, and context patterns',
         estimatedHours: 40,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'redux-toolkit',
@@ -134,6 +139,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Unit testing, integration testing, and E2E testing',
         estimatedHours: 30,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'testing-library',
@@ -170,6 +176,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Understanding Node.js runtime and core modules',
         estimatedHours: 35,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'nodejs-docs',
@@ -193,6 +200,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Build web applications and APIs with Express',
         estimatedHours: 45,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'express-guide',
@@ -216,6 +224,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Working with MongoDB, PostgreSQL, and ORMs',
         estimatedHours: 50,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'mongodb-tutorial',
@@ -252,6 +261,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Setting up development environment and project structure',
         estimatedHours: 25,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'mern-tutorial',
@@ -268,6 +278,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Implement JWT authentication and authorization',
         estimatedHours: 40,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'jwt-guide',
@@ -297,6 +308,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Python programming fundamentals and data structures',
         estimatedHours: 45,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'python-tutorial',
@@ -313,6 +325,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Master Pandas and NumPy for data analysis',
         estimatedHours: 50,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'pandas-tutorial',
@@ -342,6 +355,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Containerize applications with Docker',
         estimatedHours: 35,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'docker-tutorial',
@@ -358,6 +372,7 @@ export const roadmaps: Roadmap[] = [
         description: 'Container orchestration and management',
         estimatedHours: 60,
         completed: false,
+        xpReward: 50,
         resources: [
           {
             id: 'k8s-tutorial',
