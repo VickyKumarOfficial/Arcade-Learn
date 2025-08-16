@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -6,21 +8,24 @@ interface User {
   firstName: string;
   lastName?: string;
   phone?: string;
+  avatarUrl?: string;
 }
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  session: Session | null;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  session: Session | null;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: Omit<User, 'id'> & { password: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loginWithProvider: (provider: 'google' | 'github') => Promise<void>;
 }
 
@@ -39,72 +44,159 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user: null,
     isLoading: true,
     isAuthenticated: false,
+    session: null,
   });
 
-  // Check for existing auth on app load
+  // Helper function to convert Supabase user to our User type
+  const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User | null> => {
+    try {
+      // Get user profile from our profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      // If profile doesn't exist, create one
+      if (!profile) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: supabaseUser.id,
+              email: supabaseUser.email || '',
+              first_name: supabaseUser.user_metadata?.first_name || supabaseUser.email?.split('@')[0] || 'User',
+              last_name: supabaseUser.user_metadata?.last_name || null,
+              phone: supabaseUser.user_metadata?.phone || null,
+              avatar_url: supabaseUser.user_metadata?.avatar_url || null,
+            }
+          ])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating user profile:', createError);
+          return null;
+        }
+
+        return {
+          id: newProfile.id,
+          email: newProfile.email,
+          firstName: newProfile.first_name,
+          lastName: newProfile.last_name,
+          phone: newProfile.phone,
+          avatarUrl: newProfile.avatar_url,
+        };
+      }
+
+      return {
+        id: profile.id,
+        email: profile.email,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        phone: profile.phone,
+        avatarUrl: profile.avatar_url,
+      };
+    } catch (error) {
+      console.error('Error converting Supabase user:', error);
+      return null;
+    }
+  };
+
+  // Check for existing session on app load
   useEffect(() => {
-    const checkAuth = () => {
-      // For now, check localStorage for a simple auth token
-      // This will be replaced with Supabase auth later
-      const token = localStorage.getItem('auth-token');
-      const userData = localStorage.getItem('user-data');
-      
-      if (token && userData) {
-        try {
-          const user = JSON.parse(userData);
-          setAuthState({
-            user,
-            isLoading: false,
-            isAuthenticated: true,
-          });
-        } catch (error) {
-          console.error('Error parsing user data:', error);
-          localStorage.removeItem('auth-token');
-          localStorage.removeItem('user-data');
+    const getSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
           setAuthState({
             user: null,
             isLoading: false,
             isAuthenticated: false,
+            session: null,
+          });
+          return;
+        }
+
+        if (session?.user) {
+          const user = await convertSupabaseUser(session.user);
+          setAuthState({
+            user,
+            isLoading: false,
+            isAuthenticated: !!user,
+            session,
+          });
+        } else {
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false,
+            session: null,
           });
         }
-      } else {
+      } catch (error) {
+        console.error('Error in getSession:', error);
         setAuthState({
           user: null,
           isLoading: false,
           isAuthenticated: false,
+          session: null,
         });
       }
     };
 
-    checkAuth();
+    getSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        
+        if (session?.user) {
+          const user = await convertSupabaseUser(session.user);
+          setAuthState({
+            user,
+            isLoading: false,
+            isAuthenticated: !!user,
+            session,
+          });
+        } else {
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false,
+            session: null,
+          });
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // TODO: Replace with actual API call to backend/Supabase
-      // For now, simulate login with mock data
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-      
-      const mockUser: User = {
-        id: '1',
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        firstName: email.split('@')[0], // Extract name from email for now
-      };
-      
-      // Store auth token and user data
-      localStorage.setItem('auth-token', 'mock-jwt-token');
-      localStorage.setItem('user-data', JSON.stringify(mockUser));
-      
-      setAuthState({
-        user: mockUser,
-        isLoading: false,
-        isAuthenticated: true,
+        password,
       });
-    } catch (error) {
+
+      if (error) throw error;
+
+      // User state will be updated automatically by the auth state change listener
+      
+    } catch (error: any) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      throw error;
+      throw new Error(error.message || 'Login failed');
     }
   };
 
@@ -112,68 +204,61 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // TODO: Replace with actual API call to backend/Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-      
-      const newUser: User = {
-        id: Date.now().toString(), // Mock ID generation
+      const { data, error } = await supabase.auth.signUp({
         email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phone: userData.phone,
-      };
-      
-      // Store auth token and user data
-      localStorage.setItem('auth-token', 'mock-jwt-token');
-      localStorage.setItem('user-data', JSON.stringify(newUser));
-      
-      setAuthState({
-        user: newUser,
-        isLoading: false,
-        isAuthenticated: true,
+        password: userData.password,
+        options: {
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            phone: userData.phone,
+          }
+        }
       });
-    } catch (error) {
+
+      if (error) throw error;
+
+      // Note: User will need to confirm email before they can sign in
+      // The auth state change listener will handle the state update
+      
+    } catch (error: any) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      throw error;
+      throw new Error(error.message || 'Registration failed');
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('auth-token');
-    localStorage.removeItem('user-data');
-    localStorage.removeItem('arcade-learn-game-data'); // Clear game data on logout
-    
-    setAuthState({
-      user: null,
-      isLoading: false,
-      isAuthenticated: false,
-    });
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear local storage
+      localStorage.removeItem('arcade-learn-game-data');
+      
+      // State will be updated automatically by the auth state change listener
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      throw new Error(error.message || 'Logout failed');
+    }
   };
 
   const loginWithProvider = async (provider: 'google' | 'github') => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // TODO: Implement actual OAuth with Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockUser: User = {
-        id: '1',
-        email: `user@${provider}.com`,
-        firstName: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-      };
-      
-      localStorage.setItem('auth-token', 'mock-jwt-token');
-      localStorage.setItem('user-data', JSON.stringify(mockUser));
-      
-      setAuthState({
-        user: mockUser,
-        isLoading: false,
-        isAuthenticated: true,
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
       });
-    } catch (error) {
+
+      if (error) throw error;
+      
+      // OAuth will redirect, so state will be updated on return
+    } catch (error: any) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      throw error;
+      throw new Error(error.message || `${provider} login failed`);
     }
   };
 
@@ -183,6 +268,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user: authState.user,
         isLoading: authState.isLoading,
         isAuthenticated: authState.isAuthenticated,
+        session: authState.session,
         login,
         register,
         logout,

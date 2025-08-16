@@ -7,6 +7,7 @@ import {
   checkAchievements,
   calculateLevel
 } from '@/lib/gamification';
+import { userProgressService } from '@/services/userProgressService';
 
 interface GameState {
   userData: UserGameData;
