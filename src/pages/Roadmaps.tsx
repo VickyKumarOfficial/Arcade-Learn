@@ -7,14 +7,27 @@ import { CheckCircle, Circle, Clock, ArrowLeft, ExternalLink } from "lucide-reac
 import { roadmaps } from "@/data/roadmaps";
 import { Roadmap, RoadmapComponent } from "@/types";
 import Navigation from "@/components/Navigation";
+import { useGame } from "@/contexts/GameContext";
+import { XPDisplay } from "@/components/XPDisplay";
+import { AchievementPopup } from "@/components/AchievementPopup";
 import BackToTopButton from "@/components/BackToTopButton";
 
 const Roadmaps = () => {
   const [selectedRoadmap, setSelectedRoadmap] = useState<Roadmap | null>(null);
   const [expandedComponent, setExpandedComponent] = useState<string | null>(null);
+  const { state, dispatch } = useGame();
 
   const handleRoadmapClick = (roadmap: Roadmap) => {
-    setSelectedRoadmap(roadmap);
+    // Update roadmap with real-time completion status
+    const updatedRoadmap = {
+      ...roadmap,
+      components: roadmap.components.map(component => ({
+        ...component,
+        completed: state.userData.completedComponents.includes(`${roadmap.id}-${component.id}`)
+      }))
+    };
+    updatedRoadmap.completedComponents = updatedRoadmap.components.filter(c => c.completed).length;
+    setSelectedRoadmap(updatedRoadmap);
     setExpandedComponent(null);
   };
 
@@ -26,13 +39,38 @@ const Roadmaps = () => {
   const toggleComponent = (componentId: string) => {
     if (!selectedRoadmap) return;
     
-    // Simulate marking component as completed
+    const component = selectedRoadmap.components.find(c => c.id === componentId);
+    if (!component) return;
+
+    // Check if component is already completed in game state using the full key
+    const componentKey = `${selectedRoadmap.id}-${componentId}`;
+    const isCurrentlyCompleted = state.userData.completedComponents.includes(componentKey);
+    
+    // Update local roadmap state for UI
     const updatedRoadmap = { ...selectedRoadmap };
-    const component = updatedRoadmap.components.find(c => c.id === componentId);
-    if (component) {
-      component.completed = !component.completed;
-      updatedRoadmap.completedComponents = updatedRoadmap.components.filter(c => c.completed).length;
+    const componentToUpdate = updatedRoadmap.components.find(c => c.id === componentId);
+    if (componentToUpdate) {
+      componentToUpdate.completed = !isCurrentlyCompleted;
+      // Calculate real-time completed count
+      updatedRoadmap.completedComponents = updatedRoadmap.components.filter(c => 
+        state.userData.completedComponents.includes(`${selectedRoadmap.id}-${c.id}`) || c.id === componentId && !isCurrentlyCompleted
+      ).length;
       setSelectedRoadmap(updatedRoadmap);
+
+      // Dispatch appropriate action based on current state
+      if (!isCurrentlyCompleted) {
+        // Component is being completed
+        dispatch({ 
+          type: 'COMPLETE_COMPONENT', 
+          payload: { component: componentToUpdate, roadmapId: selectedRoadmap.id } 
+        });
+      } else {
+        // Component is being uncompleted
+        dispatch({ 
+          type: 'UNCOMPLETE_COMPONENT', 
+          payload: { component: componentToUpdate, roadmapId: selectedRoadmap.id } 
+        });
+      }
     }
   };
 
@@ -51,7 +89,11 @@ const Roadmaps = () => {
 
   // Roadmap List View
   const RoadmapCard = ({ roadmap }: { roadmap: Roadmap }) => {
-    const progressPercentage = (roadmap.completedComponents / roadmap.components.length) * 100;
+    // Calculate real-time progress
+    const completedCount = roadmap.components.filter(component => 
+      state.userData.completedComponents.includes(`${roadmap.id}-${component.id}`)
+    ).length;
+    const progressPercentage = (completedCount / roadmap.components.length) * 100;
     
     return (
       <Card 
@@ -85,15 +127,19 @@ const Roadmaps = () => {
               <span className="font-medium text-gray-900 dark:text-white text-right">{roadmap.components.length} modules</span>
             </div>
             
-            {roadmap.completedComponents > 0 && (
+            {completedCount > 0 && (
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs sm:text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Progress</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{roadmap.completedComponents}/{roadmap.components.length}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{completedCount}/{roadmap.components.length}</span>
                 </div>
                 <Progress value={progressPercentage} className="h-2" />
               </div>
             )}
+            
+            <div className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-center`}>
+              {completedCount > 0 ? 'Continue Learning' : 'Start Roadmap'}
+            </div>
           </div>
           
           <Button 
@@ -257,34 +303,54 @@ const Roadmaps = () => {
   };
 
   // Main render - show list or detail view
-  if (selectedRoadmap) {
-    return <RoadmapDetailView />;
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-x-hidden">
-      <Navigation />
-      <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8 pt-20 sm:pt-24 max-w-7xl">
-        {/* Header */}
-        <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 sm:mb-6 leading-relaxed py-2 px-2">
-            Learning Roadmaps
-          </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-3xl mx-auto px-2 sm:px-4">
-            Choose your learning path and master new skills with our curated roadmaps. 
-            Each roadmap is designed to take you from beginner to expert level.
-          </p>
-        </div>
+    <>
+      {/* Achievement Popups - Always visible */}
+      {state.newlyUnlockedAchievements.map((achievement) => (
+        <AchievementPopup
+          key={achievement.id}
+          achievement={achievement}
+          onClose={() => dispatch({ type: 'DISMISS_ACHIEVEMENT', payload: { achievementId: achievement.id } })}
+        />
+      ))}
 
-        {/* Roadmaps Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2 sm:px-0">
-          {roadmaps.map((roadmap) => (
-            <RoadmapCard key={roadmap.id} roadmap={roadmap} />
-          ))}
-        </div>
-      </div>
-      <BackToTopButton />
+      {/* XP Animation - Always visible */}
+      <XPDisplay 
+        xpGained={state.recentXPGain}
+        component={state.lastCompletedComponent}
+        isVisible={state.showXPAnimation}
+        levelUp={state.levelUp}
+        newLevel={state.newLevel}
+      />
+      
+      {selectedRoadmap ? (
+        <RoadmapDetailView />
+      ) : (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+          <Navigation />
+          <div className="container mx-auto px-4 py-8 pt-24">
+            {/* Header */}
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 leading-normal md:leading-normal">
+                Learning Roadmaps
+              </h1>
+              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                Choose your learning path and master new skills with our curated roadmaps. 
+                Each roadmap is designed to take you from beginner to expert level.
+              </p>
+            </div>
+
+            {/* Roadmaps Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2 sm:px-0">
+              {roadmaps.map((roadmap) => (
+                <RoadmapCard key={roadmap.id} roadmap={roadmap} />
+              ))}
+            </div>
+          </div>
+          <BackToTopButton />
     </div>
+      )}
+    </>
   );
 };
 
