@@ -98,7 +98,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-800 dark:to-purple-800">
       <div className="bg-white/90 dark:bg-gray-800/90 p-8 rounded-xl shadow-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center gradient-text">
-          {isRegister ? "Create your account" : "Sign in to SkillPath"}
+          {isRegister ? "Create your account" : "Sign in to ArcadeLearn"}
         </h2>
         <form className="space-y-4" onSubmit={handleSubmit}>
           {isRegister && (
@@ -205,36 +205,58 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
         >
           <span className="mr-2">🐙</span> Continue with GitHub
         </Button>
-        {/* Only show the create account link on login page, not on sign up */}
-        {!isRegister && (
-          <div className="mt-6 text-center text-sm">
-            New to SkillPath?{' '}
-            <button
-              className="text-blue-600 hover:underline"
-              onClick={() => navigate('/signup')}
-              type="button"
-            >
-              Create an account
-            </button>
-          </div>
-        )}
-        {/* Show sign in link when on register mode */}
-        {isRegister && (
-          <div className="mt-6 text-center text-sm">
-            Already have an account?{' '}
-            <button
-              className="text-blue-600 hover:underline"
-              onClick={() => navigate('/signin')}
-              type="button"
-            >
-              Sign in
-            </button>
-          </div>
-        )}
+
+        <div className="mt-4 text-center text-sm text-gray-600">
+          {isRegister ? (
+            <p>
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegister(false);
+                  setError("");
+                  setShowResendButton(false);
+                  setForm({
+                    firstName: "",
+                    lastName: "",
+                    phone: "",
+                    email: "",
+                    password: "",
+                  });
+                }}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Log in
+              </button>
+            </p>
+          ) : (
+            <p>
+              Don't have an account?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegister(true);
+                  setError("");
+                  setShowResendButton(false);
+                  setForm({
+                    firstName: "",
+                    lastName: "",
+                    phone: "",
+                    email: "",
+                    password: "",
+                  });
+                }}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Create an account
+              </button>
+            </p>
+          )}
+        </div>
       </div>
       <style>{`
         .gradient-text {
-          background: linear-gradient(90deg, #2563eb, #9333ea);
+          background: linear-gradient(90deg, #346feeff, #336deaff);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
