@@ -29,24 +29,22 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
     try {
       if (isRegister) {
         await register({
+          email: form.email,
+          password: form.password,
           firstName: form.firstName,
           lastName: form.lastName,
           phone: form.phone,
-          email: form.email,
-          password: form.password,
         });
       } else {
         await login(form.email, form.password);
       }
-      
-      // Redirect to dashboard after successful login/register
+      // Redirect to dashboard on successful login/register
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || "An error occurred");
+      setError(err.message || "Authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -55,6 +53,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   const handleOAuth = async (provider: "google" | "github") => {
     try {
       setLoading(true);
+      setError("");
       await loginWithProvider(provider);
       navigate('/dashboard');
     } catch (err: any) {
