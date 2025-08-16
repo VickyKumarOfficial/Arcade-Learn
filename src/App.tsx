@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DarkModeProvider } from "@/hooks/use-dark-mode";
 import { GameProvider } from "@/contexts/GameContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Roadmaps from "./pages/Roadmaps";
 import RoadmapDetail from "./pages/RoadmapDetail";
@@ -19,11 +20,12 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <DarkModeProvider>
-      <GameProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <AuthProvider>
+        <GameProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/roadmaps" element={<Roadmaps />} />
@@ -38,6 +40,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </GameProvider>
+      </AuthProvider>
     </DarkModeProvider>
   </QueryClientProvider>
 );

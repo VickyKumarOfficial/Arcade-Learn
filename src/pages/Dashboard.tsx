@@ -19,7 +19,9 @@ import {
 import Navigation from "@/components/Navigation";
 import { UserStatsCard } from "@/components/UserStatsCard";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
+import { AuthGuard } from "@/components/AuthGuard";
 import { useGame } from "@/contexts/GameContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { roadmaps } from "@/data/roadmaps";
 import { useNavigate } from "react-router-dom";
 import { getLevelProgress, getLevelTitle } from "@/lib/gamification";
@@ -39,7 +41,38 @@ import {
 const Dashboard = () => {
   const [showAllAchievements, setShowAllAchievements] = useState(false);
   const { state } = useGame();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show auth guard if user is not authenticated
+  if (!isAuthenticated) {
+    return (
+      <>
+        <Navigation />
+        <AuthGuard 
+          title="Welcome to Your Dashboard" 
+          description="Sign in to view your progress, achievements, and personalized learning journey"
+          featuresList={[
+            "Track your XP and level progression",
+            "View detailed learning analytics",
+            "Unlock achievements and badges",
+            "Maintain learning streaks",
+            "Access personalized roadmaps",
+            "Compete on global leaderboards"
+          ]}
+        />
+      </>
+    );
+  }
   
   const levelInfo = getLevelProgress(state.userData.totalXP);
   const levelTitle = getLevelTitle(state.userData.level);

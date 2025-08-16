@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SignInProps {
   initialMode?: "login" | "register";
@@ -9,6 +10,7 @@ interface SignInProps {
 const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   const [isRegister, setIsRegister] = useState(initialMode === "register");
   const navigate = useNavigate();
+  const { login, register, loginWithProvider } = useAuth();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -27,35 +29,39 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    
     try {
-      const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-      const body = isRegister
-        ? form
-        : { email: form.email, password: form.password };
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      let data = null;
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        // If the response is not JSON, show a generic error
-        throw new Error("Server error. Please try again later.");
+      if (isRegister) {
+        await register({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          phone: form.phone,
+          email: form.email,
+          password: form.password,
+        });
+      } else {
+        await login(form.email, form.password);
       }
-      if (!res.ok) throw new Error(data?.error || "Unknown error");
-      // TODO: handle login success (store token, redirect, etc)
+      
+      // Redirect to dashboard after successful login/register
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOAuth = (provider: "google" | "github") => {
-    // TODO: Implement OAuth popup/redirect
-    alert(`OAuth with ${provider} not implemented yet.`);
+  const handleOAuth = async (provider: "google" | "github") => {
+    try {
+      setLoading(true);
+      await loginWithProvider(provider);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || `Failed to sign in with ${provider}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
