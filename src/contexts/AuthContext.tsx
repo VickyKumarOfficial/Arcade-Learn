@@ -27,6 +27,7 @@ interface AuthContextType {
   register: (userData: Omit<User, 'id'> & { password: string }) => Promise<void>;
   logout: () => Promise<void>;
   loginWithProvider: (provider: 'google' | 'github') => Promise<void>;
+  resendVerificationEmail: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -247,7 +248,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('Registration not available. Please configure Supabase credentials.');
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
@@ -259,14 +261,86 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('User creation failed');
 
-      // Note: User will need to confirm email before they can sign in
-      // The auth state change listener will handle the state update
+      // 2. Create profile immediately
+      console.log('Attempting to create profile for user:', authData.user.id);
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: authData.user.id,
+            email: userData.email,
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            phone: userData.phone
+          }
+        ])
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Profile creation error details:', {
+          code: profileError.code,
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint
+        });
+        
+        // Check if profile already exists
+        const { data: existingProfile, error: checkError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+          
+        if (existingProfile) {
+          console.log('Profile already exists:', existingProfile);
+          return; // Profile exists, we can continue
+        }
+
+        // If profile doesn't exist and we couldn't create it, cleanup and throw error
+        console.error('Cleaning up auth user due to profile creation failure');
+        try {
+          await supabase.auth.admin.deleteUser(authData.user.id);
+        } catch (deleteError) {
+          console.error('Failed to cleanup auth user:', deleteError);
+        }
+        throw new Error(`Failed to create user profile: ${profileError.message}`);
+      }
+
+      // 3. Clear loading state and update auth state
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        user: {
+          id: authData.user.id,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone
+        },
+        isAuthenticated: true,
+        session: authData.session
+      }));
       
     } catch (error: any) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
       throw new Error(error.message || 'Registration failed');
+    }
+  };
+
+  const resendVerificationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+      if (error) throw error;
+      return;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to resend verification email');
     }
   };
 
@@ -324,6 +398,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         register,
         logout,
         loginWithProvider,
+        resendVerificationEmail,
       }}
     >
       {children}

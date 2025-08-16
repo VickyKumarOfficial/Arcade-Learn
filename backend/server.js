@@ -11,6 +11,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Test database connection on startup
+import { testConnection } from './lib/db.js';
+testConnection().catch(err => {
+  console.error('Failed to connect to database:', err);
+  process.exit(1);
+});
+
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
