@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Navigation from "@/components/Navigation";
 import { 
   BookOpen, 
   PlayCircle, 
@@ -18,6 +20,7 @@ import {
 } from "lucide-react";
 
 const HowItWorksSection = () => {
+  const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
@@ -326,6 +329,7 @@ const HowItWorksSection = () => {
             <Button 
               size="lg" 
               className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base"
+              onClick={() => navigate("/roadmaps")}
             >
               Explore Roadmaps
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
