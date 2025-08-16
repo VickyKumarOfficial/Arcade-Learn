@@ -50,6 +50,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Helper function to convert Supabase user to our User type
   const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User | null> => {
     try {
+      // Skip profile operations if using placeholder client
+      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+        return {
+          id: supabaseUser.id,
+          email: supabaseUser.email || 'demo@example.com',
+          firstName: supabaseUser.user_metadata?.first_name || 'Demo User',
+          lastName: supabaseUser.user_metadata?.last_name || null,
+          phone: supabaseUser.user_metadata?.phone || null,
+          avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
+        };
+      }
+
       // Get user profile from our profiles table
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -112,6 +124,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const getSession = async () => {
       try {
+        // Check if we have valid Supabase environment variables
+        if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+          console.warn('⚠️ Supabase not configured. Running in demo mode.');
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false,
+            session: null,
+          });
+          return;
+        }
+
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -154,37 +178,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        if (session?.user) {
-          const user = await convertSupabaseUser(session.user);
-          setAuthState({
-            user,
-            isLoading: false,
-            isAuthenticated: !!user,
-            session,
-          });
-        } else {
-          setAuthState({
-            user: null,
-            isLoading: false,
-            isAuthenticated: false,
-            session: null,
-          });
+    // Listen for auth changes (only if we have valid Supabase configuration)
+    let subscription: any = null;
+    
+    if (import.meta.env.VITE_SUPABASE_URL && !import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('Auth state changed:', event, session?.user?.email);
+          
+          if (session?.user) {
+            const user = await convertSupabaseUser(session.user);
+            setAuthState({
+              user,
+              isLoading: false,
+              isAuthenticated: !!user,
+              session,
+            });
+          } else {
+            setAuthState({
+              user: null,
+              isLoading: false,
+              isAuthenticated: false,
+              session: null,
+            });
+          }
         }
-      }
-    );
+      );
+      subscription = authSubscription;
+    }
 
-    return () => subscription.unsubscribe();
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
+      // Check if we have valid Supabase environment variables
+      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+        throw new Error('Authentication not available. Please configure Supabase credentials.');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -204,6 +242,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
+      // Check if we have valid Supabase environment variables
+      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+        throw new Error('Registration not available. Please configure Supabase credentials.');
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -229,8 +272,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // Only attempt logout if we have valid Supabase configuration
+      if (import.meta.env.VITE_SUPABASE_URL && !import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+      }
       
       // Clear local storage
       localStorage.removeItem('arcade-learn-game-data');
@@ -246,6 +292,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
+      // Check if we have valid Supabase environment variables
+      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+        throw new Error('OAuth login not available. Please configure Supabase credentials.');
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
