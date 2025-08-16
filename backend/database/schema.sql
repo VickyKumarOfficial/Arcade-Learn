@@ -16,6 +16,22 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Set up Row Level Security (RLS) policies
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for profiles table
+CREATE POLICY "Users can create their own profile" ON public.profiles
+  FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can view their own profile" ON public.profiles
+  FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile" ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id);
+
 -- Create user_game_data table for gamification
 CREATE TABLE IF NOT EXISTS public.user_game_data (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
