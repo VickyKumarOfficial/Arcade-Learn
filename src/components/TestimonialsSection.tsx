@@ -75,7 +75,7 @@ const TestimonialsSection = () => {
     return (
       <Card className={`${
         featured
-          ? "shadow-2xl border-2 border-purple-500 dark:border-purple-400 ring-2 ring-purple-500/30 dark:ring-purple-400/30" 
+          ? "shadow-2xl border-2 border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/30 dark:ring-blue-400/30" 
           : "shadow-xl border border-gray-200 dark:border-gray-700"
       } bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm hover:transform hover:scale-102 group overflow-hidden h-full transition-all duration-300`}>
         <CardContent className="p-6 relative">
@@ -134,7 +134,7 @@ const TestimonialsSection = () => {
 
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+      <div className="container mx-auto px-4 sm:px-5 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 sm:mb-6">
