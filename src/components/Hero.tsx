@@ -2,11 +2,23 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, Trophy, Users } from "lucide-react";
 import { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Leaderboard } from "./Leaderboard";
+import { AuthGuard } from "./AuthGuard";
 
 const Hero = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const { state } = useGame();
+  const { isAuthenticated } = useAuth();
+
+  const handleLeaderboardClick = () => {
+    if (isAuthenticated) {
+      setShowLeaderboard(true);
+    } else {
+      setShowAuthPrompt(true);
+    }
+  };
   
   const scrollToRoadmaps = () => {
     document.getElementById('roadmaps')?.scrollIntoView({
@@ -38,7 +50,7 @@ const Hero = () => {
               variant="outline" 
               size="lg" 
               className="w-full sm:w-auto border-2 border-white/20 dark:border-white/30 hover:bg-white/10 dark:hover:bg-white/20 px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg font-semibold rounded-xl backdrop-blur-sm text-sky-300 dark:text-sky-200"
-              onClick={() => setShowLeaderboard(true)}
+              onClick={handleLeaderboardClick}
             >
               <Trophy className="w-5 h-5 mr-2" />
               Leaderboard
@@ -66,13 +78,40 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Leaderboard Modal */}
-      {showLeaderboard && (
+      {/* Leaderboard Modal - Only for authenticated users */}
+      {showLeaderboard && isAuthenticated && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <Leaderboard 
             userData={state.userData} 
             onClose={() => setShowLeaderboard(false)}
           />
+        </div>
+      )}
+
+      {/* Auth Prompt Modal - For unauthenticated users */}
+      {showAuthPrompt && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 p-1 rounded-xl max-w-lg w-full">
+            <AuthGuard 
+              title="Join the Competition!"
+              description="Sign in to see where you rank among other learners"
+              featuresList={[
+                "View global leaderboards", 
+                "Compare your progress",
+                "Track your rank improvements",
+                "See top performers"
+              ]}
+            />
+            <div className="p-4 pt-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAuthPrompt(false)}
+                className="w-full mt-4"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </section>;
