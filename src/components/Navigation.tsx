@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Sun, Moon, Menu, X, Trophy, Star } from "lucide-react";
+import { Sun, Moon, Menu, X, Trophy, Star, LogOut } from "lucide-react";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { LevelBadge, XPBadge, StreakBadge } from "./StyledBadges";
 
@@ -13,11 +14,12 @@ const Navigation = () => {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { state } = useGame();
+  const { isAuthenticated, user, logout } = useAuth();
   
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Roadmaps', path: '/roadmaps' },
-    { label: 'Dashboard', path: '/dashboard' },
+    ...(isAuthenticated ? [{ label: 'Dashboard', path: '/dashboard' }] : []),
     { label: 'Careers', path: '/careers' },
     { label: 'FAQs', path: '/faqs' }
   ];
@@ -61,14 +63,16 @@ const Navigation = () => {
           </div>
           
           <div className="flex items-center space-x-2 sm:space-x-4">
-            {/* User Stats - Desktop */}
-            <div className="hidden lg:flex items-center space-x-2 mr-2">
-              <LevelBadge level={state.userData.level} size="sm" />
-              <XPBadge xp={state.userData.totalXP} size="sm" />
-              {state.userData.currentStreak > 0 && (
-                <StreakBadge streak={state.userData.currentStreak} size="sm" />
-              )}
-            </div>
+            {/* User Stats - Desktop (only show if authenticated) */}
+            {isAuthenticated && (
+              <div className="hidden lg:flex items-center space-x-2 mr-2">
+                <LevelBadge level={state.userData.level} size="sm" />
+                <XPBadge xp={state.userData.totalXP} size="sm" />
+                {state.userData.currentStreak > 0 && (
+                  <StreakBadge streak={state.userData.currentStreak} size="sm" />
+                )}
+              </div>
+            )}
             {/* Dark Mode Toggle Switch */}
             <div 
               onClick={toggleDarkMode}
@@ -120,21 +124,40 @@ const Navigation = () => {
             </Button>
             
             {/* Desktop Buttons */}
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="hidden sm:inline-flex border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-              onClick={() => navigate('/signin')}
-            >
-              Log In
-            </Button>
-            <Button 
-              size="sm"
-              className="hidden sm:inline-flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              onClick={() => navigate('/signup')}
-            >
-              Sign up
-            </Button>
+            {isAuthenticated ? (
+              <div className="hidden sm:flex items-center space-x-2">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Welcome, {user?.firstName}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  onClick={logout}
+                >
+                  <LogOut className="w-4 h-4 mr-1" />
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  onClick={() => navigate('/signin')}
+                >
+                  Log In
+                </Button>
+                <Button 
+                  size="sm"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  onClick={() => navigate('/signup')}
+                >
+                  Sign up
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         
@@ -161,25 +184,54 @@ const Navigation = () => {
               
               {/* Mobile Buttons */}
               <div className="pt-4 space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  onClick={() => {
-                    navigate('/signin');
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  Log In
-                </Button>
-                <Button 
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  onClick={() => {
-                    navigate('/signup');
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  Sign up
-                </Button>
+                {isAuthenticated ? (
+                  <>
+                    {/* User stats for mobile */}
+                    <div className="flex items-center justify-center space-x-2 py-2">
+                      <LevelBadge level={state.userData.level} size="sm" />
+                      <XPBadge xp={state.userData.totalXP} size="sm" />
+                      {state.userData.currentStreak > 0 && (
+                        <StreakBadge streak={state.userData.currentStreak} size="sm" />
+                      )}
+                    </div>
+                    <div className="text-center text-sm text-gray-600 dark:text-gray-300 py-2">
+                      Welcome, {user?.firstName}!
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      onClick={() => {
+                        logout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      onClick={() => {
+                        navigate('/signin');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Log In
+                    </Button>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      onClick={() => {
+                        navigate('/signup');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign up
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

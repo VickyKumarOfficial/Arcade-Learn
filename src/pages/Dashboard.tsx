@@ -14,12 +14,15 @@ import {
   CheckCircle,
   Clock,
   Flame,
-  BarChart3
+  BarChart3,
+  Lock,
+  LogIn
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { UserStatsCard } from "@/components/UserStatsCard";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { useGame } from "@/contexts/GameContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { roadmaps } from "@/data/roadmaps";
 import { useNavigate } from "react-router-dom";
 import { getLevelProgress, getLevelTitle } from "@/lib/gamification";
@@ -39,7 +42,89 @@ import {
 const Dashboard = () => {
   const [showAllAchievements, setShowAllAchievements] = useState(false);
   const { state } = useGame();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
+        <Navigation />
+        <div className="pt-20 pb-12">
+          <div className="container mx-auto px-4 flex items-center justify-center min-h-[60vh]">
+            <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg p-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt for non-authenticated users
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
+        <Navigation />
+        <div className="pt-20 pb-12">
+          <div className="container mx-auto px-4 flex items-center justify-center min-h-[60vh]">
+            <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-xl max-w-md w-full">
+              <CardContent className="p-8 text-center">
+                <div className="mb-6">
+                  <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
+                    <Lock className="w-8 h-8 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    Dashboard Access Required
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    Please log in to view your learning dashboard, track your progress, and start your learning journey.
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  <Button 
+                    onClick={() => navigate('/signin')}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                    size="lg"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In to Continue
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => navigate('/signup')}
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                  >
+                    Create New Account
+                  </Button>
+                  
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                      New to ArcadeLearn?
+                    </p>
+                    <Button 
+                      onClick={() => navigate('/roadmaps')}
+                      variant="ghost"
+                      className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    >
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Browse Learning Roadmaps
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   const levelInfo = getLevelProgress(state.userData.totalXP);
   const levelTitle = getLevelTitle(state.userData.level);

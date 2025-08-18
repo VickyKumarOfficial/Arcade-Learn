@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SignInProps {
   initialMode?: "login" | "register";
@@ -9,6 +10,7 @@ interface SignInProps {
 const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   const [isRegister, setIsRegister] = useState(initialMode === "register");
   const navigate = useNavigate();
+  const { login, register, loginWithProvider, resendVerificationEmail } = useAuth();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -18,6 +20,8 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showResendButton, setShowResendButton] = useState(false);
+  const [resendEmailSuccess, setResendEmailSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -27,35 +31,67 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    
+    // Basic validation
+    if (isRegister && !form.firstName.trim()) {
+      setError("First name is required");
+      setLoading(false);
+      return;
+    }
+    
+    if (!form.email.trim() || !form.password.trim()) {
+      setError("Email and password are required");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-      const body = isRegister
-        ? form
-        : { email: form.email, password: form.password };
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      let data = null;
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        // If the response is not JSON, show a generic error
-        throw new Error("Server error. Please try again later.");
+      if (isRegister) {
+        await register({
+          email: form.email,
+          password: form.password,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          phone: form.phone,
+        });
+        // Show success message before redirect
+        console.log("Registration successful! Redirecting...");
+      } else {
+        await login(form.email, form.password);
       }
-      if (!res.ok) throw new Error(data?.error || "Unknown error");
-      // TODO: handle login success (store token, redirect, etc)
+      // Redirect to dashboard on successful login/register
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message);
+      console.error('Auth error:', err);
+      
+      // Handle specific error cases
+      if (err.message?.toLowerCase().includes('email not confirmed')) {
+        setError(
+          "Please check your email and click the confirmation link before signing in. " +
+          "If you haven't received the email, check your spam folder or click 'Resend confirmation email' below."
+        );
+        setShowResendButton(true);
+      } else if (err.message?.toLowerCase().includes('invalid credentials')) {
+        setError("Invalid email or password. Please try again.");
+      } else {
+        setError(err.message || "Authentication failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOAuth = (provider: "google" | "github") => {
-    // TODO: Implement OAuth popup/redirect
-    alert(`OAuth with ${provider} not implemented yet.`);
+  const handleOAuth = async (provider: "google" | "github") => {
+    try {
+      setLoading(true);
+      setError("");
+      await loginWithProvider(provider);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || `Failed to sign in with ${provider}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -131,6 +167,24 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
               ? "Sign Up"
               : "Sign In"}
           </Button>
+          {showResendButton && !resendEmailSuccess && (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-2 w-full"
+              onClick={async () => {
+                try {
+                  await resendVerificationEmail(form.email);
+                  setResendEmailSuccess(true);
+                  setError("Verification email has been resent. Please check your inbox.");
+                } catch (err: any) {
+                  setError(err.message || "Failed to resend verification email");
+                }
+              }}
+            >
+              Resend confirmation email
+            </Button>
+          )}
         </form>
         <div className="my-4 flex items-center gap-2">
           <div className="flex-1 h-px bg-gray-300" />

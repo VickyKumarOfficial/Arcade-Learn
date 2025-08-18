@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { UserGameData, Achievement, RoadmapComponent, Roadmap } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   initializeUserGameData, 
   calculateComponentXP, 
@@ -7,6 +8,7 @@ import {
   checkAchievements,
   calculateLevel
 } from '@/lib/gamification';
+import { userProgressService } from '@/services/userProgressService';
 
 interface GameState {
   userData: UserGameData;
@@ -186,6 +188,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
 };
 
 export const GameProvider = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, user } = useAuth();
   const [state, dispatch] = useReducer(gameReducer, {
     userData: initializeUserGameData(),
     newlyUnlockedAchievements: [],
@@ -194,8 +197,14 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     levelUp: false
   });
 
-  // Load user data from localStorage on mount
+  // Load user data from localStorage on mount (only if authenticated)
   useEffect(() => {
+    if (!isAuthenticated) {
+      // Reset to default data when not authenticated
+      dispatch({ type: 'RESET_GAME_DATA' });
+      return;
+    }
+
     const savedData = localStorage.getItem('arcade-learn-game-data');
     if (savedData) {
       try {
@@ -211,12 +220,14 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Failed to load game data:', error);
       }
     }
-  }, []);
+  }, [isAuthenticated]);
 
-  // Save user data to localStorage whenever it changes
+  // Save user data to localStorage whenever it changes (only if authenticated)
   useEffect(() => {
-    localStorage.setItem('arcade-learn-game-data', JSON.stringify(state.userData));
-  }, [state.userData]);
+    if (isAuthenticated) {
+      localStorage.setItem('arcade-learn-game-data', JSON.stringify(state.userData));
+    }
+  }, [state.userData, isAuthenticated]);
 
   return (
     <GameContext.Provider value={{ state, dispatch }}>
