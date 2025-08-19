@@ -143,7 +143,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
               type="email"
               name="email"
               required
-              className="input"
+              className="input text-black"
               value={form.email}
               onChange={handleChange}
             />
@@ -154,7 +154,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
               type="password"
               name="password"
               required
-              className="input"
+              className="input text-black"
               value={form.password}
               onChange={handleChange}
             />
