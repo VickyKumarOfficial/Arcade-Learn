@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +10,27 @@ import { AuthGuard } from '@/components/AuthGuard';
 import Navigation from '@/components/Navigation';
 
 const Profile = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     phone: user?.phone || '',
     email: user?.email || '',
   });
+
+  // Update form data when user changes (to keep it in sync)
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
+        email: user.email || '',
+      });
+    }
+  }, [user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,10 +40,41 @@ const Profile = () => {
     }));
   };
 
-  const handleSave = () => {
-    // TODO: Implement profile update logic
-    console.log('Saving profile:', formData);
-    setIsEditing(false);
+  const handleSave = async () => {
+    // Basic validation
+    if (!formData.firstName.trim()) {
+      alert('First name is required');
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      alert('Email is required');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      console.log('Starting profile update with data:', formData);
+      
+      await updateProfile({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+      });
+      
+      console.log('Profile update completed successfully');
+      setIsEditing(false);
+      
+      // You could add a success toast notification here
+      alert('Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      // Show the actual error message for debugging
+      alert('Failed to update profile: ' + (error.message || 'Unknown error occurred'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getInitials = (firstName: string, lastName?: string) => {
@@ -166,8 +210,12 @@ const Profile = () => {
             <div className="flex gap-3 pt-4">
               {isEditing ? (
                 <>
-                  <Button onClick={handleSave} className="flex-1">
-                    Save Changes
+                  <Button 
+                    onClick={handleSave} 
+                    className="flex-1"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -181,6 +229,7 @@ const Profile = () => {
                       });
                     }}
                     className="flex-1"
+                    disabled={isSaving}
                   >
                     Cancel
                   </Button>
