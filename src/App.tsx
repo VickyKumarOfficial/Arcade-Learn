@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Roadmaps from "./pages/Roadmaps";
 import RoadmapDetail from "./pages/RoadmapDetail";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
 import SignIn from "@/pages/SignIn";
@@ -31,6 +32,7 @@ const App = () => (
                 <Route path="/roadmaps" element={<Roadmaps />} />
                 <Route path="/roadmap/:id" element={<RoadmapDetail />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/faqs" element={<FAQs />} />
                 <Route path="/signin" element={<SignIn />} />
