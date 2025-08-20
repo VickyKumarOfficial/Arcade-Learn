@@ -64,16 +64,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
       }
 
-      // Get user profile from our profiles table
-      const { data: profile, error } = await supabase
+      // Add timeout protection for profile operations
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timed out')), 10000)
+      );
+
+      // Get user profile from our profiles table with timeout
+      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
+
       if (error && error.code !== 'PGRST116') { // PGRST116 = not found
         console.error('Error fetching user profile:', error);
-        return null;
+        // Return basic user info if profile fetch fails
+        return {
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          firstName: supabaseUser.user_metadata?.first_name || supabaseUser.email?.split('@')[0] || 'User',
+          lastName: supabaseUser.user_metadata?.last_name || null,
+          phone: supabaseUser.user_metadata?.phone || null,
+          avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
+        };
       }
 
       // If profile doesn't exist, create one
@@ -188,21 +203,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         async (event, session) => {
           console.log('Auth state changed:', event, session?.user?.email);
           
-          if (session?.user) {
-            const user = await convertSupabaseUser(session.user);
-            setAuthState({
-              user,
+          try {
+            if (session?.user) {
+              const user = await convertSupabaseUser(session.user);
+              if (user) {
+                setAuthState({
+                  user,
+                  isLoading: false,
+                  isAuthenticated: true,
+                  session,
+                });
+              } else {
+                // Fallback if user conversion fails
+                setAuthState({
+                  user: null,
+                  isLoading: false,
+                  isAuthenticated: false,
+                  session: null,
+                });
+              }
+            } else {
+              setAuthState({
+                user: null,
+                isLoading: false,
+                isAuthenticated: false,
+                session: null,
+              });
+            }
+          } catch (error) {
+            console.error('Error in auth state change handler:', error);
+            // Always ensure loading is false even if there's an error
+            setAuthState(prev => ({
+              ...prev,
               isLoading: false,
-              isAuthenticated: !!user,
-              session,
-            });
-          } else {
-            setAuthState({
-              user: null,
-              isLoading: false,
-              isAuthenticated: false,
-              session: null,
-            });
+            }));
           }
         }
       );
@@ -225,13 +259,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('Authentication not available. Please configure Supabase credentials.');
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Add timeout protection for login
+      const loginPromise = supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Login request timed out after 30 seconds')), 30000)
+      );
+
+      const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any;
+
       if (error) throw error;
 
+      // Reset loading state immediately after successful authentication
+      setAuthState(prev => ({ ...prev, isLoading: false }));
+      
       // User state will be updated automatically by the auth state change listener
       
     } catch (error: any) {
