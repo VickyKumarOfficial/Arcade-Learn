@@ -22,7 +22,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
     }
   )
 } else {
-  supabase = createClient(supabaseUrl, supabaseAnonKey)
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: 'arcade-learn-auth',
+      storage: window.localStorage
+    }
+  })
 }
 
 export { supabase }

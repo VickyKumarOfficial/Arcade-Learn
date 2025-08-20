@@ -45,6 +45,12 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
       return;
     }
 
+    // Add timeout protection for the entire authentication process
+    const authTimeout = setTimeout(() => {
+      setLoading(false);
+      setError("Authentication is taking too long. Please try again.");
+    }, 60000); // 60 seconds timeout
+
     try {
       if (isRegister) {
         await register({
@@ -58,10 +64,17 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
         console.log("Registration successful! Redirecting...");
       } else {
         await login(form.email, form.password);
+        console.log("Login successful! Redirecting...");
       }
+      
+      // Clear timeout since auth was successful
+      clearTimeout(authTimeout);
+      
       // Redirect to dashboard on successful login/register
       navigate('/dashboard');
     } catch (err: any) {
+      // Clear timeout since we got a response (even if error)
+      clearTimeout(authTimeout);
       console.error('Auth error:', err);
       
       // Handle specific error cases
@@ -73,6 +86,8 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
         setShowResendButton(true);
       } else if (err.message?.toLowerCase().includes('invalid credentials')) {
         setError("Invalid email or password. Please try again.");
+      } else if (err.message?.toLowerCase().includes('timeout')) {
+        setError("Request timed out. Please check your internet connection and try again.");
       } else {
         setError(err.message || "Authentication failed. Please try again.");
       }
@@ -82,12 +97,26 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   };
 
   const handleOAuth = async (provider: "google" | "github") => {
+    setLoading(true);
+    setError("");
+    
+    // Add timeout protection for OAuth
+    const oauthTimeout = setTimeout(() => {
+      setLoading(false);
+      setError(`${provider} authentication is taking too long. Please try again.`);
+    }, 60000); // 60 seconds timeout
+    
     try {
-      setLoading(true);
-      setError("");
       await loginWithProvider(provider);
+      
+      // Clear timeout since auth was successful
+      clearTimeout(oauthTimeout);
+      
       navigate('/dashboard');
     } catch (err: any) {
+      // Clear timeout since we got a response (even if error)
+      clearTimeout(oauthTimeout);
+      console.error(`${provider} auth error:`, err);
       setError(err.message || `Failed to sign in with ${provider}`);
     } finally {
       setLoading(false);
