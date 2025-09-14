@@ -9,7 +9,7 @@ import { analyticsService } from './services/analyticsService.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8081;
 
 // Test database connection on startup
 import { testConnection } from './lib/db.js';
@@ -20,7 +20,7 @@ testConnection().catch(err => {
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
   credentials: true
 }));
 app.use(express.json());
