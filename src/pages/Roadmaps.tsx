@@ -141,12 +141,6 @@ const Roadmaps = () => {
               {completedCount > 0 ? 'Continue Learning' : 'Start Roadmap'}
             </div>
           </div>
-          
-          <Button 
-            className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 sm:py-2.5 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg mt-3 sm:mt-4 text-sm sm:text-base`}
-          >
-            {roadmap.completedComponents > 0 ? 'Continue Learning' : 'Start Roadmap'}
-          </Button>
         </CardContent>
       </Card>
     );
