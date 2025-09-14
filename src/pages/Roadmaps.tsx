@@ -136,10 +136,11 @@ const Roadmaps = () => {
                 <Progress value={progressPercentage} className="h-2" />
               </div>
             )}
-            
-            <div className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-center`}>
-              {completedCount > 0 ? 'Continue Learning' : 'Start Roadmap'}
-            </div>
+          </div>
+          
+          {/* Button moved outside flex-1 container for consistent alignment */}
+          <div className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-center mt-4`}>
+            {completedCount > 0 ? 'Continue Learning' : 'Start Roadmap'}
           </div>
         </CardContent>
       </Card>
