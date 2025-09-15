@@ -4,6 +4,7 @@ import RoadmapsSection from "@/components/RoadmapsSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import FAQSection from "@/components/FAQSection";
+import Footer from "@/components/Footer";
 import BackToTopButton from "@/components/BackToTopButton";
 import SignIn from "./SignIn";
 
@@ -16,6 +17,7 @@ const Index = () => {
       <HowItWorksSection />
       <TestimonialsSection />
       <FAQSection />
+      <Footer />
       <BackToTopButton />
     </div>
   );
