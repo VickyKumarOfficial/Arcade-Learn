@@ -12,13 +12,31 @@ import Navigation from "@/components/Navigation";
 import { AchievementPopup } from "@/components/AchievementPopup";
 import { XPDisplay, ComponentXPBadge } from "@/components/XPDisplay";
 import { useGame } from "@/contexts/GameContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthGuard } from "@/components/AuthGuard";
+import { X } from "lucide-react";
 
 const RoadmapDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [expandedComponent, setExpandedComponent] = useState<string | null>(null);
   const { state, dispatch } = useGame();
+
+  // Redirect non-authenticated users to AuthGuard
+  if (!user) {
+    return <AuthGuard 
+      title="Continue Your Learning Journey"
+      description="Sign in to access roadmaps and track your progress"
+      featuresList={[
+        "Access detailed learning roadmaps",
+        "Track completion progress", 
+        "Earn XP and achievements",
+        "Save learning progress"
+      ]}
+    />;
+  }
 
   useEffect(() => {
     const foundRoadmap = roadmaps.find(r => r.id === id);
@@ -288,6 +306,7 @@ const RoadmapDetail = () => {
         </div>
       </div>
     </div>
+    
   );
 };
 
