@@ -3,7 +3,6 @@
   "outputDirectory": "dist",
   "installCommand": "npm ci --include=optional",
   "framework": "vite",
-  "nodeVersion": "22.x",
   "routes": [
     {
       "src": "/(.*)",
