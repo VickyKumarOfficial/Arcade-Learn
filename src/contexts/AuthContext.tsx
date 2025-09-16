@@ -28,6 +28,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   loginWithProvider: (provider: 'google' | 'github') => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
+  updateProfile: (userData: Partial<Omit<User, 'id'>>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -63,16 +64,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
       }
 
-      // Get user profile from our profiles table
-      const { data: profile, error } = await supabase
+      // Add timeout protection for profile operations
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timed out')), 10000)
+      );
+
+      // Get user profile from our profiles table with timeout
+      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
+
       if (error && error.code !== 'PGRST116') { // PGRST116 = not found
         console.error('Error fetching user profile:', error);
-        return null;
+        // Return basic user info if profile fetch fails
+        return {
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          firstName: supabaseUser.user_metadata?.first_name || supabaseUser.email?.split('@')[0] || 'User',
+          lastName: supabaseUser.user_metadata?.last_name || null,
+          phone: supabaseUser.user_metadata?.phone || null,
+          avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
+        };
       }
 
       // If profile doesn't exist, create one
@@ -187,21 +203,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         async (event, session) => {
           console.log('Auth state changed:', event, session?.user?.email);
           
-          if (session?.user) {
-            const user = await convertSupabaseUser(session.user);
-            setAuthState({
-              user,
+          try {
+            if (session?.user) {
+              const user = await convertSupabaseUser(session.user);
+              if (user) {
+                setAuthState({
+                  user,
+                  isLoading: false,
+                  isAuthenticated: true,
+                  session,
+                });
+              } else {
+                // Fallback if user conversion fails
+                setAuthState({
+                  user: null,
+                  isLoading: false,
+                  isAuthenticated: false,
+                  session: null,
+                });
+              }
+            } else {
+              setAuthState({
+                user: null,
+                isLoading: false,
+                isAuthenticated: false,
+                session: null,
+              });
+            }
+          } catch (error) {
+            console.error('Error in auth state change handler:', error);
+            // Always ensure loading is false even if there's an error
+            setAuthState(prev => ({
+              ...prev,
               isLoading: false,
-              isAuthenticated: !!user,
-              session,
-            });
-          } else {
-            setAuthState({
-              user: null,
-              isLoading: false,
-              isAuthenticated: false,
-              session: null,
-            });
+            }));
           }
         }
       );
@@ -224,13 +259,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('Authentication not available. Please configure Supabase credentials.');
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Add timeout protection for login
+      const loginPromise = supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Login request timed out after 30 seconds')), 30000)
+      );
+
+      const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any;
+
       if (error) throw error;
 
+      // Reset loading state immediately after successful authentication
+      setAuthState(prev => ({ ...prev, isLoading: false }));
+      
       // User state will be updated automatically by the auth state change listener
       
     } catch (error: any) {
@@ -387,6 +432,96 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateProfile = async (userData: Partial<Omit<User, 'id'>>) => {
+    if (!authState.user) {
+      throw new Error('No user logged in');
+    }
+
+    console.log('🔍 Starting profile update process...');
+    console.log('Current user:', authState.user);
+    console.log('Session exists:', !!authState.session);
+
+    try {
+      // Check if we have valid Supabase environment variables
+      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+        throw new Error('Profile update not available. Please configure Supabase credentials.');
+      }
+
+      console.log('✅ Supabase configuration verified');
+      console.log('🔄 Updating profile for user:', authState.user.id, userData);
+
+      // First, let's test if we can read the current profile
+      console.log('📖 Testing read access to profiles table...');
+      const { data: currentProfile, error: readError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authState.user.id)
+        .single();
+
+      if (readError) {
+        console.error('❌ Failed to read current profile:', readError);
+        throw new Error(`Cannot read profile: ${readError.message}`);
+      }
+
+      console.log('✅ Current profile read successfully:', currentProfile);
+
+      // Prepare update data, only include non-undefined values
+      const updateData: any = {};
+      if (userData.firstName !== undefined) updateData.first_name = userData.firstName;
+      if (userData.lastName !== undefined) updateData.last_name = userData.lastName;
+      if (userData.phone !== undefined) updateData.phone = userData.phone;
+      if (userData.avatarUrl !== undefined) updateData.avatar_url = userData.avatarUrl;
+      if (userData.email !== undefined) updateData.email = userData.email;
+
+      console.log('📝 Update data being sent:', updateData);
+
+      // Add timeout to prevent hanging
+      const updatePromise = supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', authState.user.id)
+        .select()
+        .single();
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Update request timed out after 15 seconds')), 15000)
+      );
+
+      console.log('⏳ Sending update request...');
+
+      // Race between update and timeout
+      const { data, error } = await Promise.race([updatePromise, timeoutPromise]) as any;
+
+      if (error) {
+        console.error('❌ Profile update error:', error);
+        throw new Error(`Database update failed: ${error.message}`);
+      }
+
+      console.log('✅ Profile updated successfully:', data);
+
+      // Update the local state immediately with the response data
+      const updatedUser: User = {
+        id: authState.user.id,
+        email: data.email || authState.user.email,
+        firstName: data.first_name || authState.user.firstName,
+        lastName: data.last_name || authState.user.lastName,
+        phone: data.phone || authState.user.phone,
+        avatarUrl: data.avatar_url || authState.user.avatarUrl,
+      };
+
+      setAuthState(prev => ({
+        ...prev,
+        user: updatedUser,
+      }));
+
+      console.log('✅ Local state updated with:', updatedUser);
+
+    } catch (error: any) {
+      console.error('❌ Profile update failed:', error);
+      throw new Error(error.message || 'Profile update failed');
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -399,6 +534,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
         loginWithProvider,
         resendVerificationEmail,
+        updateProfile,
       }}
     >
       {children}
