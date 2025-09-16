@@ -54,7 +54,7 @@ const FAQs = () => {
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-normal md:leading-normal"> Questions</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Find answers to all your questions about SkillPath, our learning roadmaps, and how to make the most of your educational journey.
+              Find answers to all your questions about ArcadeLearn, our learning roadmaps, and how to make the most of your educational journey.
             </p>
           </div>
 
