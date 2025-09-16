@@ -107,7 +107,7 @@ const Footer = () => {
                 <li key={index}>
                   <button
                     onClick={() => navigate(link.path)}
-                    className="text-gray-300 hover:text-white transition-colors duration-200 text-left hover:translate-x-1 transform transition-transform"
+                    className="text-gray-300 hover:text-white text-left hover:translate-x-1 transform transition-all duration-200"
                   >
                     {link.label}
                   </button>
@@ -127,7 +127,7 @@ const Footer = () => {
                 <li key={index}>
                   <button
                     onClick={() => navigate(link.path)}
-                    className="text-gray-300 hover:text-white transition-colors duration-200 text-left hover:translate-x-1 transform transition-transform"
+                    className="text-gray-300 hover:text-white text-left hover:translate-x-1 transform transition-all duration-200"
                   >
                     {link.label}
                   </button>
@@ -147,7 +147,7 @@ const Footer = () => {
                 <li key={index}>
                   <button
                     onClick={() => navigate(link.path)}
-                    className="text-gray-300 hover:text-white transition-colors duration-200 text-left hover:translate-x-1 transform transition-transform"
+                    className="text-gray-300 hover:text-white text-left hover:translate-x-1 transform transition-all duration-200"
                   >
                     {link.label}
                   </button>
