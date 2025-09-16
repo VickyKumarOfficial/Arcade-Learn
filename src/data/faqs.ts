@@ -3,8 +3,8 @@ import { FAQ } from "@/types";
 export const faqs: FAQ[] = [
   {
     id: "getting-started",
-    question: "How do I get started with SkillPath?",
-    answer: "Getting started with SkillPath is easy! Simply create an account, browse our curated learning roadmaps, and select the path that aligns with your career goals. Each roadmap includes step-by-step guidance, resources, and practical projects to help you build real-world skills.",
+    question: "How do I get started with ArcadeLearn?",
+    answer: "Getting started with ArcadeLearn is easy! Simply create an account, browse our curated learning roadmaps, and select the path that aligns with your career goals. Each roadmap includes step-by-step guidance, resources, and practical projects to help you build real-world skills.",
     category: "Getting Started"
   },
   {
@@ -16,7 +16,7 @@ export const faqs: FAQ[] = [
   {
     id: "progress-tracking",
     question: "How can I track my learning progress?",
-    answer: "SkillPath provides detailed progress tracking features including completion percentages, milestone achievements, skill assessments, and portfolio building tools. You can monitor your advancement through each roadmap stage and see how far you've come in your learning journey.",
+    answer: "ArcadeLearn provides detailed progress tracking features including completion percentages, milestone achievements, skill assessments, and portfolio building tools. You can monitor your advancement through each roadmap stage and see how far you've come in your learning journey.",
     category: "Progress"
   },
   {
@@ -28,7 +28,7 @@ export const faqs: FAQ[] = [
   {
     id: "pricing",
     question: "What are your pricing plans?",
-    answer: "SkillPath offers flexible pricing options including a free tier with access to basic roadmaps, a premium plan with advanced features and personalized mentoring, and enterprise solutions for teams. We believe in making quality education accessible, so we offer student discounts and financial aid options.",
+    answer: "ArcadeLearn offers flexible pricing options including a free tier with access to basic roadmaps, a premium plan with advanced features and personalized mentoring, and enterprise solutions for teams. We believe in making quality education accessible, so we offer student discounts and financial aid options.",
     category: "Pricing"
   },
   {
@@ -52,13 +52,13 @@ export const faqs: FAQ[] = [
   {
     id: "community-support",
     question: "Is there a community where I can connect with other learners?",
-    answer: "SkillPath has a vibrant community of learners, mentors, and industry professionals. You can join study groups, participate in coding challenges, attend virtual meetups, and get help from peers and experts. Our community forums are organized by skill areas and career paths for targeted discussions.",
+    answer: "ArcadeLearn has a vibrant community of learners, mentors, and industry professionals. You can join study groups, participate in coding challenges, attend virtual meetups, and get help from peers and experts. Our community forums are organized by skill areas and career paths for targeted discussions.",
     category: "Community"
   },
   {
     id: "mobile-access",
-    question: "Can I access SkillPath on my mobile device?",
-    answer: "Yes! SkillPath is fully responsive and works seamlessly on all devices including smartphones, tablets, and desktops. You can download our mobile app for offline learning, so you can continue your education anywhere, anytime, even without an internet connection.",
+    question: "Can I access ArcadeLearn on my mobile device?",
+    answer: "Yes! ArcadeLearn is fully responsive and works seamlessly on all devices including smartphones, tablets, and desktops. You can download our mobile app for offline learning, so you can continue your education anywhere, anytime, even without an internet connection.",
     category: "Technical"
   }
 ];

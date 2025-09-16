@@ -282,7 +282,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Thanks to all contributors and beta testers
 - Special thanks to our mentors and industry experts
 - Supabase for backend infrastructure and authentication
-- Lovable platform for seamless deployment
 - Open source community for amazing tools and libraries
 
 ---
