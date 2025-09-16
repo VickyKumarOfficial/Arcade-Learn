@@ -18,10 +18,16 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-// Regular client for user operations (when needed)
+// Regular client for user operations (when needed) - with session persistence
 export const supabase = createClient(
   supabaseUrl, 
-  process.env.SUPABASE_ANON_KEY || supabaseServiceKey
+  process.env.SUPABASE_ANON_KEY || supabaseServiceKey,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true
+    }
+  }
 );
 
 export default supabaseAdmin;

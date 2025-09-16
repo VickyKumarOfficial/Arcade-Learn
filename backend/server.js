@@ -5,6 +5,7 @@ import { userProgressService } from './services/userProgressService.js';
 import { subscriptionService } from './services/subscriptionService.js';
 import { certificateService } from './services/certificateService.js';
 import { analyticsService } from './services/analyticsService.js';
+import { surveyService } from './services/surveyService.js';
 
 dotenv.config();
 
@@ -182,6 +183,53 @@ app.get('/api/certificate/verify/:verificationCode', async (req, res) => {
       res.json(result.data);
     } else {
       res.status(404).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Survey Routes
+app.get('/api/user/:userId/survey', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await surveyService.getUserSurvey(userId);
+    
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/user/:userId/survey', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const surveyData = req.body;
+    const result = await surveyService.saveSurvey(userId, surveyData);
+    
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/user/:userId/survey/status', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await surveyService.isSurveyCompleted(userId);
+    
+    if (result.success) {
+      res.json({ completed: result.completed });
+    } else {
+      res.status(400).json({ error: result.error });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
