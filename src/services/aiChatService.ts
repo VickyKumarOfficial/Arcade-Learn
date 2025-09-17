@@ -249,6 +249,26 @@ class AIChatService {
     }
   }
 
+  // Delete a specific message
+  async deleteMessage(messageId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('ai_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) {
+        console.error('Error deleting message:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteMessage:', error);
+      return false;
+    }
+  }
+
   // Delete a chat and all its messages
   async deleteChat(chatId: string): Promise<boolean> {
     try {
