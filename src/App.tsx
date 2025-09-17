@@ -8,6 +8,7 @@ import { GameProvider } from "@/contexts/GameContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SurveyProvider } from "@/contexts/SurveyContext";
 import { SurveyModal } from "@/components/SurveyModal";
+import DevelopmentBanner from "@/components/DevelopmentBanner";
 import Index from "./pages/Index";
 import Roadmaps from "./pages/Roadmaps";
 import RoadmapDetail from "./pages/RoadmapDetail";
@@ -27,9 +28,10 @@ const App = () => (
         <SurveyProvider>
           <GameProvider>
             <TooltipProvider>
+              <DevelopmentBanner />
               <Toaster />
               <Sonner />
-              <BrowserRouter>
+            <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/roadmaps" element={<Roadmaps />} />
