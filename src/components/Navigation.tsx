@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Sun, Moon, Menu, X, Trophy, Star, LogOut, User, Settings } from "lucide-react";
+import { Sun, Moon, Menu, X, Trophy, Star, LogOut, User, Settings, ChevronDown, Sparkles, Brain, Bot } from "lucide-react";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
@@ -26,8 +26,22 @@ const Navigation = () => {
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Roadmaps', path: '/roadmaps' },
-    { label: 'Careers', path: '/careers' },
-    { label: 'FAQs', path: '/faqs' }
+    { label: 'Careers', path: '/careers' }
+  ];
+
+  const aiMenuItems = [
+    { 
+      label: 'Doubt Solving with AI', 
+      path: '/ai/doubt-solving',
+      icon: Brain,
+      description: 'Get instant help with your coding questions'
+    },
+    { 
+      label: 'Roadmap Generation', 
+      path: '/ai/roadmap-generation',
+      icon: Bot,
+      description: 'Create personalized learning roadmaps'
+    }
   ];
 
   const getInitials = (firstName: string, lastName?: string) => {
@@ -70,6 +84,52 @@ const Navigation = () => {
                 {item.label}
               </button>
             ))}
+            
+            {/* AI Dropdown Menu */}
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center space-x-1 text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
+                    location.pathname.startsWith('/ai')
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 pb-1'
+                      : 'text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span>AI</span>
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl" 
+                align="center" 
+                side="bottom" 
+                sideOffset={8}
+                avoidCollisions={true}
+              >
+                {aiMenuItems.map((item) => (
+                  <DropdownMenuItem 
+                    key={item.path}
+                    onClick={() => navigate(item.path)} 
+                    className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-700 focus:bg-gray-50 dark:focus:bg-gray-700"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {item.label}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {item.description}
+                        </div>
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           <div className="flex items-center space-x-2 sm:space-x-4">
@@ -214,6 +274,40 @@ const Navigation = () => {
                   {item.label}
                 </button>
               ))}
+              
+              {/* AI Menu Items for Mobile */}
+              <div className="space-y-1 pt-2">
+                <div className="px-3 py-2">
+                  <div className="flex items-center space-x-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span>AI Features</span>
+                  </div>
+                </div>
+                {aiMenuItems.map((item) => (
+                  <button
+                    key={item.path}
+                    onClick={() => {
+                      navigate(item.path);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`block w-full text-left px-6 py-3 rounded-md transition-colors ${
+                      location.pathname === item.path
+                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                        : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-sm font-medium">{item.label}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {item.description}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
               
               {/* Add Dashboard and Profile for authenticated users in mobile */}
               {isAuthenticated && (
