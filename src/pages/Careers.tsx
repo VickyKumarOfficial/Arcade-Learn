@@ -38,7 +38,7 @@ const Careers = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900 overflow-x-hidden">
       <Navigation />
       
-      <div className="pt-16 sm:pt-20 pb-8 sm:pb-12 relative">
+      <div className="pt-24 sm:pt-28 pb-8 sm:pb-12 relative">
         {/* Main Content - Blurred for non-authenticated users */}
         <div className={`container mx-auto px-2 sm:px-4 max-w-7xl ${!user ? 'blur-sm pointer-events-none' : ''}`}>
           {/* Header Section */}

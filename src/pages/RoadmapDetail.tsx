@@ -133,7 +133,7 @@ const RoadmapDetail = () => {
         newLevel={state.newLevel}
       />
       
-      <div className="pt-20 pb-12">
+      <div className="pt-28 pb-12">
         <div className="container mx-auto px-4">
           <Button 
             variant="ghost" 

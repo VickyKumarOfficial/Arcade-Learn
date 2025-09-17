@@ -50,7 +50,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
         <Navigation />
-        <div className="pt-20 pb-12">
+        <div className="pt-28 pb-12">
           <div className="container mx-auto px-4 flex items-center justify-center min-h-[60vh]">
             <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg p-8">
               <div className="text-center">
@@ -69,7 +69,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
         <Navigation />
-        <div className="pt-20 pb-12">
+        <div className="pt-28 pb-12">
           <div className="container mx-auto px-4 flex items-center justify-center min-h-[60vh]">
             <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-xl max-w-md w-full">
               <CardContent className="p-8 text-center">
@@ -164,7 +164,7 @@ const Dashboard = () => {
         </div>
       )}
       
-      <div className="pt-20 pb-12">
+      <div className="pt-28 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="mb-8">
