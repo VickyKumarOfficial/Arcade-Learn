@@ -1,5 +1,38 @@
 import { supabase } from '../lib/supabase.js';
 
+/**
+ * Helper function to parse comma-separated values back to arrays
+ * @param {string} value - Comma-separated string
+ * @returns {string[]} Array of values
+ */
+const parseMultiSelectValue = (value) => {
+  if (!value) return [];
+  if (typeof value === 'string' && value.includes(',')) {
+    return value.split(',').map(item => item.trim());
+  }
+  return typeof value === 'string' ? [value] : value;
+};
+
+/**
+ * Helper function to format survey data for response
+ * @param {Object} rawData - Raw data from database
+ * @returns {Object} Formatted survey data
+ */
+const formatSurveyData = (rawData) => {
+  if (!rawData) return null;
+  
+  return {
+    ...rawData,
+    user_type: parseMultiSelectValue(rawData.user_type),
+    skill_level: parseMultiSelectValue(rawData.skill_level),
+    tech_interest: parseMultiSelectValue(rawData.tech_interest),
+    goal: parseMultiSelectValue(rawData.goal),
+    time_commitment: parseMultiSelectValue(rawData.time_commitment),
+    learning_style: parseMultiSelectValue(rawData.learning_style),
+    wants_recommendations: parseMultiSelectValue(rawData.wants_recommendations),
+  };
+};
+
 export const surveyService = {
   /**
    * Get survey data for a user
@@ -21,7 +54,7 @@ export const surveyService = {
 
       return { 
         success: true, 
-        data: data || null 
+        data: formatSurveyData(data)
       };
     } catch (error) {
       console.error('Error in getUserSurvey:', error);
@@ -39,13 +72,13 @@ export const surveyService = {
     try {
       const surveyRecord = {
         user_id: userId,
-        user_type: surveyData.userType,
-        skill_level: surveyData.skillLevel,
-        tech_interest: surveyData.techInterest,
-        goal: surveyData.goal,
-        time_commitment: surveyData.timeCommitment,
-        learning_style: surveyData.learningStyle,
-        wants_recommendations: surveyData.wantsRecommendations,
+        user_type: Array.isArray(surveyData.userType) ? surveyData.userType.join(',') : surveyData.userType,
+        skill_level: Array.isArray(surveyData.skillLevel) ? surveyData.skillLevel.join(',') : surveyData.skillLevel,
+        tech_interest: Array.isArray(surveyData.techInterest) ? surveyData.techInterest.join(',') : surveyData.techInterest,
+        goal: Array.isArray(surveyData.goal) ? surveyData.goal.join(',') : surveyData.goal,
+        time_commitment: Array.isArray(surveyData.timeCommitment) ? surveyData.timeCommitment.join(',') : surveyData.timeCommitment,
+        learning_style: Array.isArray(surveyData.learningStyle) ? surveyData.learningStyle.join(',') : surveyData.learningStyle,
+        wants_recommendations: Array.isArray(surveyData.wantsRecommendations) ? surveyData.wantsRecommendations.join(',') : surveyData.wantsRecommendations,
         completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
