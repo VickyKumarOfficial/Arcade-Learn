@@ -31,13 +31,13 @@ const Navigation = () => {
 
   const aiMenuItems = [
     { 
-      label: 'Doubt Solving with AI', 
-      path: '/ai/doubt-solving',
+      label: 'Doubt Solving with AI ✨', 
+      path: '/ai/chat',
       icon: Brain,
       description: 'Get instant help with your coding questions'
     },
     { 
-      label: 'Roadmap Generation', 
+      label: 'Roadmap Generation ✨', 
       path: '/ai/roadmap-generation',
       icon: Bot,
       description: 'Create personalized learning roadmaps'
