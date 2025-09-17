@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import FormattedText from '@/components/FormattedText';
 import { 
   Menu, 
   X, 
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { aiChatService, type AIChat, type AIChatMessage } from '@/services/aiChatService';
+import { aiService } from '@/services/aiService';
 
 interface ChatMessage {
   id: string;
@@ -44,9 +46,27 @@ const AIChatPage = () => {
   const [currentChat, setCurrentChat] = useState<AIChat | null>(null);
   const [chatHistory, setChatHistory] = useState<(AIChat & { lastMessage?: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiConnected, setAiConnected] = useState<boolean | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Test AI connection on mount
+  useEffect(() => {
+    const testAIConnection = async () => {
+      try {
+        const isConnected = await aiService.testConnection();
+        setAiConnected(isConnected);
+      } catch (error) {
+        console.error('Failed to test AI connection:', error);
+        setAiConnected(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      testAIConnection();
+    }
+  }, [isAuthenticated]);
 
   // Load user chats on component mount
   useEffect(() => {
@@ -150,11 +170,24 @@ const AIChatPage = () => {
       setMessage('');
       setIsTyping(true);
 
-      // Simulate AI response
-      setTimeout(async () => {
+      // Get real AI response
+      try {
         if (!chatToUpdate) return;
 
-        const aiResponseContent = `I understand you're asking about "${message}". This is a simulated AI response. In the actual implementation, this would connect to a real AI service to provide helpful coding assistance and explanations.`;
+        // Prepare conversation history for context
+        const conversationHistory = (chatToUpdate.messages || []).map(msg => ({
+          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+          content: msg.content
+        }));
+
+        // Get AI response with context
+        const aiResponse = await aiService.getContextualResponse(message, conversationHistory);
+
+        if (!aiResponse.success) {
+          throw new Error(aiResponse.error || 'Failed to get AI response');
+        }
+
+        const aiResponseContent = aiResponse.response || 'I apologize, but I couldn\'t generate a response. Please try again.';
 
         const aiMessage = await aiChatService.addMessage({
           chatId: chatToUpdate.id,
@@ -188,7 +221,35 @@ const AIChatPage = () => {
         }
 
         setIsTyping(false);
-      }, 2000);
+      } catch (error) {
+        console.error('Error getting AI response:', error);
+        
+        // Still save an error message to chat
+        const errorMessage = await aiChatService.addMessage({
+          chatId: chatToUpdate.id,
+          type: 'ai',
+          content: `I apologize, but I'm having trouble processing your request right now. ${error instanceof Error ? error.message : 'Please try again later.'}`
+        });
+
+        if (errorMessage) {
+          const updatedChat = {
+            ...chatToUpdate,
+            messages: [
+              ...(chatToUpdate.messages || []),
+              {
+                id: errorMessage.id,
+                chatId: errorMessage.chatId,
+                type: errorMessage.type,
+                content: errorMessage.content,
+                createdAt: errorMessage.createdAt
+              }
+            ]
+          };
+          setCurrentChat(updatedChat);
+        }
+
+        setIsTyping(false);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setIsTyping(false);
@@ -401,8 +462,22 @@ const AIChatPage = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-medium text-blue-600">AI Online</span>
+              {aiConnected === null ? (
+                <>
+                  <div className="h-2 w-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-yellow-600">Connecting...</span>
+                </>
+              ) : aiConnected ? (
+                <>
+                  <Sparkles className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-600">AI Online</span>
+                </>
+              ) : (
+                <>
+                  <div className="h-2 w-2 bg-red-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-red-600">AI Offline</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -420,14 +495,22 @@ const AIChatPage = () => {
                   Welcome to AI Assistant
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Ask me anything about coding, programming concepts, or get help with your projects. I'm here to assist you!
+                  I'm powered by Groq's advanced AI models! Ask me anything about coding, programming concepts, or get help with your projects.
                 </p>
                 <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
-                  <p>💡 Ask about coding concepts</p>
-                  <p>🐛 Get help debugging code</p>
-                  <p>📚 Learn new technologies</p>
-                  <p>🚀 Project guidance and best practices</p>
+                  <p>💡 Explain programming concepts and algorithms</p>
+                  <p>🐛 Debug code and fix errors</p>
+                  <p>📚 Learn new languages and frameworks</p>
+                  <p>🚀 Get architecture and best practice advice</p>
+                  <p>⚡ Fast responses powered by Groq AI</p>
                 </div>
+                {!aiConnected && (
+                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      ⚠️ AI service is currently unavailable. Please check your connection.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -457,7 +540,14 @@ const AIChatPage = () => {
                         ? 'bg-blue-600 text-white'
                         : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
                     }`}>
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                      {msg.type === 'user' ? (
+                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                      ) : (
+                        <FormattedText 
+                          content={msg.content} 
+                          className="text-sm leading-relaxed"
+                        />
+                      )}
                       <p className={`text-xs mt-2 ${
                         msg.type === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
                       }`}>
@@ -475,10 +565,13 @@ const AIChatPage = () => {
                       <Bot className="h-4 w-4 text-white" />
                     </div>
                     <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">AI is thinking...</span>
                       </div>
                     </div>
                   </div>
@@ -497,13 +590,14 @@ const AIChatPage = () => {
                 ref={inputRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ask me anything about coding..."
+                placeholder={aiConnected === false ? "AI is offline - please try again later" : "Ask me anything about coding..."}
                 className="pr-12 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                disabled={!aiConnected || isTyping}
               />
               <Button
                 onClick={handleSendMessage}
-                disabled={!message.trim()}
+                disabled={!message.trim() || !aiConnected || isTyping}
                 size="sm"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-800 disabled:opacity-50"
               >
