@@ -44,14 +44,14 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-800 rounded-lg flex items-center justify-center">
-                <img src="/favicon.png" alt="Arcade Learn Logo" className="h-8 w-8 object-contain mix-blend-luminosity brightness-1000" />
-              </div>
+              {/* <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-800 rounded-lg flex items-center justify-center"> */}
+                <img src="/logo-bgfree.png" alt="Arcade Learn Logo" className="h-7 w-12" />
+              {/* </div> */}
               <span className="text-xl font-bold">
                 <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
                   Arcade
                 </span>
-                <span className="text-white ml-1">Learn</span>
+                <span className="bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent ml-1">Learn</span>
               </span>
             </div>
             <p className="text-gray-300 dark:text-gray-400 mb-6 leading-relaxed">

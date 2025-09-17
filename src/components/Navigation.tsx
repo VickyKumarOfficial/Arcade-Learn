@@ -42,9 +42,9 @@ const Navigation = () => {
             className="flex items-center space-x-2 cursor-pointer" 
             onClick={() => navigate('/')}
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-800 rounded-lg flex items-center justify-center">
-              <img src="/favicon.png" alt="Arcade Learn Logo" className="h-8 w-8 object-contain mix-blend-luminosity brightness-1000" />
-            </div>
+            {/* <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-800 rounded-lg flex items-center justify-center"> */}
+              <img src="/logo-bgfree.png" alt="Arcade Learn Logo" className="h-7 w-12" />
+            {/* </div> */}
             <span className="text-lg sm:text-xl font-bold">
               <span className="bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
               Arcade
