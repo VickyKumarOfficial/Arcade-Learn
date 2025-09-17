@@ -45,7 +45,7 @@ const FAQs = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
       <Navigation />
       
-      <div className="pt-24 pb-20">
+      <div className="pt-32 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Header */}
           <div className="text-center mb-16">

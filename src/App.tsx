@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DarkModeProvider } from "@/hooks/use-dark-mode";
 import { GameProvider } from "@/contexts/GameContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import DevelopmentBanner from "@/components/DevelopmentBanner";
 import Index from "./pages/Index";
 import Roadmaps from "./pages/Roadmaps";
 import RoadmapDetail from "./pages/RoadmapDetail";
@@ -26,6 +27,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <DevelopmentBanner />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
