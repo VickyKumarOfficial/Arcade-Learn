@@ -7,42 +7,53 @@ export const SURVEY_QUESTIONS: SurveyQuestion[] = [
   {
     id: 'userType',
     question: 'What best describes you?',
-    options: ['Student', 'Teacher', 'Working Professional', 'Other']
+    options: ['Student', 'Teacher', 'Working Professional', 'Other'],
+    type: 'single'
   },
   {
     id: 'skillLevel',
     question: 'What is your current skill level?',
-    options: ['Beginner', 'Intermediate', 'Advanced']
+    options: ['Beginner', 'Intermediate', 'Advanced'],
+    type: 'single'
   },
   {
     id: 'techInterest',
-    question: 'Which tech area interests you most?',
-    options: ['Web Development', 'Data Science', 'Mobile Apps', 'DevOps', 'AI/ML', 'Not sure yet']
+    question: 'Which tech areas interest you? (Select all that apply)',
+    options: ['Web Development', 'Data Science', 'Mobile Apps', 'DevOps', 'AI/ML', 'Cybersecurity', 'Game Development', 'Not sure yet'],
+    type: 'multiple',
+    maxSelections: 4
   },
   {
     id: 'goal',
-    question: 'What is your main goal for joining ArcadeLearn?',
-    options: ['Get a job', 'Switch careers', 'Upskill for current job', 'Build a project/startup', 'Just exploring']
+    question: 'What are your main goals for joining ArcadeLearn? (Select all that apply)',
+    options: ['Get a job', 'Switch careers', 'Upskill for current job', 'Build a project/startup', 'Just exploring', 'Learn new technologies'],
+    type: 'multiple',
+    maxSelections: 3
   },
   {
     id: 'timeCommitment',
     question: 'How much time can you dedicate weekly?',
-    options: ['<5 hours', '5–10 hours', '10+ hours']
+    options: ['<5 hours', '5–10 hours', '10+ hours'],
+    type: 'single'
   },
   {
     id: 'learningStyle',
-    question: 'Preferred learning style?',
-    options: ['Videos', 'Reading', 'Projects', 'Group learning']
+    question: 'What are your preferred learning styles? (Select all that apply)',
+    options: ['Videos', 'Reading', 'Projects', 'Group learning', 'Interactive tutorials', 'Practice exercises'],
+    type: 'multiple',
+    maxSelections: 3
   },
   {
     id: 'wantsRecommendations',
     question: 'Would you like to receive roadmap recommendations?',
-    options: ['Yes', 'No']
+    options: ['Yes', 'No'],
+    type: 'single'
   }
 ];
 
 type SurveyAction =
-  | { type: 'SET_ANSWER'; questionId: keyof SurveyAnswers; answer: string }
+  | { type: 'SET_ANSWER'; questionId: keyof SurveyAnswers; answer: string | string[] }
+  | { type: 'TOGGLE_MULTI_ANSWER'; questionId: keyof SurveyAnswers; option: string; maxSelections?: number }
   | { type: 'NEXT_QUESTION' }
   | { type: 'PREVIOUS_QUESTION' }
   | { type: 'COMPLETE_SURVEY' }
@@ -66,6 +77,30 @@ function surveyReducer(state: SurveyState, action: SurveyAction): SurveyState {
         answers: {
           ...state.answers,
           [action.questionId]: action.answer as any,
+        },
+      };
+    case 'TOGGLE_MULTI_ANSWER':
+      const currentAnswers = state.answers[action.questionId] as string[] || [];
+      const optionIndex = currentAnswers.indexOf(action.option);
+      let newAnswers: string[];
+      
+      if (optionIndex > -1) {
+        // Remove option if already selected
+        newAnswers = currentAnswers.filter(item => item !== action.option);
+      } else {
+        // Add option if not selected and within limit
+        if (!action.maxSelections || currentAnswers.length < action.maxSelections) {
+          newAnswers = [...currentAnswers, action.option];
+        } else {
+          newAnswers = currentAnswers;
+        }
+      }
+      
+      return {
+        ...state,
+        answers: {
+          ...state.answers,
+          [action.questionId]: newAnswers,
         },
       };
     case 'NEXT_QUESTION':
@@ -109,7 +144,8 @@ function surveyReducer(state: SurveyState, action: SurveyAction): SurveyState {
 interface SurveyContextType {
   state: SurveyState;
   dispatch: React.Dispatch<SurveyAction>;
-  setAnswer: (questionId: keyof SurveyAnswers, answer: string) => void;
+  setAnswer: (questionId: keyof SurveyAnswers, answer: string | string[]) => void;
+  toggleMultiAnswer: (questionId: keyof SurveyAnswers, option: string, maxSelections?: number) => void;
   nextQuestion: () => void;
   previousQuestion: () => void;
   completeSurvey: () => void;
@@ -162,6 +198,14 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     if (!user) return;
 
     try {
+      // First check localStorage for quick response
+      const surveyCompleted = localStorage.getItem(`arcadelearn_survey_completed_${user.id}`);
+      if (surveyCompleted === 'true') {
+        dispatch({ type: 'LOAD_SURVEY_STATE', state: { isCompleted: true, isVisible: false } });
+        return;
+      }
+
+      // Then check backend
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
       const response = await fetch(`${apiBaseUrl}/user/${user.id}/survey/status`);
       
@@ -169,42 +213,45 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
         const { completed } = await response.json();
         
         if (completed) {
-          // User has already completed the survey
-          dispatch({ type: 'LOAD_SURVEY_STATE', state: { isCompleted: true, isVisible: false } });
+          // User has already completed the survey - update localStorage and hide survey
+          localStorage.setItem(`arcadelearn_survey_completed_${user.id}`, 'true');
           localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
-        } else {
-          // Check for saved progress
-          loadSurveyProgressLocally();
-          // Show survey if not completed and no progress
-          if (Object.keys(state.answers).length === 0) {
-            dispatch({ type: 'SHOW_SURVEY' });
-          }
-        }
-      } else {
-        // If API call fails, check localStorage
-        const surveyCompleted = localStorage.getItem(`arcadelearn_survey_completed_${user.id}`);
-        if (surveyCompleted === 'true') {
           dispatch({ type: 'LOAD_SURVEY_STATE', state: { isCompleted: true, isVisible: false } });
-        } else {
-          loadSurveyProgressLocally();
-          dispatch({ type: 'SHOW_SURVEY' });
+          return;
         }
       }
+
+      // If not completed, check for saved progress first
+      loadSurveyProgressLocally();
+      
+      // If no saved progress was loaded, show fresh survey
+      setTimeout(() => {
+        if (!state.isCompleted && Object.keys(state.answers).length === 0) {
+          dispatch({ type: 'SHOW_SURVEY' });
+        }
+      }, 100);
     } catch (error) {
       console.error('Failed to check survey status:', error);
-      // Fallback to localStorage
+      // Fallback: only show survey if not marked as completed in localStorage
       const surveyCompleted = localStorage.getItem(`arcadelearn_survey_completed_${user.id}`);
-      if (surveyCompleted === 'true') {
-        dispatch({ type: 'LOAD_SURVEY_STATE', state: { isCompleted: true, isVisible: false } });
-      } else {
+      if (surveyCompleted !== 'true') {
         loadSurveyProgressLocally();
-        dispatch({ type: 'SHOW_SURVEY' });
+        // Small delay to allow state to update before checking
+        setTimeout(() => {
+          if (!state.isCompleted) {
+            dispatch({ type: 'SHOW_SURVEY' });
+          }
+        }, 100);
       }
     }
   };
 
-  const setAnswer = (questionId: keyof SurveyAnswers, answer: string) => {
+  const setAnswer = (questionId: keyof SurveyAnswers, answer: string | string[]) => {
     dispatch({ type: 'SET_ANSWER', questionId, answer });
+  };
+
+  const toggleMultiAnswer = (questionId: keyof SurveyAnswers, option: string, maxSelections?: number) => {
+    dispatch({ type: 'TOGGLE_MULTI_ANSWER', questionId, option, maxSelections });
   };
 
   const nextQuestion = () => {
@@ -258,7 +305,17 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
 
   const canProceed = (): boolean => {
     const currentQuestion = getCurrentQuestion();
-    return !!state.answers[currentQuestion.id];
+    const answer = state.answers[currentQuestion.id];
+    
+    if (!answer) return false;
+    
+    // For multi-select questions, check if at least one option is selected
+    if (currentQuestion.type === 'multiple') {
+      return Array.isArray(answer) && answer.length > 0;
+    }
+    
+    // For single-select questions, check if answer exists
+    return typeof answer === 'string' && answer.length > 0;
   };
 
   const saveSurveyProgressLocally = () => {
@@ -275,22 +332,32 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
   const loadSurveyProgressLocally = () => {
     if (!user) return;
 
-    const savedProgress = localStorage.getItem(`arcadelearn_survey_progress_${user.id}`);
-    if (savedProgress) {
-      try {
+    try {
+      const savedProgress = localStorage.getItem(`arcadelearn_survey_progress_${user.id}`);
+      if (savedProgress) {
         const progressData = JSON.parse(savedProgress);
-        dispatch({ 
-          type: 'LOAD_SURVEY_STATE', 
-          state: {
-            ...progressData,
-            isVisible: !progressData.isCompleted,
-          }
-        });
-      } catch (error) {
-        console.error('Failed to load survey progress:', error);
-        // If there's an error, start fresh
-        dispatch({ type: 'SHOW_SURVEY' });
+        console.log('Loading saved progress:', progressData);
+        
+        // Validate the progress data and ensure it's within bounds
+        const validatedState = {
+          currentQuestionIndex: Math.max(0, Math.min(progressData.currentQuestionIndex || 0, SURVEY_QUESTIONS.length - 1)),
+          answers: progressData.answers || {},
+          isCompleted: progressData.isCompleted || false,
+          isVisible: !progressData.isCompleted // Only show if not completed
+        };
+        
+        console.log('Validated state to load:', validatedState);
+        dispatch({ type: 'LOAD_SURVEY_STATE', state: validatedState });
+        
+        // If survey is not completed and has progress, show it
+        if (!validatedState.isCompleted) {
+          dispatch({ type: 'SHOW_SURVEY' });
+        }
       }
+    } catch (error) {
+      console.error('Failed to load survey progress:', error);
+      // If there's an error loading progress, start fresh
+      dispatch({ type: 'SHOW_SURVEY' });
     }
   };
 
@@ -317,6 +384,7 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     state,
     dispatch,
     setAnswer,
+    toggleMultiAnswer,
     nextQuestion,
     previousQuestion,
     completeSurvey,

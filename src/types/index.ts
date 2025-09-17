@@ -47,19 +47,21 @@ export interface Achievement {
 }
 
 export interface SurveyAnswers {
-  userType: 'Student' | 'Teacher' | 'Working Professional' | 'Other';
-  skillLevel: 'Beginner' | 'Intermediate' | 'Advanced';
-  techInterest: 'Web Development' | 'Data Science' | 'Mobile Apps' | 'DevOps' | 'AI/ML' | 'Not sure yet';
-  goal: 'Get a job' | 'Switch careers' | 'Upskill for current job' | 'Build a project/startup' | 'Just exploring';
-  timeCommitment: '<5 hours' | '5–10 hours' | '10+ hours';
-  learningStyle: 'Videos' | 'Reading' | 'Projects' | 'Group learning';
-  wantsRecommendations: 'Yes' | 'No';
+  userType: string | string[];
+  skillLevel: string | string[];
+  techInterest: string | string[];
+  goal: string | string[];
+  timeCommitment: string | string[];
+  learningStyle: string | string[];
+  wantsRecommendations: string | string[];
 }
 
 export interface SurveyQuestion {
   id: keyof SurveyAnswers;
   question: string;
   options: string[];
+  type: 'single' | 'multiple';
+  maxSelections?: number;
 }
 
 export interface SurveyState {
