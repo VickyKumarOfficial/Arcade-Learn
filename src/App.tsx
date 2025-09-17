@@ -20,6 +20,7 @@ import SignIn from "@/pages/SignIn";
 import FAQs from "@/pages/FAQs";
 import AIDoubtSolving from "@/pages/AIDoubtSolving";
 import AIRoadmapGeneration from "@/pages/AIRoadmapGeneration";
+import AIChatPage from "@/pages/AIChatPage";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/careers" element={<Careers />} />
                   <Route path="/faqs" element={<FAQs />} />
+                  <Route path="/ai/chat" element={<AIChatPage />} />
                   <Route path="/ai/doubt-solving" element={<AIDoubtSolving />} />
                   <Route path="/ai/roadmap-generation" element={<AIRoadmapGeneration />} />
                   <Route path="/signin" element={<SignIn />} />

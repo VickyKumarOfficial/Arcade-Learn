@@ -171,3 +171,22 @@
 .animate-slide-out-right {
   animation: slideOutRight 0.5s ease-in-out;
 }
+
+/* AI Chat Page responsive heights accounting for development banner */
+.ai-chat-container {
+  height: calc(100vh - 36px); /* Mobile banner height */
+}
+
+.ai-chat-messages {
+  height: calc(100vh - 176px); /* Mobile: 36px banner + 140px header/footer */
+}
+
+@media (min-width: 640px) {
+  .ai-chat-container {
+    height: calc(100vh - 44px); /* Desktop banner height */
+  }
+  
+  .ai-chat-messages {
+    height: calc(100vh - 184px); /* Desktop: 44px banner + 140px header/footer */
+  }
+}
