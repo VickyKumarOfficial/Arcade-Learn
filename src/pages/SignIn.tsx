@@ -125,7 +125,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-800 dark:to-purple-800">
-      <div className="bg-white/90 dark:bg-gray-800/90 p-8 rounded-xl shadow-xl w-full max-w-md">
+      <div className="bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-gray-100 p-8 rounded-xl shadow-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center gradient-text">
           {isRegister ? "Create your account" : "Sign in to ArcadeLearn"}
         </h2>
@@ -172,7 +172,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
               type="email"
               name="email"
               required
-              className="input text-black"
+              className="input"
               value={form.email}
               onChange={handleChange}
             />
@@ -183,7 +183,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
               type="password"
               name="password"
               required
-              className="input text-black"
+              className="input"
               value={form.password}
               onChange={handleChange}
             />
@@ -295,7 +295,28 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
           border-radius: 0.5rem;
           border: 1px solid #d1d5db;
           background: #f9fafb;
+          color: #111827;
           margin-top: 0.25rem;
+          transition: all 0.2s ease;
+        }
+        .input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Dark mode styles */
+        .dark .input {
+          background: #374151;
+          border-color: #4b5563;
+          color: #f9fafb;
+        }
+        .dark .input:focus {
+          border-color: #60a5fa;
+          box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+        .dark .input::placeholder {
+          color: #9ca3af;
         }
       `}</style>
     </div>
