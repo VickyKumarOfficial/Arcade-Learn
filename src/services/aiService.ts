@@ -2,9 +2,12 @@ import Groq from "groq-sdk";
 
 // Initialize Groq client
 const groq = new Groq({
-  apiKey: import.meta.env.GROQ_API_KEY || import.meta.env.VITE_GROQ_API_KEY,
+  apiKey: import.meta.env.VITE_GROQ_API_KEY,
   dangerouslyAllowBrowser: true // Required for client-side usage
 });
+
+// if (import.meta.env.VITE_GROQ_API_KEY) console.log("GROQ_API", import.meta.env.VITE_GROQ_API_KEY);
+// else console.log("GORQ API KEY NOT AVAILABLE")
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -106,7 +109,7 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
       // Create chat completion
       const completion = await groq.chat.completions.create({
         messages: messagesWithSystem,
-        model: "openai/gpt-oss-120b", // Using Llama 3 for better performance and availability
+        model: "openai/gpt-oss-120b", // Using Llama 3 8B model available on Groq
         temperature: 0.7,
         max_tokens: 2000, // Increased for more detailed responses
         top_p: 0.9,

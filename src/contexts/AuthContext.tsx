@@ -50,91 +50,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   // Helper function to convert Supabase user to our User type
-  const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User | null> => {
-    try {
-      // Skip profile operations if using placeholder client
-      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
-        return {
-          id: supabaseUser.id,
-          email: supabaseUser.email || 'demo@example.com',
-          firstName: supabaseUser.user_metadata?.first_name || 'Demo User',
-          lastName: supabaseUser.user_metadata?.last_name || null,
-          phone: supabaseUser.user_metadata?.phone || null,
-          avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
-        };
-      }
-
-      // Add timeout protection for profile operations
-      const profilePromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Profile fetch timed out')), 10000)
-      );
-
-      // Get user profile from our profiles table with timeout
-      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-        console.error('Error fetching user profile:', error);
-        // Return basic user info if profile fetch fails
-        return {
-          id: supabaseUser.id,
-          email: supabaseUser.email || '',
-          firstName: supabaseUser.user_metadata?.first_name || supabaseUser.email?.split('@')[0] || 'User',
-          lastName: supabaseUser.user_metadata?.last_name || null,
-          phone: supabaseUser.user_metadata?.phone || null,
-          avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
-        };
-      }
-
-      // If profile doesn't exist, create one
-      if (!profile) {
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: supabaseUser.id,
-              email: supabaseUser.email || '',
-              first_name: supabaseUser.user_metadata?.first_name || supabaseUser.email?.split('@')[0] || 'User',
-              last_name: supabaseUser.user_metadata?.last_name || null,
-              phone: supabaseUser.user_metadata?.phone || null,
-              avatar_url: supabaseUser.user_metadata?.avatar_url || null,
-            }
-          ])
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating user profile:', createError);
-          return null;
-        }
-
-        return {
-          id: newProfile.id,
-          email: newProfile.email,
-          firstName: newProfile.first_name,
-          lastName: newProfile.last_name,
-          phone: newProfile.phone,
-          avatarUrl: newProfile.avatar_url,
-        };
-      }
-
-      return {
-        id: profile.id,
-        email: profile.email,
-        firstName: profile.first_name,
-        lastName: profile.last_name,
-        phone: profile.phone,
-        avatarUrl: profile.avatar_url,
-      };
-    } catch (error) {
-      console.error('Error converting Supabase user:', error);
-      return null;
-    }
+  const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User> => {
+    // For faster login, just return basic user info from auth metadata
+    // Profile data can be loaded separately if needed
+    return {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      firstName: supabaseUser.user_metadata?.first_name || supabaseUser.email?.split('@')[0] || 'User',
+      lastName: supabaseUser.user_metadata?.last_name || null,
+      phone: supabaseUser.user_metadata?.phone || null,
+      avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
+    };
   };
 
   // Check for existing session on app load
@@ -204,25 +130,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('Auth state changed:', event, session?.user?.email);
           
           try {
-            if (session?.user) {
+            if (session?.user && event !== 'SIGNED_OUT') {
               const user = await convertSupabaseUser(session.user);
-              if (user) {
-                setAuthState({
-                  user,
-                  isLoading: false,
-                  isAuthenticated: true,
-                  session,
-                });
-              } else {
-                // Fallback if user conversion fails
-                setAuthState({
-                  user: null,
-                  isLoading: false,
-                  isAuthenticated: false,
-                  session: null,
-                });
-              }
-            } else {
+              // Since convertSupabaseUser now always returns a user object, we can safely use it
+              setAuthState({
+                user,
+                isLoading: false,
+                isAuthenticated: true,
+                session,
+              });
+            } else if (event === 'SIGNED_OUT') {
+              // Only clear auth state on explicit sign out
               setAuthState({
                 user: null,
                 isLoading: false,
@@ -230,9 +148,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 session: null,
               });
             }
+            // For other events, maintain current state to prevent unwanted logouts
           } catch (error) {
-            console.error('Error in auth state change handler:', error);
-            // Always ensure loading is false even if there's an error
+            console.warn('Error in auth state change handler, maintaining current state:', error);
+            // Don't clear the auth state on errors - just ensure loading is false
             setAuthState(prev => ({
               ...prev,
               isLoading: false,
@@ -259,17 +178,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('Authentication not available. Please configure Supabase credentials.');
       }
 
-      // Add timeout protection for login
-      const loginPromise = supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Login request timed out after 30 seconds')), 30000)
-      );
-
-      const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -475,22 +387,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       console.log('📝 Update data being sent:', updateData);
 
-      // Add timeout to prevent hanging
-      const updatePromise = supabase
+      console.log('⏳ Sending update request...');
+
+      const { data, error } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('id', authState.user.id)
         .select()
         .single();
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Update request timed out after 15 seconds')), 15000)
-      );
-
-      console.log('⏳ Sending update request...');
-
-      // Race between update and timeout
-      const { data, error } = await Promise.race([updatePromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('❌ Profile update error:', error);
