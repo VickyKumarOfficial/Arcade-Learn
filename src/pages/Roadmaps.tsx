@@ -168,7 +168,7 @@ const Roadmaps = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <Navigation />
-        <div className="container mx-auto px-4 py-8 pt-32">
+        <div className="container mx-auto px-4 py-8 pt-[92px] sm:pt-[108px]">
           {/* Back Button */}
           <Button
             onClick={handleBackToList}
@@ -334,7 +334,7 @@ const Roadmaps = () => {
       ) : (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
           <Navigation />
-          <div className="container mx-auto px-4 py-8 pt-32">
+          <div className="container mx-auto px-4 py-8 pt-[92px] sm:pt-[108px]">
             {/* Header */}
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 leading-normal md:leading-normal">
@@ -359,7 +359,7 @@ const Roadmaps = () => {
 
       {/* Auth Prompt Modal - For unauthenticated users */}
       {showAuthPrompt && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 pt-32">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 pt-[92px] sm:pt-[108px]">
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full relative shadow-2xl border border-gray-200 dark:border-gray-700">
             {/* Close Button - Top Right Corner */}
             <button
