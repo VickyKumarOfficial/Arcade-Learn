@@ -48,6 +48,22 @@ CREATE TABLE IF NOT EXISTS public.user_game_data (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Create user_survey table for onboarding survey responses
+CREATE TABLE IF NOT EXISTS public.user_survey (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE UNIQUE,
+  user_type TEXT CHECK (user_type IN ('Student', 'Teacher', 'Working Professional', 'Other')),
+  skill_level TEXT CHECK (skill_level IN ('Beginner', 'Intermediate', 'Advanced')),
+  tech_interest TEXT CHECK (tech_interest IN ('Web Development', 'Data Science', 'Mobile Apps', 'DevOps', 'AI/ML', 'Not sure yet')),
+  goal TEXT CHECK (goal IN ('Get a job', 'Switch careers', 'Upskill for current job', 'Build a project/startup', 'Just exploring')),
+  time_commitment TEXT CHECK (time_commitment IN ('<5 hours', '5–10 hours', '10+ hours')),
+  learning_style TEXT CHECK (learning_style IN ('Videos', 'Reading', 'Projects', 'Group learning')),
+  wants_recommendations TEXT CHECK (wants_recommendations IN ('Yes', 'No')),
+  completed_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create user_achievements table
 CREATE TABLE IF NOT EXISTS public.user_achievements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -122,6 +138,7 @@ CREATE INDEX IF NOT EXISTS idx_learning_events_timestamp ON public.learning_even
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_game_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_survey ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
@@ -153,6 +170,16 @@ CREATE POLICY "Users can insert own game data" ON public.user_game_data
 -- Allow public read for leaderboard (top users only)
 CREATE POLICY "Public can view leaderboard" ON public.user_game_data
   FOR SELECT USING (true);
+
+-- User survey policies
+CREATE POLICY "Users can view own survey" ON public.user_survey
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own survey" ON public.user_survey
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own survey" ON public.user_survey
+  FOR UPDATE USING (auth.uid() = user_id);
 
 -- User achievements policies
 CREATE POLICY "Users can view own achievements" ON public.user_achievements
