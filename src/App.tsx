@@ -22,6 +22,7 @@ import ContactUs from "@/pages/ContactUs";
 import AIDoubtSolving from "@/pages/AIDoubtSolving";
 import AIRoadmapGeneration from "@/pages/AIRoadmapGeneration";
 import AIChatPage from "@/pages/AIChatPage";
+import { Analytics } from "@vercel/analytics/react"
 
 const queryClient = new QueryClient();
 
