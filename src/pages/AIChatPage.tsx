@@ -16,11 +16,23 @@ import {
   Brain,
   Sparkles,
   User,
-  Bot
+  Bot,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { aiChatService, type AIChat, type AIChatMessage } from '@/services/aiChatService';
 import { aiService } from '@/services/aiService';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ChatMessage {
   id: string;
@@ -47,6 +59,8 @@ const AIChatPage = () => {
   const [chatHistory, setChatHistory] = useState<(AIChat & { lastMessage?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiConnected, setAiConnected] = useState<boolean | null>(null);
+  const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
+  const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -261,6 +275,32 @@ const AIChatPage = () => {
     inputRef.current?.focus();
   };
 
+  const handleDeleteChat = async (chatId: string) => {
+    if (!user?.id) return;
+
+    setDeletingChatId(chatId);
+    
+    try {
+      const success = await aiChatService.deleteChat(chatId);
+      
+      if (success) {
+        // Remove chat from history
+        setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
+        
+        // If this was the current chat, clear it
+        if (currentChat?.id === chatId) {
+          setCurrentChat(null);
+        }
+      } else {
+        console.error('Failed to delete chat');
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    } finally {
+      setDeletingChatId(null);
+    }
+  };
+
   const selectChat = async (chat: AIChat & { lastMessage?: string }) => {
     try {
       // Load the full chat with messages
@@ -386,28 +426,94 @@ const AIChatPage = () => {
                     </div>
                   ) : (
                     chatHistory.map((chat) => (
-                      <Button
+                      <div
                         key={chat.id}
-                        variant="ghost"
-                        onClick={() => selectChat(chat)}
-                        className={`w-full p-3 text-left justify-start h-auto ${
-                          currentChat?.id === chat.id 
-                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' 
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }`}
+                        className="relative group"
+                        onMouseEnter={() => setHoveredChatId(chat.id)}
+                        onMouseLeave={() => setHoveredChatId(null)}
                       >
-                        <div className="flex items-start space-x-3 w-full">
-                          <MessageCircle className="h-4 w-4 flex-shrink-0 mt-1 text-gray-400" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium truncate">
-                              {chat.title}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                              {chat.lastMessage || 'No messages yet'}
+                        <Button
+                          variant="ghost"
+                          onClick={() => selectChat(chat)}
+                          className={`w-full p-3 text-left justify-start h-auto relative overflow-hidden ${
+                            currentChat?.id === chat.id 
+                              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' 
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          {/* Chat Content */}
+                          <div className="flex items-start space-x-3 w-full">
+                            <MessageCircle className="h-4 w-4 flex-shrink-0 mt-1 text-gray-400" />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">
+                                {chat.title}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {chat.lastMessage || 'No messages yet'}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </Button>
+                        </Button>
+                        
+                        {/* Delete Button - appears on hover with gradient background */}
+                        <AnimatePresence>
+                          {hoveredChatId === chat.id && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute right-1 top-1/2 transform -translate-y-1/2 z-20"
+                            >
+                              {/* Gradient background behind the icon */}
+                              <div 
+                                className="absolute inset-0 w-8 h-8 -m--3 rounded-full"
+                                style={{
+                                  background: `conic-gradient(from 0deg, 
+                                    rgba(0,0,0,0.4) 0deg, 
+                                    rgba(0,0,0,0.4) 90deg, 
+                                    rgba(0,0,0,0.4) 180deg, 
+                                    rgba(0,0,0,0.4) 270deg, 
+                                    rgba(0,0,0,0.4) 360deg)`
+                                }}
+                              />
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-color-black-800 transition-colors relative z-10"
+                                    disabled={deletingChatId === chat.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent chat selection
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-white drop-shadow-sm" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{chat.title}"? This will permanently delete the entire conversation and cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteChat(chat.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete Chat
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     ))
                   )}
                 </div>
@@ -519,9 +625,9 @@ const AIChatPage = () => {
               {currentChat.messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} group`}
                 >
-                  <div className={`flex items-start space-x-3 max-w-3xl ${
+                  <div className={`flex items-start space-x-3 max-w-3xl relative ${
                     msg.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                   }`}>
                     <div className={`p-2 rounded-full ${
