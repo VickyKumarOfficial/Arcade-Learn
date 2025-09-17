@@ -295,6 +295,83 @@ GROUP BY p.id, p.first_name, p.last_name, p.created_at, ugd.total_xp, ugd.level,
 -- Insert initial data or default achievements (optional)
 -- This would be handled by the application layer
 
+-- Create AI chat tables
+CREATE TABLE IF NOT EXISTS public.ai_chats (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.ai_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chat_id UUID REFERENCES public.ai_chats(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('user', 'ai')),
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes for AI chat tables
+CREATE INDEX IF NOT EXISTS idx_ai_chats_user_id ON public.ai_chats(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_chats_updated_at ON public.ai_chats(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_messages_chat_id ON public.ai_messages(chat_id);
+CREATE INDEX IF NOT EXISTS idx_ai_messages_created_at ON public.ai_messages(created_at);
+
+-- Enable Row Level Security for AI chat tables
+ALTER TABLE public.ai_chats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_messages ENABLE ROW LEVEL SECURITY;
+
+-- AI chats policies
+CREATE POLICY "Users can view own chats" ON public.ai_chats
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own chats" ON public.ai_chats
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own chats" ON public.ai_chats
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own chats" ON public.ai_chats
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- AI messages policies
+CREATE POLICY "Users can view messages from own chats" ON public.ai_messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.ai_chats 
+      WHERE ai_chats.id = ai_messages.chat_id 
+      AND ai_chats.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert messages to own chats" ON public.ai_messages
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.ai_chats 
+      WHERE ai_chats.id = ai_messages.chat_id 
+      AND ai_chats.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update messages in own chats" ON public.ai_messages
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.ai_chats 
+      WHERE ai_chats.id = ai_messages.chat_id 
+      AND ai_chats.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete messages from own chats" ON public.ai_messages
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM public.ai_chats 
+      WHERE ai_chats.id = ai_messages.chat_id 
+      AND ai_chats.user_id = auth.uid()
+    )
+  );
+
 -- Grant necessary permissions
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
