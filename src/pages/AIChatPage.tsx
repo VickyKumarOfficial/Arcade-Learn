@@ -18,6 +18,7 @@ import {
   Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { aiChatService, type AIChat, type AIChatMessage } from '@/services/aiChatService';
 
 interface ChatMessage {
   id: string;
@@ -40,46 +41,33 @@ const AIChatPage = () => {
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [currentChat, setCurrentChat] = useState<ChatHistory | null>(null);
-  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([
-    {
-      id: '1',
-      title: 'React Hooks Explained',
-      lastMessage: 'Can you explain useEffect hook?',
-      timestamp: new Date(Date.now() - 86400000),
-      messages: [
-        {
-          id: '1',
-          type: 'user',
-          content: 'Can you explain useEffect hook?',
-          timestamp: new Date(Date.now() - 86400000)
-        },
-        {
-          id: '2',
-          type: 'ai',
-          content: 'useEffect is a React Hook that lets you perform side effects in functional components...',
-          timestamp: new Date(Date.now() - 86400000 + 1000)
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'JavaScript Async/Await',
-      lastMessage: 'How does async/await work?',
-      timestamp: new Date(Date.now() - 172800000),
-      messages: []
-    },
-    {
-      id: '3',
-      title: 'CSS Grid Layout',
-      lastMessage: 'CSS Grid vs Flexbox differences?',
-      timestamp: new Date(Date.now() - 259200000),
-      messages: []
-    }
-  ]);
+  const [currentChat, setCurrentChat] = useState<AIChat | null>(null);
+  const [chatHistory, setChatHistory] = useState<(AIChat & { lastMessage?: string })[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load user chats on component mount
+  useEffect(() => {
+    const loadUserChats = async () => {
+      if (!isAuthenticated || !user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const chats = await aiChatService.getUserChatsWithLastMessage(user.id);
+        setChatHistory(chats);
+      } catch (error) {
+        console.error('Error loading chats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserChats();
+  }, [isAuthenticated, user?.id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -90,66 +78,121 @@ const AIChatPage = () => {
   }, [currentChat?.messages]);
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !isAuthenticated) return;
+    if (!message.trim() || !isAuthenticated || !user?.id) return;
 
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: message,
-      timestamp: new Date()
-    };
+    try {
+      let chatToUpdate = currentChat;
 
-    // If no current chat, create a new one
-    if (!currentChat) {
-      const newChat: ChatHistory = {
-        id: Date.now().toString(),
-        title: message.length > 30 ? message.substring(0, 30) + '...' : message,
-        lastMessage: message,
-        timestamp: new Date(),
-        messages: [newMessage]
-      };
-      setCurrentChat(newChat);
-      setChatHistory(prev => [newChat, ...prev]);
-    } else {
-      // Add to existing chat
-      const updatedChat = {
-        ...currentChat,
-        messages: [...currentChat.messages, newMessage],
-        lastMessage: message,
-        timestamp: new Date()
-      };
-      setCurrentChat(updatedChat);
-      setChatHistory(prev => prev.map(chat => 
-        chat.id === currentChat.id ? updatedChat : chat
-      ));
-    }
+      // If no current chat, create a new one
+      if (!currentChat) {
+        const title = message.length > 30 ? message.substring(0, 30) + '...' : message;
+        
+        const newChat = await aiChatService.createChat(user.id, {
+          title,
+          firstMessage: {
+            type: 'user',
+            content: message
+          }
+        });
 
-    setMessage('');
-    setIsTyping(true);
+        if (!newChat) {
+          console.error('Failed to create new chat');
+          return;
+        }
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: `I understand you're asking about "${message}". This is a simulated AI response. In the actual implementation, this would connect to a real AI service to provide helpful coding assistance and explanations.`,
-        timestamp: new Date()
-      };
+        // Load the full chat with messages
+        const fullChat = await aiChatService.getChatWithMessages(newChat.id);
+        if (fullChat) {
+          setCurrentChat(fullChat);
+          chatToUpdate = fullChat;
+          
+          // Update chat history
+          setChatHistory(prev => [
+            { ...newChat, lastMessage: message },
+            ...prev
+          ]);
+        }
+      } else {
+        // Add message to existing chat
+        const newMessage = await aiChatService.addMessage({
+          chatId: currentChat.id,
+          type: 'user',
+          content: message
+        });
 
-      if (currentChat) {
-        const updatedChat = {
-          ...currentChat,
-          messages: [...currentChat.messages, newMessage, aiResponse],
-          lastMessage: aiResponse.content,
-          timestamp: new Date()
-        };
-        setCurrentChat(updatedChat);
-        setChatHistory(prev => prev.map(chat => 
-          chat.id === currentChat.id ? updatedChat : chat
-        ));
+        if (newMessage) {
+          // Update current chat with new message
+          const updatedChat = {
+            ...currentChat,
+            messages: [
+              ...(currentChat.messages || []),
+              {
+                id: newMessage.id,
+                chatId: newMessage.chatId,
+                type: newMessage.type,
+                content: newMessage.content,
+                createdAt: newMessage.createdAt
+              }
+            ]
+          };
+          setCurrentChat(updatedChat);
+          chatToUpdate = updatedChat;
+
+          // Update chat history
+          setChatHistory(prev => prev.map(chat =>
+            chat.id === currentChat.id
+              ? { ...chat, lastMessage: message, updatedAt: new Date() }
+              : chat
+          ));
+        }
       }
+
+      setMessage('');
+      setIsTyping(true);
+
+      // Simulate AI response
+      setTimeout(async () => {
+        if (!chatToUpdate) return;
+
+        const aiResponseContent = `I understand you're asking about "${message}". This is a simulated AI response. In the actual implementation, this would connect to a real AI service to provide helpful coding assistance and explanations.`;
+
+        const aiMessage = await aiChatService.addMessage({
+          chatId: chatToUpdate.id,
+          type: 'ai',
+          content: aiResponseContent
+        });
+
+        if (aiMessage) {
+          // Update current chat with AI response
+          const updatedChat = {
+            ...chatToUpdate,
+            messages: [
+              ...(chatToUpdate.messages || []),
+              {
+                id: aiMessage.id,
+                chatId: aiMessage.chatId,
+                type: aiMessage.type,
+                content: aiMessage.content,
+                createdAt: aiMessage.createdAt
+              }
+            ]
+          };
+          setCurrentChat(updatedChat);
+
+          // Update chat history with AI response
+          setChatHistory(prev => prev.map(chat =>
+            chat.id === chatToUpdate.id
+              ? { ...chat, lastMessage: aiResponseContent, updatedAt: new Date() }
+              : chat
+          ));
+        }
+
+        setIsTyping(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error sending message:', error);
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
   const startNewChat = () => {
@@ -157,10 +200,25 @@ const AIChatPage = () => {
     inputRef.current?.focus();
   };
 
-  const selectChat = (chat: ChatHistory) => {
-    setCurrentChat(chat);
-    if (window.innerWidth < 768) {
-      setSidebarOpen(false);
+  const selectChat = async (chat: AIChat & { lastMessage?: string }) => {
+    try {
+      // Load the full chat with messages
+      const fullChat = await aiChatService.getChatWithMessages(chat.id);
+      if (fullChat) {
+        setCurrentChat(fullChat);
+      } else {
+        // Fallback to basic chat without messages
+        setCurrentChat({
+          ...chat,
+          messages: []
+        });
+      }
+      
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      }
+    } catch (error) {
+      console.error('Error loading chat:', error);
     }
   };
 
@@ -257,30 +315,40 @@ const AIChatPage = () => {
                   <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-2 mb-2">
                     Recent Chats
                   </h3>
-                  {chatHistory.map((chat) => (
-                    <Button
-                      key={chat.id}
-                      variant="ghost"
-                      onClick={() => selectChat(chat)}
-                      className={`w-full p-3 text-left justify-start h-auto ${
-                        currentChat?.id === chat.id 
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' 
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <div className="flex items-start space-x-3 w-full">
-                        <MessageCircle className="h-4 w-4 flex-shrink-0 mt-1 text-gray-400" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">
-                            {chat.title}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {chat.lastMessage}
+                  {loading ? (
+                    <div className="px-2 py-4 text-center text-sm text-gray-500">
+                      Loading chats...
+                    </div>
+                  ) : chatHistory.length === 0 ? (
+                    <div className="px-2 py-4 text-center text-sm text-gray-500">
+                      No chats yet. Start a conversation!
+                    </div>
+                  ) : (
+                    chatHistory.map((chat) => (
+                      <Button
+                        key={chat.id}
+                        variant="ghost"
+                        onClick={() => selectChat(chat)}
+                        className={`w-full p-3 text-left justify-start h-auto ${
+                          currentChat?.id === chat.id 
+                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' 
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3 w-full">
+                          <MessageCircle className="h-4 w-4 flex-shrink-0 mt-1 text-gray-400" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {chat.title}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {chat.lastMessage || 'No messages yet'}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Button>
-                  ))}
+                      </Button>
+                    ))
+                  )}
                 </div>
               </motion.div>
             )}
@@ -320,7 +388,7 @@ const AIChatPage = () => {
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-full">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-800 p-2 rounded-full">
                 <Brain className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -340,12 +408,12 @@ const AIChatPage = () => {
         </div>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 h-[calc(100vh-176px)] sm:h-[calc(100vh-180px)]">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 h-[calc(100vh-220px)] sm:h-[calc(100vh-220px)]">
           {!currentChat ? (
             // Welcome Screen
             <div className="flex items-center justify-center h-full">
               <div className="text-center max-w-md">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-full inline-block mb-6">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-800 p-6 rounded-full inline-block mb-6">
                   <Brain className="h-12 w-12 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
@@ -376,7 +444,7 @@ const AIChatPage = () => {
                     <div className={`p-2 rounded-full ${
                       msg.type === 'user' 
                         ? 'bg-blue-600' 
-                        : 'bg-gradient-to-r from-purple-500 to-blue-600'
+                        : 'bg-gradient-to-r from-blue-500 to-blue-600'
                     }`}>
                       {msg.type === 'user' ? (
                         <User className="h-4 w-4 text-white" />
@@ -393,7 +461,7 @@ const AIChatPage = () => {
                       <p className={`text-xs mt-2 ${
                         msg.type === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
                       }`}>
-                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {msg.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>
@@ -423,7 +491,7 @@ const AIChatPage = () => {
 
         {/* Input Area */}
         <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center space-x-3 max-w-4xl mx-auto">
+          <div className="flex items-center space-x-3 max-w-4xl mx-auto mb-3">
             <div className="flex-1 relative">
               <Input
                 ref={inputRef}
@@ -437,13 +505,13 @@ const AIChatPage = () => {
                 onClick={handleSendMessage}
                 disabled={!message.trim()}
                 size="sm"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-800 disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
             AI can make mistakes. Consider checking important information.
           </p>
         </div>
