@@ -8,6 +8,7 @@ const EMAIL_CONFIG = {
 export interface ContactFormData {
   firstName: string;
   lastName: string;
+  email: string;
   subject: string;
   phone: string;
   description: string;
@@ -23,6 +24,9 @@ export const sendContactEmail = async (formData: ContactFormData): Promise<boole
 export const sendContactEmailViaBackend = async (formData: ContactFormData): Promise<boolean> => {
   try {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+    console.log('🔍 Sending email via backend:', baseUrl);
+    console.log('📧 Form data:', formData);
+    
     const response = await fetch(`${baseUrl}/contact/send-email`, {
       method: 'POST',
       headers: {
@@ -34,9 +38,20 @@ export const sendContactEmailViaBackend = async (formData: ContactFormData): Pro
       }),
     });
 
-    return response.ok;
+    console.log('📡 Response status:', response.status);
+    console.log('📡 Response ok:', response.ok);
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Email sent successfully:', result);
+      return true;
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Backend responded with error:', response.status, errorText);
+      return false;
+    }
   } catch (error) {
-    console.error('Error sending email via backend:', error);
+    console.error('❌ Error sending email via backend:', error);
     return false;
   }
 };
