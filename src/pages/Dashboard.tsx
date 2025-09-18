@@ -123,7 +123,7 @@ const Dashboard = () => {
   }
   
   // Calculate rating and star based stats
-  const averageRating = state.userData.totalStars > 0 ? state.userData.totalRating / state.userData.totalStars : 0;
+  const averageRating = state.userData.completedTests > 0 ? state.userData.totalRating / state.userData.completedTests : 0;
   const totalStars = state.userData.totalStars;
   
   // Calculate completed roadmaps with real-time data

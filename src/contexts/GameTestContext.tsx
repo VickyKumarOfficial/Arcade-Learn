@@ -54,25 +54,59 @@ const gameTestReducer = (state: GameTestState, action: GameTestAction): GameTest
       // Check if already completed to prevent duplicate badges
       const alreadyCompleted = state.userData.completedComponents.includes(componentKey);
       
+      // STRONG LOCK: Only mark as completed if score >= 80%
+      const shouldMarkCompleted = result.score >= 80 && !alreadyCompleted;
+      const shouldRemoveFromCompleted = result.score < 80 && alreadyCompleted;
+      
+      // Find previous test result for this component to handle retakes
+      const previousResult = state.userData.testResults.find(
+        r => r.testId === result.testId && r.componentId === result.componentId && r.roadmapId === result.roadmapId
+      );
+      
+      // Calculate the rating difference (for retakes, we want to replace, not add)
+      const ratingDifference = previousResult ? result.rating - previousResult.rating : result.rating;
+      const starsDifference = previousResult ? result.stars - previousResult.stars : result.stars;
+      
+      // Update test results (replace if exists, add if new)
+      const updatedTestResults = previousResult 
+        ? state.userData.testResults.map(r => 
+            r.testId === result.testId && r.componentId === result.componentId && r.roadmapId === result.roadmapId 
+              ? result 
+              : r
+          )
+        : [...state.userData.testResults, result];
+      
+      // Calculate new average score across all completed tests
+      const passedTests = updatedTestResults.filter(r => r.passed);
+      const newAverageScore = passedTests.length > 0 
+        ? passedTests.reduce((sum, r) => sum + r.score, 0) / passedTests.length 
+        : 0;
+      
+      // Calculate completed components list based on 80% rule
+      let updatedCompletedComponents = [...state.userData.completedComponents];
+      
+      if (shouldMarkCompleted) {
+        updatedCompletedComponents.push(componentKey);
+      } else if (shouldRemoveFromCompleted) {
+        updatedCompletedComponents = updatedCompletedComponents.filter(key => key !== componentKey);
+      }
+
       // Update stats with new test result
       const updatedUserData = {
         ...state.userData,
-        totalRating: state.userData.totalRating + result.rating,
-        totalStars: state.userData.totalStars + result.stars,
-        averageScore: alreadyCompleted 
-          ? state.userData.averageScore 
-          : (state.userData.averageScore * state.userData.completedTests + result.score) / 
-            (state.userData.completedTests + 1),
-        completedTests: alreadyCompleted 
-          ? state.userData.completedTests 
-          : state.userData.completedTests + 1,
-        totalComponentsCompleted: alreadyCompleted 
-          ? state.userData.totalComponentsCompleted 
-          : state.userData.totalComponentsCompleted + 1,
-        completedComponents: alreadyCompleted 
-          ? state.userData.completedComponents 
-          : [...state.userData.completedComponents, componentKey],
-        testResults: [...state.userData.testResults, result]
+        totalRating: state.userData.totalRating + ratingDifference,
+        totalStars: state.userData.totalStars + starsDifference,
+        averageScore: newAverageScore,
+        completedTests: shouldMarkCompleted || alreadyCompleted
+          ? state.userData.completedTests + (shouldMarkCompleted ? 1 : 0)
+          : state.userData.completedTests,
+        totalComponentsCompleted: shouldMarkCompleted
+          ? state.userData.totalComponentsCompleted + 1
+          : shouldRemoveFromCompleted 
+            ? Math.max(0, state.userData.totalComponentsCompleted - 1)
+            : state.userData.totalComponentsCompleted,
+        completedComponents: updatedCompletedComponents,
+        testResults: updatedTestResults
       };
 
       // Update streak
