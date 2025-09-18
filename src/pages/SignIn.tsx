@@ -48,8 +48,8 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     // Add timeout protection for the entire authentication process
     const authTimeout = setTimeout(() => {
       setLoading(false);
-      setError("Authentication is taking too long. Please try again.");
-    }, 60000); // 60 seconds timeout
+      setError("Authentication is taking too long. Please check your internet connection and try again.");
+    }, 30000); // Reduced to 30 seconds timeout
 
     try {
       if (isRegister) {
