@@ -57,6 +57,25 @@ export const TestResults: React.FC<TestResultsProps> = ({
             ? `Congratulations! You've completed this component with a score of ${result.score}%.` 
             : `You need ${test?.passingScore || 80}% to pass. Keep practicing and try again!`}
         </CardDescription>
+        
+        {/* Unlock Warning for scores below 80% */}
+        {!result.passed && result.score < 80 && (
+          <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <div className="flex items-start gap-2">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="text-sm">
+                <p className="font-medium text-orange-800 dark:text-orange-200">Unlock Requirement Not Met</p>
+                <p className="text-orange-700 dark:text-orange-300 mt-1">
+                  You need at least 80% to unlock the next component in this roadmap.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </CardHeader>
       
       <CardContent className="py-6">
