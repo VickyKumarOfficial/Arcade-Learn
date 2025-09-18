@@ -37,22 +37,7 @@ const RoadmapDetail = () => {
   const [showRatingAnimation, setShowRatingAnimation] = useState<boolean>(false);
   const { state, dispatch } = useGameTest();
 
-  // This component is now the default for all roadmaps
-
-  // Redirect non-authenticated users to AuthGuard
-  if (!user) {
-    return <AuthGuard 
-      title="Continue Your Learning Journey"
-      description="Sign in to access roadmaps and track your progress"
-      featuresList={[
-        "Access detailed learning roadmaps",
-        "Take component tests and earn ratings",
-        "Track completion progress", 
-        "Earn stars and badges"
-      ]}
-    />;
-  }
-
+  // Move useEffect before any conditional returns to follow Rules of Hooks
   useEffect(() => {
     const foundRoadmap = roadmaps.find(r => r.id === id);
     if (foundRoadmap) {
@@ -95,6 +80,22 @@ const RoadmapDetail = () => {
       setRoadmap(updatedRoadmap);
     }
   }, [id, state.userData.completedComponents, state.userData.testResults]);
+
+  // This component is now the default for all roadmaps
+
+  // Redirect non-authenticated users to AuthGuard
+  if (!user) {
+    return <AuthGuard 
+      title="Continue Your Learning Journey"
+      description="Sign in to access roadmaps and track your progress"
+      featuresList={[
+        "Access detailed learning roadmaps",
+        "Take component tests and earn ratings",
+        "Track completion progress", 
+        "Earn stars and badges"
+      ]}
+    />;
+  }
 
   if (!roadmap) {
     return (
