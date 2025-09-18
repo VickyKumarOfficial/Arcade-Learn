@@ -26,6 +26,7 @@ import { sendContactEmailViaMailto, sendContactEmailViaBackend } from '@/service
 interface ContactFormData {
   firstName: string;
   lastName: string;
+  email: string;
   subject: string;
   phone: string;
   description: string;
@@ -37,6 +38,7 @@ const ContactUs = () => {
   const [formData, setFormData] = useState<ContactFormData>({
     firstName: '',
     lastName: '',
+    email: user?.email || '',
     subject: '',
     phone: '',
     description: ''
@@ -69,6 +71,12 @@ const ContactUs = () => {
 
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
 
     if (!formData.subject.trim()) {
@@ -120,7 +128,7 @@ const ContactUs = () => {
       // Prepare form data with user email
       const emailData = {
         ...formData,
-        userEmail: user?.email || ''
+        userEmail: formData.email
       };
 
       // Try to send via backend first
@@ -150,6 +158,7 @@ const ContactUs = () => {
       setFormData({
         firstName: '',
         lastName: '',
+        email: user?.email || '',
         subject: '',
         phone: '',
         description: ''
@@ -161,7 +170,7 @@ const ContactUs = () => {
       // Fallback to mailto
       sendContactEmailViaMailto({
         ...formData,
-        userEmail: user?.email || ''
+        userEmail: formData.email
       });
       
       toast({
@@ -247,8 +256,23 @@ const ContactUs = () => {
                       </div>
                     </div>
 
+                    {/* Email */}
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email address"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        className={errors.email ? 'border-red-500' : ''}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-red-500">{errors.email}</p>
+                      )}
+                    </div>
 
-{/* Subject */}
+                    {/* Subject */}
                     <div className="space-y-2">
                       <Label htmlFor="subject">Subject *</Label>
                       <Input
