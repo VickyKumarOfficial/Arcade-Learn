@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,8 @@ import { TestResults } from "@/components/TestResults";
 import { RatingDisplay, ComponentRatingBadge, ComponentStarsBadge } from "@/components/RatingDisplay";
 import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getComponentTestIds } from "@/data/componentMapping";
+
+// Import our new helper even though we can't replace the entire GameContext
 import { checkPrerequisites } from "@/lib/testSystem";
 
 const RoadmapDetail = () => {
@@ -34,7 +34,10 @@ const RoadmapDetail = () => {
     roadmapId: string;
   } | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [showRatingAnimation, setShowRatingAnimation] = useState<boolean>(false);
   const { state, dispatch } = useGameTest();
+
+  // This component is now the default for all roadmaps
 
   // Redirect non-authenticated users to AuthGuard
   if (!user) {
@@ -61,14 +64,13 @@ const RoadmapDetail = () => {
           const isCompleted = state.userData.completedComponents.includes(componentKey);
           
           // Check if component has prerequisites
-          const isLocked = component.prerequisiteIds && component.prerequisiteIds.length > 0 && 
-            !checkPrerequisites(component, state.userData.completedComponents, foundRoadmap.id);
+          const isLocked = component.isLocked && !checkPrerequisites(component, state.userData.completedComponents, foundRoadmap.id);
 
           // Find test results for this component (if any)
           const testResults = state.userData.testResults?.filter(result => 
             result.componentId === component.id && 
             result.roadmapId === foundRoadmap.id
-          ) || [];
+          );
           
           // Get the latest test result
           const latestResult = testResults?.length > 0 
@@ -102,107 +104,132 @@ const RoadmapDetail = () => {
     );
   }
 
-  // Start a test for a component
   const startTest = (componentId: string) => {
-    const component = roadmap?.components.find(c => c.id === componentId);
-    if (!component || component.isLocked) return;
-    
-    // Map component ID to test ID using our mapping helper
-    const testIds = getComponentTestIds();
-    const testId = testIds[componentId] || componentId;
+    const component = roadmap.components.find(c => c.id === componentId);
+    if (!component || !component.testId) return;
     
     setActiveTest({
-      testId,
+      testId: component.testId,
       componentId,
-      roadmapId: roadmap?.id || ''
+      roadmapId: roadmap.id
     });
   };
-  
-  // Handle test completion
+
   const handleTestComplete = (result: TestResult) => {
+    // Store the test result for display
     setTestResult(result);
     setActiveTest(null);
     
-    // If the test was passed, mark component as completed
-    if (result.passed) {
-      const componentKey = `${result.roadmapId}-${result.componentId}`;
-      
-      // Update local state for UI responsiveness
-      const updatedRoadmap = { ...roadmap! };
+    // Show rating animation
+    setShowRatingAnimation(true);
+
+    // In our actual implementation, we'd use the GameContext to update the state
+    const component = roadmap.components.find(c => c.id === result.componentId);
+    if (component) {
+      // This is where we would dispatch to our updated GameContext
+      // dispatch({ 
+      //   type: 'COMPLETE_TEST', 
+      //   payload: { testResult: result, component, roadmapId: roadmap.id } 
+      // });
+
+      // For demo purposes, we'll update the UI directly
+      const updatedRoadmap = { ...roadmap };
       const componentToUpdate = updatedRoadmap.components.find(c => c.id === result.componentId);
-      
-      if (componentToUpdate && !componentToUpdate.completed) {
-        componentToUpdate.completed = true;
+      if (componentToUpdate) {
+        componentToUpdate.completed = result.passed;
         componentToUpdate.testResult = result;
-        updatedRoadmap.completedComponents++;
-        setRoadmap(updatedRoadmap);
         
-        // TODO: In a real implementation, we would update the GameContext
-        // dispatch({ 
-        //   type: 'COMPLETE_TEST', 
-        //   payload: { result, component: componentToUpdate, roadmapId: result.roadmapId } 
-        // });
-        
-        // Check if roadmap is now complete
-        if (updatedRoadmap.completedComponents === updatedRoadmap.components.length) {
-          // TODO: Dispatch roadmap completion action
-          // dispatch({ 
-          //   type: 'COMPLETE_ROADMAP', 
-          //   payload: { roadmap: updatedRoadmap } 
-          // });
+        if (result.passed) {
+          updatedRoadmap.completedComponents = updatedRoadmap.components.filter(c => c.completed).length;
+          
+          // Unlock dependent components
+          updatedRoadmap.components.forEach(c => {
+            if (c.prerequisiteIds && c.prerequisiteIds.includes(result.componentId)) {
+              c.isLocked = false;
+            }
+          });
         }
+        
+        setRoadmap(updatedRoadmap);
       }
     }
   };
 
-  // Calculate progress metrics
+  const closeTestResult = () => {
+    setTestResult(null);
+    setShowRatingAnimation(false);
+  };
+
+  const retakeTest = () => {
+    if (testResult) {
+      setActiveTest({
+        testId: testResult.testId,
+        componentId: testResult.componentId,
+        roadmapId: testResult.roadmapId
+      });
+      setTestResult(null);
+    }
+  };
+
   const progressPercentage = (roadmap.completedComponents / roadmap.components.length) * 100;
   const totalHours = roadmap.components.reduce((total, component) => total + component.estimatedHours, 0);
   
-  // Calculate rating statistics for this roadmap
-  const getUserRatingForRoadmap = (roadmapId: string) => {
-    if (!state.userData.testResults) return { total: 0, stars: 0, average: 0 };
-    
-    const roadmapTests = state.userData.testResults.filter(
-      result => result.roadmapId === roadmapId && result.passed
-    );
-    
-    const totalRating = roadmapTests.reduce((total, result) => total + result.rating, 0);
-    const totalStars = Math.floor(totalRating / 100);
-    const average = roadmapTests.length > 0 
-      ? roadmapTests.reduce((sum, result) => sum + result.score, 0) / roadmapTests.length 
-      : 0;
-      
-    return {
-      total: totalRating,
-      stars: totalStars,
-      average: Math.round(average)
-    };
-  };
+  // For the test-based progression system
+  const totalRating = roadmap.components.reduce((total, component) => {
+    const testResult = component.testResult;
+    return total + (testResult?.rating || 0);
+  }, 0);
   
-  const roadmapRating = getUserRatingForRoadmap(roadmap.id);
+  const earnedStars = roadmap.components.reduce((total, component) => {
+    const testResult = component.testResult;
+    return total + (testResult?.stars || 0);
+  }, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
       <Navigation />
       
-      {/* Test Results Display */}
-      {testResult && (
-        <TestResults
-          result={testResult}
-          onClose={() => setTestResult(null)}
+      {/* Rating Animation (replaces XP Animation) */}
+      {showRatingAnimation && testResult && (
+        <RatingDisplay 
+          ratingGained={testResult?.rating || 0}
+          starsGained={testResult?.stars || 0}
+          component={roadmap.components.find(c => c.id === testResult?.componentId)}
+          testResult={testResult}
+          isVisible={showRatingAnimation}
+          onAnimationComplete={() => setShowRatingAnimation(false)}
         />
       )}
       
-      {/* Active Test */}
+      {/* Active Test Modal */}
       {activeTest && (
-        <ComponentTest
-          testId={activeTest.testId}
-          componentId={activeTest.componentId}
-          roadmapId={activeTest.roadmapId}
-          onComplete={handleTestComplete}
-          onCancel={() => setActiveTest(null)}
-        />
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <ComponentTest 
+            testId={activeTest.testId}
+            componentId={activeTest.componentId}
+            roadmapId={activeTest.roadmapId}
+            onComplete={handleTestComplete}
+            onCancel={() => setActiveTest(null)}
+          />
+        </div>
+      )}
+      
+      {/* Test Results Modal */}
+      {testResult && !activeTest && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm p-4">
+          <TestResults 
+            result={testResult}
+            onRetake={retakeTest}
+            onClose={closeTestResult}
+            attemptsRemaining={
+              (componentTests[testResult.testId]?.maxAttempts || 3) - 
+              (state.userData.testResults?.filter(r => 
+                r.testId === testResult.testId && 
+                r.componentId === testResult.componentId
+              ).length || 0)
+            }
+          />
+        </div>
       )}
       
       <div className="pt-[92px] sm:pt-[108px] pb-12">
@@ -244,14 +271,20 @@ const RoadmapDetail = () => {
                     <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">{totalHours}h</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Total Time</div>
                   </div>
-                  <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/30 rounded-xl">
-                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">{roadmapRating.total}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Rating Points</div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/30 rounded-xl">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">{Math.round(progressPercentage)}%</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Complete</div>
-                  </div>
+                  <>
+                    <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/30 rounded-xl">
+                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+                        {totalRating}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Rating Points</div>
+                    </div>
+                    <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl">
+                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">
+                        {earnedStars > 0 ? `⭐ ${earnedStars}` : "0"}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Stars Earned</div>
+                    </div>
+                  </>
                 </div>
                 
                 {progressPercentage > 0 && (
@@ -272,16 +305,22 @@ const RoadmapDetail = () => {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Learning Components</h2>
             
             {roadmap.components.map((component, index) => (
-              <Card key={component.id} className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <Card 
+                key={component.id} 
+                className={`
+                  bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg 
+                  ${component.isLocked ? 'opacity-75' : 'hover:shadow-xl transition-all duration-300'}
+                `}
+              >
                 <CardHeader className="pb-4">
                   <div className="flex items-start gap-4">
                     <div className="mt-1 flex-shrink-0">
                       {component.completed ? (
                         <CheckCircle className="w-6 h-6 text-green-500" />
                       ) : component.isLocked ? (
-                        <Lock className="w-6 h-6 text-orange-500" />
+                        <Lock className="w-6 h-6 text-gray-400" />
                       ) : (
-                        <AlertCircle className="w-6 h-6 text-blue-500" />
+                        <Circle className="w-6 h-6 text-gray-400" />
                       )}
                     </div>
                     
@@ -290,11 +329,17 @@ const RoadmapDetail = () => {
                         <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
                           {index + 1}
                         </div>
-                        <CardTitle className="text-xl flex-1 text-gray-900 dark:text-white">
+                        <CardTitle className={`text-xl flex-1 ${component.completed ? 'text-gray-900 dark:text-white' : component.isLocked ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                           {component.title}
                         </CardTitle>
+                        
                         {component.testResult && (
-                          <ComponentRatingBadge rating={component.testResult.rating} />
+                          <div className="flex items-center gap-2">
+                            <ComponentRatingBadge rating={component.testResult.rating} completed={component.completed} />
+                            {component.testResult.stars > 0 && (
+                              <ComponentStarsBadge stars={component.testResult.stars} />
+                            )}
+                          </div>
                         )}
                       </div>
                       
@@ -302,7 +347,7 @@ const RoadmapDetail = () => {
                         {component.description}
                       </CardDescription>
                       
-                      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           <span>{component.estimatedHours} hours</span>
@@ -311,33 +356,26 @@ const RoadmapDetail = () => {
                           <span>{component.resources.length} resources</span>
                         </div>
                         
-                        {component.isLocked && (
-                          <div className="flex items-center gap-1 text-orange-500">
-                            <Lock className="w-4 h-4" />
-                            <span>Complete prerequisites first</span>
-                          </div>
-                        )}
-                        
-                        {component.testResult && (
-                          <div className={`flex items-center gap-1 ${
-                            component.testResult.passed ? 'text-green-500' : 'text-red-500'
-                          }`}>
-                            {component.testResult.passed ? (
-                              <>
-                                <CheckCircle className="w-4 h-4" />
-                                <span>Passed with {component.testResult.score}%</span>
-                              </>
+                        {component.testId && (
+                          <div className="flex items-center gap-1">
+                            {component.testResult?.passed ? (
+                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                Passed: {component.testResult.score}%
+                              </Badge>
+                            ) : component.testResult ? (
+                              <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                                Failed: {component.testResult.score}%
+                              </Badge>
                             ) : (
-                              <>
-                                <AlertCircle className="w-4 h-4" />
-                                <span>Failed with {component.testResult.score}%</span>
-                              </>
+                              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                Test Required
+                              </Badge>
                             )}
                           </div>
                         )}
                       </div>
                       
-                      <div className="flex gap-4 mt-3">
+                      <div className="flex flex-wrap gap-3 mt-3">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -349,23 +387,22 @@ const RoadmapDetail = () => {
                           {expandedComponent === component.id ? 'Hide Resources' : 'View Resources'}
                         </Button>
                         
-                        {!component.isLocked && (
+                        {component.testId && !component.isLocked && (
                           <Button
-                            variant="outline"
                             size="sm"
                             onClick={() => startTest(component.id)}
-                            disabled={component.isLocked}
-                            className={`p-0 h-auto font-medium ${
-                              component.testResult?.passed
-                                ? 'text-green-600 hover:text-green-700 dark:text-green-400'
-                                : 'text-orange-600 hover:text-orange-700 dark:text-orange-400'
-                            }`}
+                            variant={component.completed ? "outline" : "default"}
+                            className={component.completed 
+                              ? "text-green-600 hover:text-green-700 dark:text-green-400" 
+                              : ""
+                            }
                           >
-                            {component.testResult?.passed
-                              ? 'Retake Test'
-                              : component.testResult
-                                ? 'Try Again'
-                                : 'Take Test'}
+                            {component.testResult 
+                              ? "Retake Test" 
+                              : component.completed 
+                                ? "Test Completed" 
+                                : "Take Test"
+                            }
                           </Button>
                         )}
                       </div>
@@ -400,6 +437,33 @@ const RoadmapDetail = () => {
                           </Button>
                         </div>
                       ))}
+                      
+                      {component.testId && (
+                        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <div className="flex items-start gap-3">
+                            <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full">
+                              <AlertCircle className="w-5 h-5 text-blue-700 dark:text-blue-300" />
+                            </div>
+                            <div>
+                              <h5 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                                Component Test Required
+                              </h5>
+                              <p className="text-xs text-blue-700 dark:text-blue-400">
+                                To complete this component, you'll need to pass a test with a score of 80% or higher.
+                                Each test question is worth 20 points, and you'll need to answer most questions correctly.
+                              </p>
+                              {component.isLocked && (
+                                <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
+                                  <p className="text-xs text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
+                                    <Lock className="w-3 h-3" />
+                                    Complete the prerequisite component(s) to unlock this test.
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 )}

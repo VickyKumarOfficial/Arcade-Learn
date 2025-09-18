@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Trophy, Users } from "lucide-react";
 import { useState } from "react";
-import { useGame } from "@/contexts/GameContext";
+import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Leaderboard } from "./Leaderboard";
 import { AuthGuard } from "./AuthGuard";
@@ -9,7 +9,7 @@ import { AuthGuard } from "./AuthGuard";
 const Hero = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
-  const { state } = useGame();
+  const { state } = useGameTest();
   const { isAuthenticated } = useAuth();
 
   const handleLeaderboardClick = () => {
