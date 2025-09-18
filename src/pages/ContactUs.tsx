@@ -21,6 +21,7 @@ import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useToast } from '@/hooks/use-toast';
+import { sendContactEmailViaMailto, sendContactEmailViaBackend } from '@/services/emailService';
 
 interface ContactFormData {
   firstName: string;
@@ -116,13 +117,34 @@ const ContactUs = () => {
     setIsSubmitting(true);
 
     try {
-      // Simulate form submission (replace with actual backend call later)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Message Sent Successfully!",
-        description: "We've received your message and will get back to you within 24 hours.",
-      });
+      // Prepare form data with user email
+      const emailData = {
+        ...formData,
+        userEmail: user?.email || ''
+      };
+
+      // Try to send via backend first
+      let emailSent = false;
+      try {
+        emailSent = await sendContactEmailViaBackend(emailData);
+      } catch (backendError) {
+        console.log('Backend email failed, trying mailto fallback');
+      }
+
+      if (!emailSent) {
+        // Fallback to mailto if backend fails
+        sendContactEmailViaMailto(emailData);
+        
+        toast({
+          title: "Opening Email Client",
+          description: "Your default email client will open with the message pre-filled. Please send it to complete your request.",
+        });
+      } else {
+        toast({
+          title: "Message Sent Successfully!",
+          description: "We've received your message and will get back to you within 24 hours.",
+        });
+      }
 
       // Reset form
       setFormData({
@@ -133,11 +155,18 @@ const ContactUs = () => {
         description: ''
       });
 
-} catch (error) {
+    } catch (error) {
+      console.error('Email sending error:', error);
+      
+      // Fallback to mailto
+      sendContactEmailViaMailto({
+        ...formData,
+        userEmail: user?.email || ''
+      });
+      
       toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive",
+        title: "Opening Email Client",
+        description: "Your default email client will open with the message pre-filled. Please send it to complete your request.",
       });
     } finally {
       setIsSubmitting(false);

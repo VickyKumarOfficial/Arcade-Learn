@@ -6,6 +6,7 @@ import { subscriptionService } from './services/subscriptionService.js';
 import { certificateService } from './services/certificateService.js';
 import { analyticsService } from './services/analyticsService.js';
 import { surveyService } from './services/surveyService.js';
+import { emailService } from './services/emailService.js';
 
 dotenv.config();
 
@@ -231,6 +232,62 @@ app.get('/api/user/:userId/survey/status', async (req, res) => {
     } else {
       res.status(400).json({ error: result.error });
     }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Contact Form Routes
+app.post('/api/contact/send-email', async (req, res) => {
+  try {
+    const { firstName, lastName, subject, phone, description, userEmail, toEmail } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !subject || !phone || !description) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: firstName, lastName, subject, phone, description' 
+      });
+    }
+
+    // Send contact email
+    const emailResult = await emailService.sendContactEmail({
+      firstName,
+      lastName, 
+      subject,
+      phone,
+      description,
+      userEmail
+    });
+
+    if (!emailResult.success) {
+      return res.status(500).json({ 
+        error: 'Failed to send contact email',
+        details: emailResult.error 
+      });
+    }
+
+    // Send auto-reply if user email is provided
+    if (userEmail) {
+      await emailService.sendAutoReply(userEmail, `${firstName} ${lastName}`);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Contact email sent successfully',
+      messageId: emailResult.messageId 
+    });
+
+  } catch (error) {
+    console.error('Contact form error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Test email service endpoint
+app.get('/api/contact/test', async (req, res) => {
+  try {
+    const result = await emailService.testConnection();
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
