@@ -29,7 +29,7 @@ const Footer = () => {
       { label: 'About Us', path: '#' },
       { label: 'Privacy Policy', path: '#' },
       { label: 'Terms of Service', path: '#' },
-      { label: 'Contact', path: '#' }
+      { label: 'ContactUs', path: '/contactus' }
     ]
   };
 
