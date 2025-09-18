@@ -1,26 +1,29 @@
 import { supabase } from '@/lib/supabase';
-import { UserGameData, Achievement } from '@/types';
-import { defaultAchievements } from '@/lib/gamification';
+import { UserGameData, RatingBadge } from '@/types';
+import { initializeUserGameData } from '@/lib/gamification';
 
 export interface SupabaseUserProgress {
   id: string;
   user_id: string;
-  total_xp: number;
-  level: number;
+  total_rating: number;
+  total_stars: number;
+  average_score: number;
+  completed_tests: number;
   current_streak: number;
   longest_streak: number;
   last_active_date: string;
   total_components_completed: number;
   completed_components: string[];
   completed_roadmaps: string[];
+  test_results: any[];
   created_at: string;
   updated_at: string;
 }
 
-export interface SupabaseUserAchievement {
+export interface SupabaseUserBadge {
   id: string;
   user_id: string;
-  achievement_id: string;
+  badge_id: string;
   unlocked_at: string;
   created_at: string;
 }
@@ -41,14 +44,14 @@ class UserProgressService {
         return null;
       }
 
-      // Fetch user achievements
-      const { data: achievements, error: achievementsError } = await supabase
-        .from('user_achievements')
+      // Fetch user badges
+      const { data: badges, error: badgesError } = await supabase
+        .from('user_badges')
         .select('*')
         .eq('user_id', userId);
 
-      if (achievementsError) {
-        console.error('Error fetching user achievements:', achievementsError);
+      if (badgesError) {
+        console.error('Error fetching user badges:', badgesError);
         return null;
       }
 
@@ -57,26 +60,22 @@ class UserProgressService {
         return await this.createInitialProgress(userId);
       }
 
-      // Map achievements
-      const allAchievements = defaultAchievements.map(achievement => {
-        const unlockedAchievement = achievements?.find(a => a.achievement_id === achievement.id);
-        return {
-          ...achievement,
-          unlocked: !!unlockedAchievement,
-          unlockedAt: unlockedAchievement ? new Date(unlockedAchievement.unlocked_at) : undefined,
-        };
-      });
+      // For now, use empty badges array since we don't have default badges defined
+      const userBadges: RatingBadge[] = [];
 
       return {
-        totalXP: progress.total_xp,
-        level: progress.level,
-        currentStreak: progress.current_streak,
-        longestStreak: progress.longest_streak,
+        totalRating: progress.total_rating || 0,
+        totalStars: progress.total_stars || 0,
+        averageScore: progress.average_score || 0,
+        completedTests: progress.completed_tests || 0,
+        currentStreak: progress.current_streak || 0,
+        longestStreak: progress.longest_streak || 0,
         lastActiveDate: new Date(progress.last_active_date),
-        totalComponentsCompleted: progress.total_components_completed,
-        completedComponents: progress.completed_components,
-        completedRoadmaps: progress.completed_roadmaps,
-        achievements: allAchievements,
+        totalComponentsCompleted: progress.total_components_completed || 0,
+        completedComponents: progress.completed_components || [],
+        completedRoadmaps: progress.completed_roadmaps || [],
+        badges: userBadges,
+        testResults: progress.test_results || [],
       };
     } catch (error) {
       console.error('Error in getUserProgress:', error);
@@ -89,14 +88,17 @@ class UserProgressService {
     try {
       const initialData = {
         user_id: userId,
-        total_xp: 0,
-        level: 1,
+        total_rating: 0,
+        total_stars: 0,
+        average_score: 0,
+        completed_tests: 0,
         current_streak: 0,
         longest_streak: 0,
         last_active_date: new Date().toISOString(),
         total_components_completed: 0,
         completed_components: [],
         completed_roadmaps: [],
+        test_results: [],
       };
 
       const { data: progress, error } = await supabase
@@ -110,17 +112,7 @@ class UserProgressService {
         throw error;
       }
 
-      return {
-        totalXP: 0,
-        level: 1,
-        currentStreak: 0,
-        longestStreak: 0,
-        lastActiveDate: new Date(),
-        totalComponentsCompleted: 0,
-        completedComponents: [],
-        completedRoadmaps: [],
-        achievements: [...defaultAchievements],
-      };
+      return initializeUserGameData();
     } catch (error) {
       console.error('Error in createInitialProgress:', error);
       throw error;
@@ -135,14 +127,17 @@ class UserProgressService {
         .from('user_progress')
         .upsert({
           user_id: userId,
-          total_xp: userData.totalXP,
-          level: userData.level,
+          total_rating: userData.totalRating,
+          total_stars: userData.totalStars,
+          average_score: userData.averageScore,
+          completed_tests: userData.completedTests,
           current_streak: userData.currentStreak,
           longest_streak: userData.longestStreak,
           last_active_date: userData.lastActiveDate.toISOString(),
           total_components_completed: userData.totalComponentsCompleted,
           completed_components: userData.completedComponents,
           completed_roadmaps: userData.completedRoadmaps,
+          test_results: userData.testResults,
         });
 
       if (progressError) {
@@ -150,23 +145,23 @@ class UserProgressService {
         return false;
       }
 
-      // Save unlocked achievements
-      const unlockedAchievements = userData.achievements.filter(a => a.unlocked);
-      if (unlockedAchievements.length > 0) {
-        const achievementsToInsert = unlockedAchievements.map(achievement => ({
+      // Save unlocked badges
+      const unlockedBadges = userData.badges.filter(b => b.unlocked);
+      if (unlockedBadges.length > 0) {
+        const badgesToInsert = unlockedBadges.map(badge => ({
           user_id: userId,
-          achievement_id: achievement.id,
-          unlocked_at: achievement.unlockedAt?.toISOString() || new Date().toISOString(),
+          badge_id: badge.id,
+          unlocked_at: badge.unlockedAt?.toISOString() || new Date().toISOString(),
         }));
 
-        const { error: achievementsError } = await supabase
-          .from('user_achievements')
-          .upsert(achievementsToInsert, {
-            onConflict: 'user_id,achievement_id',
+        const { error: badgesError } = await supabase
+          .from('user_badges')
+          .upsert(badgesToInsert, {
+            onConflict: 'user_id,badge_id',
           });
 
-        if (achievementsError) {
-          console.error('Error saving achievements:', achievementsError);
+        if (badgesError) {
+          console.error('Error saving badges:', badgesError);
           // Don't return false here, progress was saved successfully
         }
       }
@@ -189,8 +184,8 @@ class UserProgressService {
         return localData;
       }
 
-      // Simple conflict resolution: use the data with higher XP
-      if (localData.totalXP >= remoteData.totalXP) {
+      // Simple conflict resolution: use the data with higher total rating
+      if (localData.totalRating >= remoteData.totalRating) {
         await this.saveUserProgress(userId, localData);
         return localData;
       } else {

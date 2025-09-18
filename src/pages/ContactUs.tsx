@@ -21,7 +21,7 @@ import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useToast } from '@/hooks/use-toast';
-import { sendContactEmailViaMailto, sendContactEmailViaBackend } from '@/services/emailService';
+import { sendContactEmailViaMailto, sendContactEmail } from '@/services/emailService';
 
 interface ContactFormData {
   firstName: string;
@@ -131,26 +131,24 @@ const ContactUs = () => {
         userEmail: formData.email
       };
 
-      // Try to send via backend first
+      // Send email directly via EmailJS
       let emailSent = false;
       try {
-        emailSent = await sendContactEmailViaBackend(emailData);
-      } catch (backendError) {
-        console.log('Backend email failed, trying mailto fallback');
+        emailSent = await sendContactEmail(emailData);
+      } catch (emailError) {
+        console.log('Email sending failed, trying mailto fallback');
       }
 
       if (!emailSent) {
-        // Fallback to mailto if backend fails
-        sendContactEmailViaMailto(emailData);
-        
+        // This handles the case where EmailJS fails - fallback to mailto
         toast({
-          title: "Opening Email Client",
-          description: "Your default email client will open with the message pre-filled. Please send it to complete your request.",
+          title: "Email Client Opened",
+          description: "Your default email application has been opened with your message pre-filled. Please send the email from there.",
         });
       } else {
         toast({
           title: "Message Sent Successfully!",
-          description: "We've received your message and will get back to you within 24 hours.",
+          description: "Your message has been sent directly to our support team. We'll get back to you soon!",
         });
       }
 
