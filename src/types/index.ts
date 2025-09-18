@@ -1,4 +1,39 @@
 
+export interface TestQuestion {
+  id: string;
+  question: string;
+  type: 'multiple-choice' | 'true-false';
+  options?: string[];
+  correctAnswer: string | boolean;
+  explanation?: string;
+  points: number;
+}
+
+// Test System Types
+
+export interface ComponentTest {
+  id: string;
+  title: string;
+  description: string;
+  questions: TestQuestion[];
+  timeLimit: number; // minutes
+  passingScore: number; // 80
+  maxAttempts: number; // 3
+}
+
+export interface TestResult {
+  testId: string;
+  componentId: string;
+  roadmapId: string;
+  score: number; // 0-100
+  rating: number; // score * 2 (0-200)
+  stars: number; // rating / 100 (0-2 stars max)
+  passed: boolean; // score >= 80
+  attemptCount: number;
+  completedAt: Date;
+  answers: { questionId: string; answer: string | number | boolean; correct: boolean }[];
+}
+
 export interface RoadmapComponent {
   id: string;
   title: string;
@@ -6,7 +41,11 @@ export interface RoadmapComponent {
   estimatedHours: number;
   resources: Resource[];
   completed: boolean;
-  xpReward: number;
+  // Test-related properties
+  testId?: string;
+  testResult?: TestResult;
+  isLocked: boolean;
+  prerequisiteIds: string[]; // Component IDs that must be completed first
 }
 
 export interface Resource {
@@ -30,18 +69,34 @@ export interface Roadmap {
   color: string;
 }
 
+// Rating Badge System (replacing Achievement system)
+export interface RatingBadge {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  type: 'stars' | 'perfect' | 'streak' | 'milestone';
+  condition: {
+    type: 'total_stars' | 'perfect_scores' | 'consecutive_passes' | 'roadmap_complete';
+    value: number;
+    roadmapId?: string;
+  };
+  unlocked: boolean;
+  unlockedAt?: Date;
+}
+
 export interface Achievement {
   id: string;
   title: string;
   description: string;
   icon: string;
   condition: {
-    type: 'complete_components' | 'complete_roadmap' | 'earn_xp' | 'streak_days' | 'complete_difficulty';
+    type: 'complete_components' | 'complete_roadmap' | 'earn_rating' | 'streak_days' | 'complete_difficulty';
     value: number;
     roadmapId?: string;
     difficulty?: string;
   };
-  xpReward: number;
+  ratingReward: number; // Rating points reward instead of XP
   unlocked: boolean;
   unlockedAt?: Date;
 }
@@ -71,16 +126,20 @@ export interface SurveyState {
   isVisible: boolean;
 }
 
+// Updated User Data (Rating System)
 export interface UserGameData {
-  totalXP: number;
-  level: number;
+  totalRating: number; // Sum of all component ratings
+  totalStars: number; // totalRating / 100
+  averageScore: number; // Average test score across all components
+  completedTests: number;
   currentStreak: number;
   longestStreak: number;
   lastActiveDate: Date;
-  achievements: Achievement[];
+  badges: RatingBadge[]; // Instead of achievements
   completedRoadmaps: string[];
   totalComponentsCompleted: number;
   completedComponents: string[]; // Track individual component IDs
+  testResults: TestResult[]; // Store all test results
 }
 
 export interface CareerOption {

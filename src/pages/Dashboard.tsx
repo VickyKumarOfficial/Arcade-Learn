@@ -20,8 +20,7 @@ import {
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { UserStatsCard } from "@/components/UserStatsCard";
-import { AchievementsGrid } from "@/components/AchievementsGrid";
-import { useGame } from "@/contexts/GameContext";
+import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { roadmaps } from "@/data/roadmaps";
 import { useNavigate } from "react-router-dom";
@@ -32,16 +31,13 @@ import {
   getInProgressRoadmaps
 } from "@/lib/gamification";
 import { 
-  XPBadge, 
-  LevelBadge, 
   StreakBadge, 
-  ProgressBadge, 
-  AchievementBadge 
+  ProgressBadge
 } from "@/components/StyledBadges";
 
 const Dashboard = () => {
   const [showAllAchievements, setShowAllAchievements] = useState(false);
-  const { state } = useGame();
+  const { state } = useGameTest();
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -126,8 +122,9 @@ const Dashboard = () => {
     );
   }
   
-  const levelInfo = getLevelProgress(state.userData.totalXP);
-  const levelTitle = getLevelTitle(state.userData.level);
+  // Calculate rating and star based stats
+  const averageRating = state.userData.totalStars > 0 ? state.userData.totalRating / state.userData.totalStars : 0;
+  const totalStars = state.userData.totalStars;
   
   // Calculate completed roadmaps with real-time data
   const completedRoadmaps = getCompletedRoadmaps(state.userData.completedComponents);
@@ -139,28 +136,33 @@ const Dashboard = () => {
   const completedComponentsCount = state.userData.totalComponentsCompleted;
   const overallProgress = totalComponents > 0 ? (completedComponentsCount / totalComponents) * 100 : 0;
 
-  // Get recent achievements (last 5 unlocked)
-  const recentAchievements = state.userData.achievements
-    .filter(achievement => achievement.unlocked)
+  // Get recent badges (last 5 unlocked)
+  const recentBadges = state.userData.badges
+    .filter(badge => badge.unlocked)
     .sort((a, b) => {
       if (!a.unlockedAt || !b.unlockedAt) return 0;
       return new Date(b.unlockedAt).getTime() - new Date(a.unlockedAt).getTime();
     })
     .slice(0, 5);
 
-  const totalUnlockedAchievements = state.userData.achievements.filter(a => a.unlocked).length;
+  const totalUnlockedBadges = state.userData.badges.filter(b => b.unlocked).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
       <Navigation />
       
-      {/* Achievements Modal */}
+      {/* Badges Modal */}
       {showAllAchievements && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <AchievementsGrid 
-            achievements={state.userData.achievements} 
-            onClose={() => setShowAllAchievements(false)}
-          />
+          <Card className="w-full max-w-4xl mx-auto">
+            <CardHeader>
+              <CardTitle>Your Badges</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Badge system coming soon!</p>
+              <Button onClick={() => setShowAllAchievements(false)}>Close</Button>
+            </CardContent>
+          </Card>
         </div>
       )}
       
@@ -271,41 +273,41 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* Achievements Section */}
+          {/* Badges Section */}
           <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg mb-8">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-yellow-500" />
-                  Achievements
+                  Badges
                 </CardTitle>
                 <Button 
                   variant="outline" 
                   onClick={() => setShowAllAchievements(true)}
                   className="text-sm"
                 >
-                  View All ({totalUnlockedAchievements})
+                  View All ({totalUnlockedBadges})
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {recentAchievements.length > 0 ? (
+              {recentBadges.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {recentAchievements.map((achievement) => (
-                    <AchievementBadge
-                      key={achievement.id}
-                      title={achievement.title}
-                      icon={achievement.icon}
-                      unlocked={true}
-                      size="sm"
-                    />
+                  {recentBadges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center"
+                    >
+                      <div className="text-2xl mb-2">{badge.icon}</div>
+                      <div className="font-semibold text-sm">{badge.title}</div>
+                    </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No achievements unlocked yet.</p>
-                  <p className="text-sm mt-1">Complete your first component to get started!</p>
+                  <p>No badges earned yet.</p>
+                  <p className="text-sm mt-1">Complete your first test to get started!</p>
                 </div>
               )}
             </CardContent>
@@ -346,10 +348,12 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <XPBadge 
-                          xp={roadmap.components.reduce((sum, comp) => sum + comp.xpReward, 0)} 
-                          size="sm"
-                        />
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-yellow-500">⭐</span>
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                            {roadmap.components.length} components
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}

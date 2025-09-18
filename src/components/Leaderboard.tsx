@@ -92,8 +92,8 @@ export const Leaderboard = ({ userData, onClose }: LeaderboardProps) => {
   const currentUserEntry: LeaderboardEntry = {
     id: "current",
     name: "You",
-    level: userData.level,
-    totalXP: userData.totalXP,
+    level: Math.floor(userData.totalRating / 100), // Calculate level from rating
+    totalXP: userData.totalRating, // Use total rating as XP equivalent
     completedRoadmaps: userData.completedRoadmaps.length,
     avatar: "🎯"
   };
@@ -165,7 +165,7 @@ export const Leaderboard = ({ userData, onClose }: LeaderboardProps) => {
                       <span>Level {entry.level}</span>
                     </div>
                     <div>
-                      <span>{entry.totalXP.toLocaleString()} XP</span>
+                      <span>{entry.totalXP.toLocaleString()} Rating</span>
                     </div>
                     <div>
                       <span>{entry.completedRoadmaps} roadmaps</span>

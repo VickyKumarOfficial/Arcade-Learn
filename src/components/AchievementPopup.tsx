@@ -49,7 +49,7 @@ export const AchievementPopup = ({ achievement, onClose }: AchievementPopupProps
             <p className="text-sm opacity-90 mb-4">{achievement.description}</p>
             
             <div className="bg-white/20 rounded-lg px-4 py-2 mb-4">
-              <span className="font-bold text-lg">+{achievement.xpReward} XP</span>
+              <span className="font-bold text-lg">+{achievement.ratingReward} Rating Points</span>
             </div>
             
             <Button 
