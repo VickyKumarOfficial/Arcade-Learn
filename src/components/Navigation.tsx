@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Sun, Moon, Menu, X, Trophy, Star, LogOut, User, Settings, ChevronDown, Sparkles, Brain, Bot } from "lucide-react";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useState } from "react";
-import { useGame } from "@/contexts/GameContext";
+import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { LevelBadge, XPBadge, StreakBadge } from "./StyledBadges";
@@ -20,7 +20,7 @@ const Navigation = () => {
   const location = useLocation();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { state } = useGame();
+  const { state } = useGameTest();
   const { isAuthenticated, user, logout } = useAuth();
   
   const navItems = [
@@ -136,10 +136,16 @@ const Navigation = () => {
             {/* User Stats - Desktop (only show if authenticated) */}
             {isAuthenticated && (
               <div className="hidden lg:flex items-center space-x-2 mr-2">
-                <LevelBadge level={state.userData.level} size="sm" />
-                <XPBadge xp={state.userData.totalXP} size="sm" />
+                <Badge className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30 text-xs">
+                  ⭐ {state.userData.totalStars}
+                </Badge>
+                <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30 text-xs">
+                  {state.userData.averageScore.toFixed(0)}% avg
+                </Badge>
                 {state.userData.currentStreak > 0 && (
-                  <StreakBadge streak={state.userData.currentStreak} size="sm" />
+                  <Badge className="bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30 text-xs">
+                    🔥 {state.userData.currentStreak}
+                  </Badge>
                 )}
               </div>
             )}
@@ -347,10 +353,16 @@ const Navigation = () => {
                   <>
                     {/* User stats for mobile */}
                     <div className="flex items-center justify-center space-x-2 py-2">
-                      <LevelBadge level={state.userData.level} size="sm" />
-                      <XPBadge xp={state.userData.totalXP} size="sm" />
+                      <Badge className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30 text-xs">
+                        ⭐ {state.userData.totalStars}
+                      </Badge>
+                      <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30 text-xs">
+                        {state.userData.averageScore.toFixed(0)}% avg
+                      </Badge>
                       {state.userData.currentStreak > 0 && (
-                        <StreakBadge streak={state.userData.currentStreak} size="sm" />
+                        <Badge className="bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30 text-xs">
+                          🔥 {state.userData.currentStreak}
+                        </Badge>
                       )}
                     </div>
                     <div className="text-center text-sm text-gray-600 dark:text-gray-300 py-2">

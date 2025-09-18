@@ -99,7 +99,7 @@ export const AchievementsGrid = ({ achievements, onClose }: AchievementsGridProp
                         variant={achievement.unlocked ? 'default' : 'secondary'}
                         className="text-xs"
                       >
-                        +{achievement.xpReward} XP
+                        +{achievement.ratingReward} Rating
                       </Badge>
                       {achievement.unlocked && achievement.unlockedAt && (
                         <span className="text-xs text-gray-500 dark:text-gray-400">

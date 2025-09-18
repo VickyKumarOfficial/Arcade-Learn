@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Roadmap } from "@/types";
 import { useNavigate } from "react-router-dom";
-import { useGame } from "@/contexts/GameContext";
+import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -16,7 +16,7 @@ interface RoadmapCardProps {
 
 const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
   const navigate = useNavigate();
-  const { state } = useGame();
+  const { state } = useGameTest();
   const { user } = useAuth();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   
