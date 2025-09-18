@@ -2,16 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { UserGameData } from "@/types";
-import { getLevelProgress, getLevelTitle } from "@/lib/gamification";
-import { XPBadge, LevelBadge, StreakBadge } from "./StyledBadges";
+import { Star, Target, TrendingUp } from "lucide-react";
 
 interface UserStatsCardProps {
   userData: UserGameData;
 }
 
 export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
-  const levelInfo = getLevelProgress(userData.totalXP);
-  const levelTitle = getLevelTitle(userData.level);
+  const averageRating = userData.completedTests > 0 ? userData.totalRating / userData.completedTests : 0;
+  const completionRate = userData.completedTests > 0 ? (userData.averageScore / 100) * 100 : 0;
 
   return (
     <Card className="bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-600 text-white border-0 shadow-xl overflow-hidden relative">
@@ -23,45 +22,47 @@ export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
       <CardHeader className="pb-4 relative z-10">
         <CardTitle className="flex items-center justify-between">
           <span className="text-xl font-bold">Your Progress</span>
-          <LevelBadge level={userData.level} title={levelTitle} size="md" />
+          <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
+            ⭐ {userData.totalStars} Stars
+          </Badge>
         </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-6 relative z-10">
-        {/* XP and Level Display */}
+        {/* Rating and Stars Display */}
         <div className="grid grid-cols-2 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              {userData.level}
+              {averageRating.toFixed(1)}
             </div>
-            <div className="text-sm opacity-90">Level</div>
-            <div className="text-xs opacity-75 mt-1">{levelTitle}</div>
+            <div className="text-sm opacity-90">Avg Rating</div>
+            <div className="text-xs opacity-75 mt-1">Out of 10.0</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">
-              {userData.totalXP.toLocaleString()}
+              {userData.totalStars}
             </div>
-            <div className="text-sm opacity-90">Total XP</div>
+            <div className="text-sm opacity-90">Total Stars</div>
             <div className="text-xs opacity-75 mt-1">All Time</div>
           </div>
         </div>
         
-        {/* Level Progress Bar */}
+        {/* Test Performance Progress */}
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="opacity-90">Level {levelInfo.current}</span>
-            <span className="opacity-90">Level {levelInfo.next}</span>
+            <span className="opacity-90">Test Performance</span>
+            <span className="opacity-90">{completionRate.toFixed(1)}%</span>
           </div>
           <div className="relative">
             <Progress 
-              value={levelInfo.progress} 
+              value={completionRate} 
               className="h-3 bg-white/20" 
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-full opacity-80" style={{width: `${levelInfo.progress}%`}}></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 rounded-full opacity-80" style={{width: `${completionRate}%`}}></div>
           </div>
           <div className="flex justify-between text-xs opacity-75">
-            <span>{levelInfo.currentLevelXP}/100 XP</span>
-            <span>{levelInfo.xpToNext} XP to next level</span>
+            <span>Average Score: {userData.averageScore.toFixed(1)}%</span>
+            <span>{userData.completedTests} tests completed</span>
           </div>
         </div>
 
@@ -81,9 +82,13 @@ export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
 
         {/* Badge Row */}
         <div className="flex flex-wrap gap-2 pt-2">
-          <XPBadge xp={userData.totalXP} size="sm" />
+          <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30 text-xs">
+            ⭐ {userData.totalStars} Stars
+          </Badge>
           {userData.currentStreak > 0 && (
-            <StreakBadge streak={userData.currentStreak} size="sm" />
+            <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30 text-xs">
+              🔥 {userData.currentStreak} Day Streak
+            </Badge>
           )}
           {userData.completedRoadmaps.length > 0 && (
             <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 text-xs">

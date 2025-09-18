@@ -101,7 +101,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete your first component',
     icon: '🎯',
     condition: { type: 'complete_components', value: 1 },
-    xpReward: 50,
+    ratingReward: 50,
     unlocked: false
   },
   {
@@ -110,7 +110,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete 5 components',
     icon: '🚀',
     condition: { type: 'complete_components', value: 5 },
-    xpReward: 100,
+    ratingReward: 100,
     unlocked: false
   },
   {
@@ -119,7 +119,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete 10 components',
     icon: '📚',
     condition: { type: 'complete_components', value: 10 },
-    xpReward: 200,
+    ratingReward: 200,
     unlocked: false
   },
   {
@@ -128,7 +128,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete 25 components',
     icon: '🔍',
     condition: { type: 'complete_components', value: 25 },
-    xpReward: 500,
+    ratingReward: 500,
     unlocked: false
   },
   {
@@ -137,7 +137,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete 50 components',
     icon: '🏆',
     condition: { type: 'complete_components', value: 50 },
-    xpReward: 1000,
+    ratingReward: 1000,
     unlocked: false
   },
   {
@@ -146,7 +146,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete your first roadmap',
     icon: '🛣️',
     condition: { type: 'complete_roadmap', value: 1 },
-    xpReward: 300,
+    ratingReward: 300,
     unlocked: false
   },
   {
@@ -154,8 +154,8 @@ export const defaultAchievements: Achievement[] = [
     title: 'XP Hunter',
     description: 'Earn 1000 XP',
     icon: '⭐',
-    condition: { type: 'earn_xp', value: 1000 },
-    xpReward: 200,
+    condition: { type: 'earn_rating', value: 1000 },
+    ratingReward: 200,
     unlocked: false
   },
   {
@@ -163,8 +163,8 @@ export const defaultAchievements: Achievement[] = [
     title: 'XP Master',
     description: 'Earn 5000 XP',
     icon: '💎',
-    condition: { type: 'earn_xp', value: 5000 },
-    xpReward: 500,
+    condition: { type: 'earn_rating', value: 5000 },
+    ratingReward: 500,
     unlocked: false
   },
   {
@@ -173,7 +173,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Maintain a 7-day learning streak',
     icon: '🔥',
     condition: { type: 'streak_days', value: 7 },
-    xpReward: 300,
+    ratingReward: 300,
     unlocked: false
   },
   {
@@ -182,7 +182,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Maintain a 30-day learning streak',
     icon: '🌟',
     condition: { type: 'streak_days', value: 30 },
-    xpReward: 1000,
+    ratingReward: 1000,
     unlocked: false
   },
   {
@@ -191,7 +191,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete a beginner roadmap',
     icon: '🎓',
     condition: { type: 'complete_difficulty', value: 1, difficulty: 'Beginner' },
-    xpReward: 250,
+    ratingReward: 250,
     unlocked: false
   },
   {
@@ -200,7 +200,7 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete an intermediate roadmap',
     icon: '🏅',
     condition: { type: 'complete_difficulty', value: 1, difficulty: 'Intermediate' },
-    xpReward: 500,
+    ratingReward: 500,
     unlocked: false
   },
   {
@@ -209,49 +209,16 @@ export const defaultAchievements: Achievement[] = [
     description: 'Complete an advanced roadmap',
     icon: '👑',
     condition: { type: 'complete_difficulty', value: 1, difficulty: 'Advanced' },
-    xpReward: 1000,
+    ratingReward: 1000,
     unlocked: false
   }
 ];
 
 // Check and unlock achievements
 export const checkAchievements = (userData: UserGameData, roadmapDifficulty?: string): Achievement[] => {
-  const newlyUnlocked: Achievement[] = [];
-  
-  userData.achievements.forEach(achievement => {
-    if (achievement.unlocked) return;
-    
-    let shouldUnlock = false;
-    
-    switch (achievement.condition.type) {
-      case 'complete_components':
-        shouldUnlock = userData.totalComponentsCompleted >= achievement.condition.value;
-        break;
-      case 'complete_roadmap':
-        shouldUnlock = userData.completedRoadmaps.length >= achievement.condition.value;
-        break;
-      case 'earn_xp':
-        shouldUnlock = userData.totalXP >= achievement.condition.value;
-        break;
-      case 'streak_days':
-        shouldUnlock = userData.currentStreak >= achievement.condition.value;
-        break;
-      case 'complete_difficulty':
-        if (roadmapDifficulty && achievement.condition.difficulty === roadmapDifficulty) {
-          const completedOfDifficulty = userData.completedRoadmaps.length; // This would need more specific tracking
-          shouldUnlock = completedOfDifficulty >= achievement.condition.value;
-        }
-        break;
-    }
-    
-    if (shouldUnlock) {
-      achievement.unlocked = true;
-      achievement.unlockedAt = new Date();
-      newlyUnlocked.push(achievement);
-    }
-  });
-  
-  return newlyUnlocked;
+  // For now, return empty array since we're transitioning to rating system
+  // This function will be deprecated in favor of badge system in GameTestContext
+  return [];
 };
 
 // Update streak based on daily activity
@@ -282,13 +249,16 @@ export const updateStreak = (userData: UserGameData): UserGameData => {
 
 // Initialize default user game data
 export const initializeUserGameData = (): UserGameData => ({
-  totalXP: 0,
-  level: 1,
+  totalRating: 0,
+  totalStars: 0,
+  averageScore: 0,
+  completedTests: 0,
   currentStreak: 0,
   longestStreak: 0,
   lastActiveDate: new Date(),
-  achievements: [...defaultAchievements],
+  badges: [],
   completedRoadmaps: [],
   totalComponentsCompleted: 0,
-  completedComponents: []
+  completedComponents: [],
+  testResults: []
 });
