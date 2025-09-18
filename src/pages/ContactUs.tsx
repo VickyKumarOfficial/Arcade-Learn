@@ -21,10 +21,12 @@ import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useToast } from '@/hooks/use-toast';
+import { sendContactEmailViaMailto, sendContactEmailViaBackend } from '@/services/emailService';
 
 interface ContactFormData {
   firstName: string;
   lastName: string;
+  email: string;
   subject: string;
   phone: string;
   description: string;
@@ -36,6 +38,7 @@ const ContactUs = () => {
   const [formData, setFormData] = useState<ContactFormData>({
     firstName: '',
     lastName: '',
+    email: user?.email || '',
     subject: '',
     phone: '',
     description: ''
@@ -68,6 +71,12 @@ const ContactUs = () => {
 
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
 
     if (!formData.subject.trim()) {
@@ -116,28 +125,57 @@ const ContactUs = () => {
     setIsSubmitting(true);
 
     try {
-      // Simulate form submission (replace with actual backend call later)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Message Sent Successfully!",
-        description: "We've received your message and will get back to you within 24 hours.",
-      });
+      // Prepare form data with user email
+      const emailData = {
+        ...formData,
+        userEmail: formData.email
+      };
+
+      // Try to send via backend first
+      let emailSent = false;
+      try {
+        emailSent = await sendContactEmailViaBackend(emailData);
+      } catch (backendError) {
+        console.log('Backend email failed, trying mailto fallback');
+      }
+
+      if (!emailSent) {
+        // Fallback to mailto if backend fails
+        sendContactEmailViaMailto(emailData);
+        
+        toast({
+          title: "Opening Email Client",
+          description: "Your default email client will open with the message pre-filled. Please send it to complete your request.",
+        });
+      } else {
+        toast({
+          title: "Message Sent Successfully!",
+          description: "We've received your message and will get back to you within 24 hours.",
+        });
+      }
 
       // Reset form
       setFormData({
         firstName: '',
         lastName: '',
+        email: user?.email || '',
         subject: '',
         phone: '',
         description: ''
       });
 
-} catch (error) {
+    } catch (error) {
+      console.error('Email sending error:', error);
+      
+      // Fallback to mailto
+      sendContactEmailViaMailto({
+        ...formData,
+        userEmail: formData.email
+      });
+      
       toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive",
+        title: "Opening Email Client",
+        description: "Your default email client will open with the message pre-filled. Please send it to complete your request.",
       });
     } finally {
       setIsSubmitting(false);
@@ -218,8 +256,23 @@ const ContactUs = () => {
                       </div>
                     </div>
 
+                    {/* Email */}
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email address"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        className={errors.email ? 'border-red-500' : ''}
+                      />
+                      {errors.email && (
+                        <p className="text-sm text-red-500">{errors.email}</p>
+                      )}
+                    </div>
 
-{/* Subject */}
+                    {/* Subject */}
                     <div className="space-y-2">
                       <Label htmlFor="subject">Subject *</Label>
                       <Input
