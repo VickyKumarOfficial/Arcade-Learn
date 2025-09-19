@@ -9,6 +9,7 @@ import { AlertCircle, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { ComponentTest as ComponentTestType, TestQuestion, TestResult } from '@/types';
 import { componentTests } from '@/data/componentTests';
 import { useGameTest } from '@/contexts/GameTestContext';
+import { calculateModuleScore } from '@/lib/gamification';
 
 interface ComponentTestProps {
   testId: string;
@@ -144,8 +145,13 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
     
     const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
     const passed = score >= test.passingScore;
-    const rating = score * 2; // Each percentage point is worth 2 rating points
-    const stars = Math.floor(rating / 100); // Each 100 rating points = 1 star
+    const rating = score * 2; // Legacy: each percentage point is worth 2 rating points
+    
+    // Calculate module score using our imported function (properly handles 80% edge case)
+    const moduleScore = calculateModuleScore(score);
+    
+    // Calculate stars based on score (legacy calculation for individual test stars)
+    const stars = Math.floor(score / 50); // 0-1 stars for 0-100%
     
     const result: TestResult = {
       testId,
@@ -154,6 +160,7 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
       score,
       rating,
       stars,
+      moduleScore, // Add moduleScore to the test result
       passed,
       attemptCount: previousAttempts + 1,
       completedAt: new Date(),
@@ -192,7 +199,7 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
           </div>
           <CardDescription>
             {testResult.passed 
-              ? `Great job! You've earned ${testResult.rating} rating points and ${testResult.stars} stars.` 
+              ? `Great job! You've earned ${testResult.moduleScore.toFixed(1)} points toward your overall score.` 
               : `You need ${test.passingScore}% to pass. Keep practicing and try again!`}
           </CardDescription>
         </CardHeader>
@@ -207,7 +214,13 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
               className={`h-3 ${testResult.passed ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"}`} 
             />
             
-            <div className="grid grid-cols-2 gap-4 mt-6">
+            <div className="grid grid-cols-3 gap-4 mt-6">
+              <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg text-center">
+                <div className="text-lg font-bold text-green-700 dark:text-green-400">
+                  {testResult.moduleScore.toFixed(1)}
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Points Earned</div>
+              </div>
               <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg text-center">
                 <div className="text-lg font-bold text-blue-700 dark:text-blue-400">
                   {testResult.rating}

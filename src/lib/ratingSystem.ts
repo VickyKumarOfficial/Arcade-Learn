@@ -38,7 +38,7 @@ export const initializeTestUserGameData = (): UserGameData => {
         // Default values
         totalRating: 0,
         totalStars: 0,
-        averageScore: 0,
+        totalScore: 0,
         completedTests: 0,
         currentStreak: 0,
         longestStreak: 0,
@@ -68,7 +68,7 @@ const createDefaultTestUserData = (): UserGameData => {
   return {
     totalRating: 0,
     totalStars: 0,
-    averageScore: 0,
+    totalScore: 0,
     completedTests: 0,
     currentStreak: 0,
     longestStreak: 0,

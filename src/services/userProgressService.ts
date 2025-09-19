@@ -1,13 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import { UserGameData, RatingBadge } from '@/types';
-import { initializeUserGameData } from '@/lib/gamification';
+import { initializeUserGameData, calculateModuleScore, calculateStarsFromScore } from '@/lib/gamification';
 
 export interface SupabaseUserProgress {
   id: string;
   user_id: string;
   total_rating: number;
   total_stars: number;
-  average_score: number;
+  total_score: number; // Changed from average_score
   completed_tests: number;
   current_streak: number;
   longest_streak: number;
@@ -66,7 +66,7 @@ class UserProgressService {
       return {
         totalRating: progress.total_rating || 0,
         totalStars: progress.total_stars || 0,
-        averageScore: progress.average_score || 0,
+        totalScore: progress.total_score || 0,
         completedTests: progress.completed_tests || 0,
         currentStreak: progress.current_streak || 0,
         longestStreak: progress.longest_streak || 0,
@@ -90,7 +90,7 @@ class UserProgressService {
         user_id: userId,
         total_rating: 0,
         total_stars: 0,
-        average_score: 0,
+        total_score: 0,
         completed_tests: 0,
         current_streak: 0,
         longest_streak: 0,
@@ -130,7 +130,7 @@ class UserProgressService {
           user_id: userId,
           total_rating: userData.totalRating,
           total_stars: userData.totalStars,
-          average_score: userData.averageScore,
+          total_score: userData.totalScore,
           completed_tests: userData.completedTests,
           current_streak: userData.currentStreak,
           longest_streak: userData.longestStreak,
@@ -195,6 +195,55 @@ class UserProgressService {
     } catch (error) {
       console.error('Error in syncUserProgress:', error);
       return localData; // Fallback to local data
+    }
+  }
+
+  // Handle test completion with new scoring system
+  async completeTest(userId: string, componentId: string, testScore: number): Promise<UserGameData | null> {
+    try {
+      const userData = await this.getUserProgress(userId);
+      if (!userData) return null;
+
+      // Calculate module score using new system
+      const moduleScore = calculateModuleScore(testScore);
+      
+      // Only proceed if test passed (score >= 80%)
+      if (testScore >= 80) {
+        // Add to total score
+        userData.totalScore += moduleScore;
+        
+        // Update stars based on new total score
+        userData.totalStars = calculateStarsFromScore(userData.totalScore);
+        
+        // Update other stats
+        userData.completedTests += 1;
+        
+        // Add test result
+        userData.testResults.push({
+          testId: `${componentId}_test`,
+          componentId,
+          roadmapId: 'unknown', // This should be passed as parameter in real implementation
+          score: testScore,
+          rating: testScore * 2,
+          stars: Math.floor(testScore / 50), // Legacy star calculation
+          moduleScore,
+          passed: testScore >= 80,
+          attemptCount: 1,
+          completedAt: new Date(),
+          answers: [] // This should be passed as parameter in real implementation
+        });
+
+        // Update last active date
+        userData.lastActiveDate = new Date();
+
+        // Save updated progress
+        await this.saveUserProgress(userId, userData);
+      }
+
+      return userData;
+    } catch (error) {
+      console.error('Error in completeTest:', error);
+      return null;
     }
   }
 
