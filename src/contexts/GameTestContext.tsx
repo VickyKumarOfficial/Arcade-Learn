@@ -76,11 +76,11 @@ const gameTestReducer = (state: GameTestState, action: GameTestAction): GameTest
           )
         : [...state.userData.testResults, result];
       
-      // Calculate new average score across all completed tests
-      const passedTests = updatedTestResults.filter(r => r.passed);
-      const newAverageScore = passedTests.length > 0 
-        ? passedTests.reduce((sum, r) => sum + r.score, 0) / passedTests.length 
-        : 0;
+      // Update total score (instead of average score)
+      const moduleScore = result.moduleScore || 0;
+      const totalScoreDifference = previousResult 
+        ? moduleScore - (previousResult.moduleScore || 0)
+        : moduleScore;
       
       // Calculate completed components list based on 80% rule
       let updatedCompletedComponents = [...state.userData.completedComponents];
@@ -96,7 +96,7 @@ const gameTestReducer = (state: GameTestState, action: GameTestAction): GameTest
         ...state.userData,
         totalRating: state.userData.totalRating + ratingDifference,
         totalStars: state.userData.totalStars + starsDifference,
-        averageScore: newAverageScore,
+        totalScore: Math.max(0, state.userData.totalScore + totalScoreDifference),
         completedTests: shouldMarkCompleted || alreadyCompleted
           ? state.userData.completedTests + (shouldMarkCompleted ? 1 : 0)
           : state.userData.completedTests,
