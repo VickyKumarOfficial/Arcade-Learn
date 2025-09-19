@@ -125,20 +125,24 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
     let earnedPoints = 0;
     
     const answersWithCorrectness = test.questions.map(question => {
-      const userAnswer = answers[question.id] || '';
-      const isCorrect = userAnswer === question.correctAnswer;
+      const userAnswer = answers[question.id];
+      
+      // Ensure consistent string comparison for all answer types
+      const userAnswerStr = userAnswer?.toString() || '';
+      const correctAnswerStr = question.correctAnswer.toString();
+      const isCorrect = userAnswerStr === correctAnswerStr;
       
       totalPoints += question.points;
       if (isCorrect) earnedPoints += question.points;
       
       return {
         questionId: question.id,
-        answer: userAnswer,
+        answer: userAnswer || '',
         correct: isCorrect
       };
     });
     
-    const score = Math.round((earnedPoints / totalPoints) * 100);
+    const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
     const passed = score >= test.passingScore;
     const rating = score * 2; // Each percentage point is worth 2 rating points
     const stars = Math.floor(rating / 100); // Each 100 rating points = 1 star
@@ -303,7 +307,7 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
             {question.type === 'true-false' && (
               <RadioGroup
                 value={answers[question.id]?.toString() || ''}
-                onValueChange={(value) => selectAnswer(question.id, value === 'true')}
+                onValueChange={(value) => selectAnswer(question.id, value)}
                 className="space-y-3"
               >
                 <div className="flex items-center space-x-2">

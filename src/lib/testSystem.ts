@@ -1,20 +1,88 @@
 import { RoadmapComponent, UserGameData, TestResult, RatingBadge } from '@/types';
 
-// Helper to check component prerequisites
+// Helper to check component prerequisites with strong 80% pass requirement
 export const checkPrerequisites = (
   component: RoadmapComponent,
   completedComponents: string[],
-  roadmapId: string
+  roadmapId: string,
+  testResults?: TestResult[]
 ): boolean => {
   // If no prerequisites, component is unlocked
   if (!component.prerequisiteIds || component.prerequisiteIds.length === 0) {
     return true;
   }
   
-  // Check if all prerequisites are completed
-  return component.prerequisiteIds.every(prereqId => 
-    completedComponents.includes(`${roadmapId}-${prereqId}`)
-  );
+  // Check if all prerequisites are completed AND passed with at least 80%
+  return component.prerequisiteIds.every(prereqId => {
+    const componentKey = `${roadmapId}-${prereqId}`;
+    const isCompleted = completedComponents.includes(componentKey);
+    
+    // If not completed, definitely locked
+    if (!isCompleted) return false;
+    
+    // If testResults provided, check for 80% pass requirement
+    if (testResults && testResults.length > 0) {
+      const prereqTestResults = testResults.filter(result => 
+        result.componentId === prereqId && result.roadmapId === roadmapId
+      );
+      
+      if (prereqTestResults.length > 0) {
+        // Get the best score for this prerequisite component
+        const bestScore = Math.max(...prereqTestResults.map(result => result.score));
+        
+        // STRONG LOCK: Must have at least 80% to unlock next component
+        return bestScore >= 80;
+      }
+    }
+    
+    // If no test results available, default to completed status
+    // This ensures backward compatibility but maintains security
+    return isCompleted;
+  });
+};
+
+// Helper to check if a component can be accessed (stronger version)
+export const canAccessComponent = (
+  component: RoadmapComponent,
+  userData: UserGameData,
+  roadmapId: string
+): { canAccess: boolean; reason?: string; requiredScore?: number } => {
+  // Check if component has prerequisites
+  if (!component.prerequisiteIds || component.prerequisiteIds.length === 0) {
+    return { canAccess: true };
+  }
+
+  // Check each prerequisite
+  for (const prereqId of component.prerequisiteIds) {
+    const componentKey = `${roadmapId}-${prereqId}`;
+    const isCompleted = userData.completedComponents.includes(componentKey);
+    
+    if (!isCompleted) {
+      return { 
+        canAccess: false, 
+        reason: `Complete the previous component first` 
+      };
+    }
+
+    // Check test score requirement
+    const prereqTestResults = userData.testResults?.filter(result => 
+      result.componentId === prereqId && result.roadmapId === roadmapId
+    ) || [];
+
+    if (prereqTestResults.length > 0) {
+      const bestScore = Math.max(...prereqTestResults.map(result => result.score));
+      
+      if (bestScore < 80) {
+        return { 
+          canAccess: false, 
+          reason: `You need at least 80% score in the previous component to unlock this. Your best score: ${bestScore}%`,
+          requiredScore: 80
+        };
+      }
+    }
+  }
+
+  return { canAccess: true };
 };
 
 // Check for badges based on user's data (updated version)

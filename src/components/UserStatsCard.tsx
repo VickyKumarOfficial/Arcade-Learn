@@ -9,8 +9,10 @@ interface UserStatsCardProps {
 }
 
 export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
+  // Calculate average rating correctly (rating points / completed tests)
   const averageRating = userData.completedTests > 0 ? userData.totalRating / userData.completedTests : 0;
-  const completionRate = userData.completedTests > 0 ? (userData.averageScore / 100) * 100 : 0;
+  const averageRatingOutOf10 = averageRating / 20; // Convert to 0-10 scale (200 max rating / 20 = 10)
+  const completionRate = userData.averageScore;
 
   return (
     <Card className="bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-600 text-white border-0 shadow-xl overflow-hidden relative">
@@ -33,7 +35,7 @@ export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
         <div className="grid grid-cols-2 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              {averageRating.toFixed(1)}
+              {averageRatingOutOf10.toFixed(1)}
             </div>
             <div className="text-sm opacity-90">Avg Rating</div>
             <div className="text-xs opacity-75 mt-1">Out of 10.0</div>

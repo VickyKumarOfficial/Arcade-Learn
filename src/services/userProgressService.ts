@@ -119,6 +119,7 @@ class UserProgressService {
     }
   }
 
+
   // Save user progress to Supabase
   async saveUserProgress(userId: string, userData: UserGameData): Promise<boolean> {
     try {

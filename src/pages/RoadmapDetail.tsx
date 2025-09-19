@@ -20,7 +20,7 @@ import { RatingDisplay, ComponentRatingBadge, ComponentStarsBadge } from "@/comp
 import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getComponentTestIds } from "@/data/componentMapping";
-import { checkPrerequisites } from "@/lib/testSystem";
+import { checkPrerequisites, canAccessComponent } from "@/lib/testSystem";
 
 const RoadmapDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,16 +53,16 @@ const RoadmapDetail = () => {
   useEffect(() => {
     const foundRoadmap = roadmaps.find(r => r.id === id);
     if (foundRoadmap) {
-      // Update components with completion status and lock status
+      // Update components with completion status and strong lock status
       const updatedRoadmap = {
         ...foundRoadmap,
         components: foundRoadmap.components.map(component => {
           const componentKey = `${foundRoadmap.id}-${component.id}`;
           const isCompleted = state.userData.completedComponents.includes(componentKey);
           
-          // Check if component has prerequisites
-          const isLocked = component.prerequisiteIds && component.prerequisiteIds.length > 0 && 
-            !checkPrerequisites(component, state.userData.completedComponents, foundRoadmap.id);
+          // Use stronger lock system with 80% score requirement
+          const accessCheck = canAccessComponent(component, state.userData, foundRoadmap.id);
+          const isLocked = !accessCheck.canAccess;
 
           // Find test results for this component (if any)
           const testResults = state.userData.testResults?.filter(result => 
@@ -81,7 +81,9 @@ const RoadmapDetail = () => {
             ...component,
             completed: isCompleted,
             isLocked: isLocked,
-            testResult: latestResult
+            testResult: latestResult,
+            lockReason: accessCheck.reason,
+            requiredScore: accessCheck.requiredScore
           };
         })
       };
@@ -105,7 +107,18 @@ const RoadmapDetail = () => {
   // Start a test for a component
   const startTest = (componentId: string) => {
     const component = roadmap?.components.find(c => c.id === componentId);
-    if (!component || component.isLocked) return;
+    
+    if (!component) return;
+    
+    // Stronger lock enforcement - show specific reason
+    if (component.isLocked) {
+      if (component.lockReason) {
+        alert(component.lockReason);
+      } else {
+        alert('This component is locked. Complete the previous components with at least 80% score to unlock.');
+      }
+      return;
+    }
     
     // Map component ID to test ID using our mapping helper
     const testIds = getComponentTestIds();
@@ -272,7 +285,11 @@ const RoadmapDetail = () => {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Learning Components</h2>
             
             {roadmap.components.map((component, index) => (
-              <Card key={component.id} className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <Card key={component.id} className={`backdrop-blur-sm border-0 shadow-lg transition-all duration-300 ${
+                component.isLocked 
+                  ? 'bg-gray-100/90 dark:bg-gray-900/90 opacity-75' 
+                  : 'bg-white/90 dark:bg-gray-800/90 hover:shadow-xl'
+              }`}>
                 <CardHeader className="pb-4">
                   <div className="flex items-start gap-4">
                     <div className="mt-1 flex-shrink-0">
@@ -314,7 +331,9 @@ const RoadmapDetail = () => {
                         {component.isLocked && (
                           <div className="flex items-center gap-1 text-orange-500">
                             <Lock className="w-4 h-4" />
-                            <span>Complete prerequisites first</span>
+                            <span className="text-xs">
+                              {component.lockReason || 'Complete prerequisites with 80% score first'}
+                            </span>
                           </div>
                         )}
                         
@@ -338,16 +357,34 @@ const RoadmapDetail = () => {
                       </div>
                       
                       <div className="flex gap-4 mt-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setExpandedComponent(
-                            expandedComponent === component.id ? null : component.id
-                          )}
-                          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-0 h-auto font-medium"
-                        >
-                          {expandedComponent === component.id ? 'Hide Resources' : 'View Resources'}
-                        </Button>
+                        {!component.isLocked ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedComponent(
+                              expandedComponent === component.id ? null : component.id
+                            )}
+                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-0 h-auto font-medium"
+                          >
+                            {expandedComponent === component.id ? 'Hide Resources' : 'View Resources'}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled
+                            className="text-gray-400 p-0 h-auto font-medium cursor-not-allowed"
+                            onClick={() => {
+                              if (component.lockReason) {
+                                alert(component.lockReason);
+                              } else {
+                                alert('Complete the previous component with at least 80% score to access resources.');
+                              }
+                            }}
+                          >
+                            🔒 Resources Locked
+                          </Button>
+                        )}
                         
                         {!component.isLocked && (
                           <Button
@@ -373,7 +410,7 @@ const RoadmapDetail = () => {
                   </div>
                 </CardHeader>
                 
-                {expandedComponent === component.id && (
+                {expandedComponent === component.id && !component.isLocked && (
                   <CardContent className="pt-0">
                     <div className="space-y-3">
                       <h4 className="font-medium text-gray-900 dark:text-white mb-3">Learning Resources:</h4>
