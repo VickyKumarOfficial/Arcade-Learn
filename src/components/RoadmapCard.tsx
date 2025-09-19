@@ -1,4 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -53,37 +52,36 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
 
   return (
     <>
-      <Card className="h-full hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm flex flex-col overflow-hidden">
-        <CardHeader className="pb-3 px-4 sm:px-6">
-          <div className="flex items-start justify-between">
-            <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${roadmap.color} flex items-center justify-center text-lg sm:text-2xl mb-3 sm:mb-4 shadow-lg flex-shrink-0`}>
+      <div className="group cursor-pointer transition-all duration-300 hover:scale-105" onClick={handleStartRoadmap}>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 h-full flex flex-col hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300">
+          <div className="flex items-start justify-between mb-4">
+            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${roadmap.color} flex items-center justify-center text-2xl shadow-lg flex-shrink-0`}>
               {roadmap.icon}
             </div>
-            <Badge className={`${getDifficultyColor(roadmap.difficulty)} text-xs sm:text-sm flex-shrink-0`}>
+            <Badge className={`${getDifficultyColor(roadmap.difficulty)} text-sm flex-shrink-0`}>
               {roadmap.difficulty}
             </Badge>
           </div>
-          <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">{roadmap.title}</CardTitle>
-          <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
+          
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight mb-3">{roadmap.title}</h3>
+          <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-6 flex-1">
             {roadmap.description}
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="pt-0 flex-1 flex flex-col px-4 sm:px-6 pb-4 sm:pb-6">
-          <div className="space-y-3 sm:space-y-4 flex-1">
-            <div className="flex justify-between items-center text-xs sm:text-sm">
+          </p>
+          
+          <div className="space-y-3 mb-6">
+            <div className="flex justify-between items-center text-sm">
               <span className="text-gray-600 dark:text-gray-400">Duration</span>
               <span className="font-medium text-gray-900 dark:text-white text-right">{roadmap.estimatedDuration}</span>
             </div>
             
-            <div className="flex justify-between items-center text-xs sm:text-sm">
+            <div className="flex justify-between items-center text-sm">
               <span className="text-gray-600 dark:text-gray-400">Components</span>
               <span className="font-medium text-gray-900 dark:text-white text-right">{roadmap.components.length} modules</span>
             </div>
             
             {completedCount > 0 && (
               <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs sm:text-sm">
+                <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Progress</span>
                   <span className="font-medium text-gray-900 dark:text-white">{completedCount}/{roadmap.components.length}</span>
                 </div>
@@ -94,12 +92,12 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
           
           <Button 
             onClick={handleStartRoadmap}
-            className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-2 sm:py-2.5 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg mt-3 sm:mt-4 text-sm sm:text-base`}
+            className={`w-full bg-gradient-to-r ${roadmap.color} hover:opacity-90 text-white font-medium py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-base`}
           >
             {completedCount > 0 ? 'Continue Learning' : 'Start Roadmap'}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Auth Prompt Modal - For unauthenticated users */}
       {showAuthPrompt && (

@@ -46,6 +46,9 @@ export interface RoadmapComponent {
   testResult?: TestResult;
   isLocked: boolean;
   prerequisiteIds: string[]; // Component IDs that must be completed first
+  // Strong lock system properties
+  lockReason?: string; // Reason why component is locked
+  requiredScore?: number; // Required score to unlock next component
 }
 
 export interface Resource {
