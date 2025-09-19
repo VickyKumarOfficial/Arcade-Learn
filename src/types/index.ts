@@ -71,6 +71,7 @@ export interface Roadmap {
   completedComponents: number;
   icon: string;
   color: string;
+  tags: string[]; // Tags for career recommendation matching
 }
 
 // Rating Badge System (replacing Achievement system)
@@ -154,6 +155,7 @@ export interface CareerOption {
   requiredSkills: string[];
   roadmapIds: string[];
   companies: string[];
+  tags: string[]; // Tags for career recommendation matching
 }
 
 export interface UserProgress {

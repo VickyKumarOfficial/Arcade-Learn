@@ -12,6 +12,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '⚛️',
     color: 'from-blue-500 to-cyan-500',
+    tags: ['frontend', 'react', 'javascript', 'typescript', 'web-development', 'ui', 'components', 'hooks', 'jsx', 'css'],
     components: [
       {
         id: 'html-css-basics',
@@ -179,6 +180,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '🟢',
     color: 'from-green-500 to-emerald-500',
+    tags: ['backend', 'nodejs', 'javascript', 'express', 'server-side', 'api', 'database', 'mongodb', 'rest', 'microservices'],
     components: [
       {
         id: 'nodejs-basics',
@@ -270,6 +272,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '🚀',
     color: 'from-purple-500 to-pink-500',
+    tags: ['fullstack', 'frontend', 'backend', 'react', 'nodejs', 'mongodb', 'express', 'javascript', 'web-development', 'api'],
     components: [
       {
         id: 'mern-setup',
@@ -321,6 +324,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '📊',
     color: 'from-orange-500 to-red-500',
+    tags: ['data-science', 'python', 'machine-learning', 'statistics', 'data-analysis', 'pandas', 'numpy', 'visualization', 'ai', 'analytics'],
     components: [
       {
         id: 'python-fundamentals',
@@ -372,6 +376,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '☁️',
     color: 'from-indigo-500 to-blue-500',
+    tags: ['devops', 'cloud', 'docker', 'kubernetes', 'cicd', 'automation', 'infrastructure', 'aws', 'deployment', 'monitoring'],
     components: [
       {
         id: 'docker-basics',
@@ -423,6 +428,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '📱',
     color: 'from-blue-400 to-cyan-500',
+    tags: ['mobile', 'flutter', 'dart', 'ios', 'android', 'cross-platform', 'mobile-development', 'app-development', 'ui'],
     components: [
       {
         id: 'dart-fundamentals',
@@ -636,6 +642,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '🔐',
     color: 'from-red-500 to-orange-500',
+    tags: ['cybersecurity', 'security', 'ethical-hacking', 'penetration-testing', 'network-security', 'vulnerability', 'cryptography', 'linux', 'security-tools'],
     components: [
       {
         id: 'security-fundamentals',
@@ -821,6 +828,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '⛓️',
     color: 'from-purple-500 to-indigo-600',
+    tags: ['blockchain', 'web3', 'smart-contracts', 'solidity', 'ethereum', 'defi', 'nft', 'cryptocurrency', 'dapp', 'decentralized'],
     components: [
       {
         id: 'blockchain-basics',
@@ -1006,6 +1014,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '🤖',
     color: 'from-green-500 to-teal-500',
+    tags: ['artificial-intelligence', 'machine-learning', 'deep-learning', 'python', 'neural-networks', 'tensorflow', 'pytorch', 'ai', 'data-science', 'ml-engineering'],
     components: [
       {
         id: 'python-data-science',
@@ -1198,6 +1207,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '🎮',
     color: 'from-purple-600 to-pink-500',
+    tags: ['game-development', 'unity', 'csharp', '3d-graphics', '2d-games', 'game-engine', 'animation', 'physics', 'scripting', 'gamedev'],
     components: [
       {
         id: 'csharp-programming',
@@ -1376,6 +1386,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '☁️',
     color: 'from-sky-500 to-blue-600',
+    tags: ['cloud-architecture', 'aws', 'azure', 'google-cloud', 'infrastructure', 'scalability', 'cloud-solutions', 'architecture', 'cloud-computing', 'serverless'],
     components: [
       {
         id: 'cloud-fundamentals',
@@ -1554,6 +1565,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '📊',
     color: 'from-orange-500 to-red-500',
+    tags: ['product-management', 'strategy', 'user-research', 'analytics', 'product-lifecycle', 'roadmap-planning', 'market-research', 'agile', 'project-management', 'business-strategy'],
     components: [
       {
         id: 'product-strategy',
@@ -1732,6 +1744,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '🧪',
     color: 'from-teal-500 to-green-500',
+    tags: ['qa', 'quality-assurance', 'automation-testing', 'selenium', 'testing-frameworks', 'cicd', 'test-automation', 'software-testing', 'cypress', 'junit'],
     components: [
       {
         id: 'testing-fundamentals',
@@ -1917,6 +1930,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '🎨',
     color: 'from-pink-500 to-rose-500',
+    tags: ['ux-design', 'ui-design', 'user-research', 'design-thinking', 'figma', 'prototyping', 'wireframing', 'user-experience', 'visual-design', 'usability'],
     components: [
       {
         id: 'design-thinking',
@@ -2095,6 +2109,7 @@ export const roadmaps: Roadmap[] = [
     completedComponents: 0,
     icon: '📡',
     color: 'from-indigo-500 to-purple-500',
+    tags: ['iot', 'embedded-systems', 'arduino', 'raspberry-pi', 'sensors', 'microcontrollers', 'electronics', 'hardware', 'wireless', 'connectivity'],
     components: [
       {
         id: 'electronics-basics',
