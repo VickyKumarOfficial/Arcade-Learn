@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   CheckCircle, Circle, Clock, ArrowLeft, ExternalLink, 
-  Trophy, Target, Lock, Star, AlertCircle, BarChart2
+  Trophy, Target, Lock, Star, AlertCircle, BarChart2, Briefcase
 } from "lucide-react";
 import { roadmaps } from "@/data/roadmaps";
 import { componentTests } from "@/data/componentTests";
@@ -21,6 +21,8 @@ import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getComponentTestIds } from "@/data/componentMapping";
 import { checkPrerequisites, canAccessComponent } from "@/lib/testSystem";
+import { useDetailedCareerRecommendations } from "@/hooks/useCareerRecommendations";
+import { CareerCard } from "@/components/CareerCard";
 
 const RoadmapDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +37,14 @@ const RoadmapDetail = () => {
   } | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const { state, dispatch } = useGameTest();
+
+  // Get detailed career recommendations with matching tags and scores
+  const careerRecommendations = useDetailedCareerRecommendations(roadmap || {} as Roadmap);
+  
+  // Debug: Log career recommendations
+  console.log('Roadmap:', roadmap?.title, 'Tags:', roadmap?.tags);
+  console.log('Career Recommendations:', careerRecommendations);
+  console.log('Filtered (>= 15%):', careerRecommendations.filter(rec => rec.similarity >= 0.15));
 
   // Redirect non-authenticated users to AuthGuard
   if (!user) {
@@ -443,6 +453,72 @@ const RoadmapDetail = () => {
               </Card>
             ))}
           </div>
+          
+          {/* Career Recommendations Section */}
+          {/* Debug: Always show section for testing */}
+          <div className="mt-12 border-2 border-red-500 p-4">
+            <h3 className="text-lg font-bold text-red-600 mb-2">DEBUG: Career Recommendations</h3>
+            <p>Roadmap: {roadmap?.title || 'No roadmap'}</p>
+            <p>Roadmap Tags: {roadmap?.tags?.join(', ') || 'No tags'}</p>
+            <p>Total Recommendations: {careerRecommendations.length}</p>
+            <p>Filtered (≥ 15%): {careerRecommendations.filter(rec => rec.similarity >= 0.15).length}</p>
+            <p>Filtered (≥ 5%): {careerRecommendations.filter(rec => rec.similarity >= 0.05).length}</p>
+            <div className="mt-2">
+              <h4>All Recommendations:</h4>
+              {careerRecommendations.map(rec => (
+                <div key={rec.career.id} className="text-sm">
+                  {rec.career.title}: {(rec.similarity * 100).toFixed(1)}%
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {careerRecommendations.filter(rec => rec.similarity >= 0.05).length > 0 && (
+            <div className="mt-12">
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-md">
+                    <Briefcase className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      Career Opportunities
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Careers you can pursue with skills from this roadmap
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {careerRecommendations
+                  .filter(rec => rec.similarity >= 0.05)
+                  .slice(0, 6)
+                  .map((recommendation) => (
+                    <CareerCard
+                      key={recommendation.career.id}
+                      career={recommendation.career}
+                      matchingTags={recommendation.matchingTags}
+                      similarity={recommendation.similarity}
+                    />
+                  ))
+                }
+              </div>
+              
+              {careerRecommendations.filter(rec => rec.similarity >= 0.05).length > 6 && (
+                <div className="mt-6 text-center">
+                  <Button 
+                    onClick={() => navigate('/careers')}
+                    variant="outline"
+                    className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800 hover:bg-gradient-to-r hover:from-blue-100 hover:to-purple-100"
+                  >
+                    View More Career Options ({careerRecommendations.filter(rec => rec.similarity >= 0.05).length - 6} more)
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
           
           {progressPercentage === 100 && (
             <div className="mt-12 text-center">

@@ -3,17 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { UserGameData } from "@/types";
 import { Star, Target, TrendingUp } from "lucide-react";
-import { getUserLevelTag, getStarProgress, calculateModuleScore } from "@/lib/gamification";
+import { getUserLevelTag, getStarProgress } from "@/lib/gamification";
 
 interface UserStatsCardProps {
   userData: UserGameData;
 }
 
 export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
-  // Calculate totalScore from testResults using correct logic
-  const totalScore = userData.testResults
-    ? userData.testResults.filter(r => r.passed && typeof r.score === 'number').reduce((sum, r) => sum + calculateModuleScore(r.score), 0)
-    : 0;
+  // Use new scoring system
+  const totalScore = userData.totalScore;
   const levelTag = getUserLevelTag(totalScore);
   const starProgress = getStarProgress(totalScore);
   const completionRate = userData.completedTests > 0 ? (userData.completedTests / 10) * 100 : 0; // Assuming 10 tests total for now

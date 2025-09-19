@@ -11,12 +11,11 @@
 ### 2. **New Scoring Logic**
 - **Passing Threshold**: 80% minimum required to pass any test
 - **Score Calculation**: 
-  - 80% = 0 points (passing threshold)
-  - 81% = 0.5 points  
-  - 82% = 1 point
-  - 90% = 5 points
+  - 80% = 0.5 points
+  - 81% = 1 point
+  - 82% = 1.5 points
+  - ...
   - 100% = 10 points
-- **Formula**: `(testScore - 80) × 0.5`
 
 ### 3. **Star System Thresholds**
 - **0-99 points**: Beginner (0 stars)
@@ -58,7 +57,7 @@
 ```typescript
 // Example: User completes a test with 85% score
 const testScore = 85;
-const moduleScore = calculateModuleScore(85); // Returns 2.5 points (85-80)*0.5
+const moduleScore = calculateModuleScore(85); // Returns 3 points
 const newTotalScore = currentTotalScore + moduleScore;
 const newStars = calculateStarsFromScore(newTotalScore);
 const levelTag = getUserLevelTag(newTotalScore);
@@ -78,12 +77,10 @@ const levelTag = getUserLevelTag(newTotalScore);
 
 ## 📊 **Example User Journey**
 1. User starts: 0 points, 0 stars, "Beginner" tag
-2. Completes test with 90%: +5 points = 5 total
-3. Completes test with 85%: +2.5 points = 7.5 total  
-4. Completes test with 95%: +7.5 points = 15 total
-5. After ~20 tests averaging 85%: ~50 points total
-6. After ~40 tests: ~100 points = 1 star ⭐, "Intermediate" tag
-7. Eventually reaches 250+ points: 2 stars ⭐⭐
-8. At 999+ points: "Expert" tag 🏆
+2. Completes test with 90%: +5.5 points = 5.5 total
+3. Completes 18 more tests averaging 85%: ~100 points total
+4. Achieves: 1 star ⭐, "Intermediate" tag
+5. Continues to 250 points: 2 stars ⭐⭐
+6. Eventually reaches 999+ points: "Expert" tag 🏆
 
 All changes are **error-free** and ready for production! 🎉
