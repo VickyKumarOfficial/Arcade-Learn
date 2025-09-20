@@ -6,6 +6,14 @@ const groq = new Groq({
   dangerouslyAllowBrowser: true // Required for client-side usage
 });
 
+// Debug: Check if API key is loaded
+console.log('🔑 Groq API Key Status:', {
+  loaded: !!import.meta.env.VITE_GROQ_API_KEY,
+  length: import.meta.env.VITE_GROQ_API_KEY?.length || 0,
+  startsWithGsk: import.meta.env.VITE_GROQ_API_KEY?.startsWith('gsk_') || false,
+  firstChars: import.meta.env.VITE_GROQ_API_KEY?.substring(0, 8) + '...' || 'MISSING'
+});
+
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -104,32 +112,57 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
       ];
 
       // Create chat completion
-      const completion = await groq.chat.completions.create({
-        messages: messagesWithSystem,
-        model: "openai/gpt-oss-120b", // Using Llama 3 8B model available on Groq
-        temperature: 0.7,
-        max_tokens: 2000, // Increased for more detailed responses
-        top_p: 0.9,
-        stream: false
-      });
+      try {
+        const completion = await groq.chat.completions.create({
+          messages: messagesWithSystem,
+          model: "openai/gpt-oss-120b", // Using Llama 3 8B model available on Groq
+          temperature: 0.7,
+          max_tokens: 2000, // Increased for more detailed responses
+          top_p: 0.9,
+          stream: false
+        });
 
-      const response = completion.choices[0]?.message?.content;
+        const response = completion.choices[0]?.message?.content;
 
-      if (!response) {
+        if (!response) {
+          return {
+            success: false,
+            error: 'No response received from AI service'
+          };
+        }
+
+        // Clean up the response for better formatting
+        const cleanedResponse = this.cleanResponse(response);
+
+        return {
+          success: true,
+          response: cleanedResponse
+        };
+
+      } catch (error: any) {
+        console.error('Groq API Error Details:', {
+          error: error,
+          message: error.message,
+          status: error.status,
+          code: error.code
+        });
+        
+        // Handle specific error types
+        let errorMessage = 'Failed to get AI response. Please try again.';
+        
+        if (error?.message?.includes('rate limit')) {
+          errorMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
+        } else if (error?.message?.includes('API key') || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+          errorMessage = 'Invalid API key. Please check your configuration.';
+        } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        }
+
         return {
           success: false,
-          error: 'No response received from AI service'
+          error: errorMessage
         };
       }
-
-      // Clean up the response for better formatting
-      const cleanedResponse = this.cleanResponse(response);
-
-      return {
-        success: true,
-        response: cleanedResponse
-      };
-
     } catch (error: any) {
       console.error('Error in AI service:', error);
       
