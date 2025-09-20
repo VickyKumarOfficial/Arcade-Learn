@@ -228,7 +228,14 @@ app.get('/api/user/:userId/survey/status', async (req, res) => {
     const result = await surveyService.isSurveyCompleted(userId);
     
     if (result.success) {
-      res.json({ completed: result.completed });
+      // Check if user is new by checking when they were created
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+      const isNewUser = userData?.user && new Date() - new Date(userData.user.created_at) < 24 * 60 * 60 * 1000; // New if created within 24 hours
+      
+      res.json({ 
+        completed: result.completed,
+        isNewUser: isNewUser || false
+      });
     } else {
       res.status(400).json({ error: result.error });
     }
