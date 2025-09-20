@@ -6,7 +6,7 @@ import { Brain, MessageCircle, Code, Lightbulb } from 'lucide-react';
 
 const AIDoubtSolving = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-blue-900">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="pt-[92px] sm:pt-[108px] pb-12">
@@ -14,11 +14,11 @@ const AIDoubtSolving = () => {
           {/* Header */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-full">
-                <Brain className="h-12 w-12 text-white" />
+              <div className="bg-primary p-4 rounded-full">
+                <Brain className="h-12 w-12 text-primary-foreground" />
               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
               AI Doubt Solving ✨
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -72,21 +72,21 @@ const AIDoubtSolving = () => {
           </div>
 
           {/* Coming Soon Card */}
-          <Card className="max-w-2xl mx-auto border-0 shadow-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20">
+          <Card className="max-w-2xl mx-auto border border-border shadow-xl bg-card">
             <CardContent className="p-8 text-center">
               <div className="mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4">
-                  <Brain className="h-8 w-8 text-white" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
+                  <Brain className="h-8 w-8 text-primary-foreground" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-2xl font-bold text-foreground mb-2">
                   Coming Soon!
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                <p className="text-muted-foreground mb-6">
                   We're working hard to bring you the most advanced AI-powered doubt solving experience. 
                   Stay tuned for the launch!
                 </p>
                 <Button 
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-primary hover:bg-primary/90"
                   disabled
                 >
                   Notify Me When Ready

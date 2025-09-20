@@ -6,7 +6,7 @@ import { Bot, Route, Target, Zap, BookOpen, TrendingUp } from 'lucide-react';
 
 const AIRoadmapGeneration = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-green-900">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="pt-[92px] sm:pt-[108px] pb-12">
@@ -14,57 +14,57 @@ const AIRoadmapGeneration = () => {
           {/* Header */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
-              <div className="bg-gradient-to-r from-green-500 to-blue-600 p-4 rounded-full">
-                <Bot className="h-12 w-12 text-white" />
+              <div className="bg-primary p-4 rounded-full">
+                <Bot className="h-12 w-12 text-primary-foreground" />
               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
               AI Roadmap Generation ✨
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Create personalized learning roadmaps tailored to your goals, skill level, and preferences using our intelligent AI system.
             </p>
           </div>
 
           {/* Feature Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <Card className="border border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Route className="h-6 w-6 text-green-600" />
+                  <Route className="h-6 w-6 text-primary" />
                   <span>Custom Paths</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-muted-foreground">
                   Generate unique learning paths based on your specific career goals and interests.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <Card className="border border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Target className="h-6 w-6 text-blue-600" />
+                  <Target className="h-6 w-6 text-primary" />
                   <span>Goal-Oriented</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-muted-foreground">
                   AI analyzes your target role and creates optimized learning sequences.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <Card className="border border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Zap className="h-6 w-6 text-purple-600" />
+                  <Zap className="h-6 w-6 text-primary" />
                   <span>Adaptive Learning</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-muted-foreground">
                   Roadmaps that evolve based on your progress and learning patterns.
                 </p>
               </CardContent>

@@ -99,9 +99,9 @@ const RoadmapDetail = () => {
 
   if (!roadmap) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Roadmap not found</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Roadmap not found</h1>
           <Button onClick={() => navigate('/')}>Go Home</Button>
         </div>
       </div>
@@ -201,7 +201,7 @@ const RoadmapDetail = () => {
   }, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
       {/* Rating Animation (replaces XP Animation) */}
@@ -252,7 +252,7 @@ const RoadmapDetail = () => {
           <Button 
             variant="ghost" 
             onClick={() => navigate('/')}
-            className="mb-6 hover:bg-white/50 dark:hover:bg-gray-800/50"
+            className="mb-6 hover:bg-card/50"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Roadmaps

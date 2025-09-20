@@ -75,13 +75,13 @@ const TestimonialsSection = () => {
     return (
       <Card className={`${
         featured
-          ? "shadow-2xl border-2 border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/30 dark:ring-blue-400/30" 
-          : "shadow-xl border border-gray-200 dark:border-gray-700"
-      } bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm hover:transform hover:scale-102 group overflow-hidden h-full transition-all duration-300`}>
+          ? "shadow-2xl border-2 border-primary ring-2 ring-primary/30" 
+          : "shadow-xl border border-border"
+      } bg-card backdrop-blur-sm hover:transform hover:scale-102 group overflow-hidden h-full transition-all duration-300`}>
         <CardContent className="p-6 relative">
           {/* Quote Icon */}
           <div className={`absolute top-4 right-4 ${
-            featured ? "text-purple-500/20 dark:text-purple-400/20" : "text-gray-300/30 dark:text-gray-600/30"
+            featured ? "text-primary/20" : "text-muted-foreground/30"
           }`}>
             <Quote className="w-8 h-8" />
           </div>
@@ -92,7 +92,7 @@ const TestimonialsSection = () => {
           </div>
 
           {/* Content */}
-          <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed text-sm sm:text-base italic relative z-10">
+          <p className="text-foreground mb-6 leading-relaxed text-sm sm:text-base italic relative z-10">
             "{testimonial.content}"
           </p>
 
@@ -101,26 +101,26 @@ const TestimonialsSection = () => {
             {/* Avatar */}
             <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-white font-bold text-lg ${
               featured
-                ? "bg-gradient-to-br from-purple-500 to-pink-500" 
-                : "bg-gradient-to-br from-blue-500 to-purple-500"
+                ? "bg-primary" 
+                : "bg-primary"
             } shadow-lg`}>
               {testimonial.avatar}
             </div>
 
             {/* Details */}
             <div className="flex-1">
-              <h4 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">
+              <h4 className="font-bold text-foreground text-sm sm:text-base">
                 {testimonial.name}
               </h4>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-2">
                 <Briefcase className="w-3 h-3" />
                 <span>{testimonial.role} at {testimonial.company}</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                <Badge variant="secondary" className="text-xs">
                   {testimonial.course}
                 </Badge>
-                <Badge variant="secondary" className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 flex items-center gap-1">
+                <Badge variant="secondary" className="text-xs flex items-center gap-1">
                   <Trophy className="w-3 h-3" />
                   {testimonial.achievement}
                 </Badge>
@@ -133,20 +133,20 @@ const TestimonialsSection = () => {
   };
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-hidden">
+    <section className="py-12 sm:py-16 lg:py-20 bg-background overflow-hidden">
       <div className="container mx-auto px-4 sm:px-5 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 sm:mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 sm:mb-6">
             Customer Reviews
           </h2>
           {/* <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 sm:mb-6">
             Success Stories
           </h2> */}
-          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Join thousands of learners who transformed their careers with our roadmaps
           </p>
-          <div className="flex justify-center items-center gap-2 mt-4 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex justify-center items-center gap-2 mt-4 text-sm text-muted-foreground">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
             <span className="font-medium">4.9/5 average rating from 10,000+ students</span>
           </div>
@@ -160,15 +160,15 @@ const TestimonialsSection = () => {
             {/* Navigation Arrows */}
             <button
               onClick={prevTestimonial}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 dark:bg-gray-800/90 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 z-10"
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-card/90 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 z-10"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
             <button
               onClick={nextTestimonial}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 dark:bg-gray-800/90 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 z-10"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-card/90 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 z-10"
             >
-              <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ChevronRight className="w-5 h-5 text-foreground" />
             </button>
           </div>
 
@@ -180,8 +180,8 @@ const TestimonialsSection = () => {
                 onClick={() => goToTestimonial(index)}
                 className={`w-2 h-2 rounded-full transition-all duration-200 ${
                   index === currentIndex
-                    ? "bg-purple-500 w-6"
-                    : "bg-gray-300 dark:bg-gray-600 hover:bg-purple-300 dark:hover:bg-purple-400"
+                    ? "bg-primary w-6"
+                    : "bg-muted-foreground/30 hover:bg-primary/50"
                 }`}
               />
             ))}
@@ -253,9 +253,9 @@ const TestimonialsSection = () => {
           <div className="flex justify-center items-center gap-4 mt-8">
             <button
               onClick={prevTestimonial}
-              className="bg-white/90 dark:bg-gray-800/90 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 border border-gray-200 dark:border-gray-700"
+              className="bg-card p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 border border-border"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
             
             <div className="flex gap-2">
@@ -265,8 +265,8 @@ const TestimonialsSection = () => {
                   onClick={() => goToTestimonial(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-200 ${
                     index === currentIndex
-                      ? "bg-purple-500 w-8"
-                      : "bg-gray-300 dark:bg-gray-600 hover:bg-purple-300 dark:hover:bg-purple-400"
+                      ? "bg-primary w-8"
+                      : "bg-muted-foreground/30 hover:bg-primary/50"
                   }`}
                 />
               ))}
@@ -274,9 +274,9 @@ const TestimonialsSection = () => {
             
             <button
               onClick={nextTestimonial}
-              className="bg-white/90 dark:bg-gray-800/90 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 border border-gray-200 dark:border-gray-700"
+              className="bg-card p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 border border-border"
             >
-              <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ChevronRight className="w-5 h-5 text-foreground" />
             </button>
           </div>
         </div>
@@ -284,34 +284,34 @@ const TestimonialsSection = () => {
         {/* Stats Section */}
         <div className="mt-12 sm:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
           <div className="text-center">
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+            <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">
               10K+
             </div>
-            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <div className="text-sm sm:text-base text-muted-foreground">
               Success Stories
             </div>
           </div>
           <div className="text-center">
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+            <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">
               95%
             </div>
-            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <div className="text-sm sm:text-base text-muted-foreground">
               Job Placement Rate
             </div>
           </div>
           <div className="text-center">
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-600 dark:text-green-400 mb-2">
+            <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">
               3x
             </div>
-            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <div className="text-sm sm:text-base text-muted-foreground">
               Average Salary Increase
             </div>
           </div>
           <div className="text-center">
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-pink-600 dark:text-pink-400 mb-2">
+            <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">
               50+
             </div>
-            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <div className="text-sm sm:text-base text-muted-foreground">
               Top Companies
             </div>
           </div>

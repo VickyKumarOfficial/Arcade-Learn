@@ -69,20 +69,20 @@ const RoadmapsSection = () => {
   });
 
   return (
-    <section id="roadmaps" className="py-16 sm:py-20 bg-white dark:bg-gray-900 overflow-x-hidden">
+    <section id="roadmaps" className="py-16 sm:py-20 bg-background overflow-x-hidden">
       <div className="w-full px-2 sm:px-4 max-w-none">
         <div className="text-center mb-2 sm:mb-4">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3 mt-2 sm:mt-3 leading-normal md:leading-normal px-2">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 sm:mb-3 mt-2 sm:mt-3 leading-normal md:leading-normal px-2">
             {searchTerm === '*' ? 'All Available' : 'Some Popular'}
-            <span className="bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent"> Courses</span>
+            <span className="text-primary"> Courses</span>
           </h2>
           {searchTerm === '' && selectedCategory === 'View All Courses' && (
-            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+            <p className="text-muted-foreground text-sm sm:text-base">
               Showing {filteredRoadmaps.length} most popular courses
             </p>
           )}
           {searchTerm === '*' && (
-            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+            <p className="text-muted-foreground text-sm sm:text-base">
               Showing all {filteredRoadmaps.length} available courses
             </p>
           )}
@@ -95,16 +95,16 @@ const RoadmapsSection = () => {
               <button
                 key={category}
                 onClick={() => {setSelectedCategory(category); setSearchTerm('');}}
-                className={`px-6 py-3 rounded-full shadow-md border-2 transition-all duration-200 cursor-pointer ${
+                className={`px-6 py-3 rounded-full shadow-md border transition-all duration-200 cursor-pointer ${
                   selectedCategory === category
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white border-blue-300 dark:border-blue-400'
-                    : 'bg-white dark:bg-gray-800 border-transparent hover:border-blue-200 dark:hover:border-blue-400'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card border-border hover:border-primary'
                 }`}
               >
                 <span className={`font-medium ${
                   selectedCategory === category
-                    ? 'text-white'
-                    : 'text-gray-700 dark:text-gray-300 text-sm sm:text-base'
+                    ? 'text-primary-foreground'
+                    : 'text-foreground text-sm sm:text-base'
                 }`}>
                   {category}
                 </span>
@@ -118,10 +118,10 @@ const RoadmapsSection = () => {
                 placeholder="Search roadmaps..."
                 value={searchTerm}
                 onChange={(e) => {setSearchTerm(e.target.value);}}
-                className="px-6 py-3 rounded-full shadow-md border-2 border-transparent bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-300 dark:focus:border-blue-400 focus:outline-none transition-all duration-200 w-64"
+                className="px-6 py-3 rounded-full shadow-md border border-border bg-card text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none transition-all duration-200 w-64"
               />
               <svg
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -143,7 +143,7 @@ const RoadmapsSection = () => {
           <div className="text-center mt-8 sm:mt-12">
             <button
               onClick={() => {setSearchTerm('*');}}
-              className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              className="px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               View All {roadmaps.length} Courses
             </button>
@@ -155,7 +155,7 @@ const RoadmapsSection = () => {
           <div className="text-center mt-8 sm:mt-12">
             <button
               onClick={() => {setSearchTerm('');}}
-              className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              className="px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               Show Popular Courses Only
             </button>

@@ -33,18 +33,18 @@ export const AuthGuard = ({
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-2xl border-0">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl bg-card backdrop-blur-sm shadow-2xl border border-border">
         <CardHeader className="text-center pb-6">
           <div className="mb-4 flex justify-center">
-            <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full">
-              <Trophy className="h-12 w-12 text-white" />
+            <div className="p-4 bg-primary rounded-full">
+              <Trophy className="h-12 w-12 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <CardTitle className="text-3xl font-bold text-primary mb-2">
             {title}
           </CardTitle>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto">
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
             {description}
           </p>
         </CardHeader>
@@ -71,7 +71,7 @@ export const AuthGuard = ({
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button 
               onClick={() => navigate('/signin')}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-12"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-12"
             >
               <LogIn className="mr-2 h-5 w-5" />
               Sign In to Continue

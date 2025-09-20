@@ -33,14 +33,14 @@ const FAQSection = () => {
   };
 
   return (
-    <section className="py-20 bg-white dark:bg-gray-900">
+    <section className="py-20 bg-background">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-normal">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-normal">
             Frequently Asked
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Questions</span>
+            <span className="text-primary"> Questions</span>
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Get answers to common questions about ArcadeLearn and start your learning journey today.
           </p>
         </div>
@@ -71,11 +71,11 @@ const FAQSection = () => {
                     {needsReadMore(faq.answer) ? (
                       <div className="relative">
                         <div className="relative overflow-hidden">
-                          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                          <p className="text-muted-foreground leading-relaxed">
                             {truncateText(faq.answer)}
                           </p>
-                          {/* Blur overlay covering only the last 2-3 lines with stronger gradient */}
-                          <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-gray-50 dark:from-gray-800 via-gray-50/70 dark:via-gray-800/70 to-transparent pointer-events-none"></div>
+                          {/* Blur overlay covering only the last 2-3 lines */}
+                          <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background via-background/70 to-transparent pointer-events-none"></div>
                         </div>
                         {/* Read More button positioned just below the blur area */}
                         <div className="mt-2 flex justify-start">
@@ -103,7 +103,7 @@ const FAQSection = () => {
         <div className="text-center mt-12">
           <Button
             onClick={() => navigate('/faqs')}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             Learn More
           </Button>
