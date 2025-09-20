@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Sparkles, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Check, X } from 'lucide-react';
 import { useSurvey } from '@/contexts/SurveyContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const SurveyModal: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const {
     state,
     setAnswer,
@@ -16,6 +16,7 @@ export const SurveyModal: React.FC = () => {
     nextQuestion,
     previousQuestion,
     completeSurvey,
+    hideSurvey,
     getCurrentQuestion,
     isLastQuestion,
     isFirstQuestion,
@@ -44,6 +45,14 @@ export const SurveyModal: React.FC = () => {
     } else {
       return currentAnswer === option;
     }
+  };
+
+  const handleSkipSurvey = () => {
+    if (user) {
+      // Mark that user has been shown the survey in this session
+      sessionStorage.setItem(`arcadelearn_survey_shown_${user.id}`, 'true');
+    }
+    hideSurvey();
   };
 
   const getSelectedCount = (): number => {
@@ -90,7 +99,17 @@ export const SurveyModal: React.FC = () => {
           onClick={(e) => e.stopPropagation()}
         >
           <Card className="border-2 border-gray-800/50 dark:border-black shadow-2xl bg-black/95 dark:bg-black backdrop-blur-sm h-full flex flex-col">
-            <CardHeader className="text-center space-y-4 bg-gradient-to-br from-black/90 to-gray-900/90 dark:from-black dark:to-black rounded-t-lg flex-shrink-0">
+            <CardHeader className="text-center space-y-4 bg-gradient-to-br from-black/90 to-gray-900/90 dark:from-black dark:to-black rounded-t-lg flex-shrink-0 relative">
+              {/* Close button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSkipSurvey}
+                className="absolute top-2 right-2 text-gray-400 hover:text-white hover:bg-gray-800/50 w-8 h-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -209,15 +228,25 @@ export const SurveyModal: React.FC = () => {
             </CardContent>
 
             <CardFooter className="flex justify-between bg-black/50 dark:bg-black rounded-b-lg flex-shrink-0 p-4 sm:p-6">
-              <Button
-                variant="outline"
-                onClick={previousQuestion}
-                disabled={isFirstQuestion()}
-                className="flex items-center gap-2 border-gray-700 dark:border-gray-800 text-gray-300 dark:text-gray-300 hover:bg-gray-800/50 dark:hover:bg-black/50 text-sm sm:text-base"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={previousQuestion}
+                  disabled={isFirstQuestion()}
+                  className="flex items-center gap-2 border-gray-700 dark:border-gray-800 text-gray-300 dark:text-gray-300 hover:bg-gray-800/50 dark:hover:bg-black/50 text-sm sm:text-base"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  onClick={handleSkipSurvey}
+                  className="text-gray-400 hover:text-gray-300 hover:bg-gray-800/30 text-sm"
+                >
+                  Skip Survey
+                </Button>
+              </div>
               
               <Button
                 onClick={handleNext}
