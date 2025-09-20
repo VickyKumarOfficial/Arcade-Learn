@@ -96,7 +96,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     }
   };
 
-  const handleOAuth = async (provider: "google" | "github") => {
+  const handleOAuth = async (provider: "google") => {
     setLoading(true);
     setError("");
     
@@ -222,17 +222,17 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
         </div>
         <Button
           variant="outline"
-          className="w-full mb-2"
+          className="w-full flex items-center justify-center"
           onClick={() => handleOAuth("google")}
         >
-          <span className="mr-2">🔵</span> Continue with Google
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => handleOAuth("github")}
-        >
-          <span className="mr-2">🐙</span> Continue with GitHub
+          <div className="flex items-center justify-center">
+            <img 
+              src="/assets/google-removebg-preview.png" 
+              alt="Google logo" 
+              className="w-6 h-6 mr-3 object-contain" 
+            /> 
+            <span>Continue with Google</span>
+          </div>
         </Button>
 
         <div className="mt-4 text-center text-sm text-gray-600">
@@ -303,6 +303,13 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
           outline: none;
           border-color: #3b82f6;
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        /* Provider logo styles */
+        img[alt="Google logo"] {
+          display: inline-flex;
+          object-fit: contain;
+          aspect-ratio: 1;
+          vertical-align: middle;
         }
         
         /* Dark mode styles */
