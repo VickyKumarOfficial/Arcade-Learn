@@ -6,9 +6,6 @@ const groq = new Groq({
   dangerouslyAllowBrowser: true // Required for client-side usage
 });
 
-// if (import.meta.env.VITE_GROQ_API_KEY) console.log("GROQ_API", import.meta.env.VITE_GROQ_API_KEY);
-// else console.log("GORQ API KEY NOT AVAILABLE")
-
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;

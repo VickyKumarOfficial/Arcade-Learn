@@ -10,12 +10,14 @@
 
 In your Vercel dashboard, add these environment variables (use values from your local .env file):
 
+```
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_EMAILJS_SERVICE_ID=your_emailjs_service_id
 VITE_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
 VITE_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
 VITE_GROQ_API_KEY=your_groq_api_key
+```
 
 > Note: Copy the actual values from your local .env file when setting up Vercel environment variables.
 
