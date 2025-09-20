@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Bot, Route, Target, Zap, BookOpen, TrendingUp, Clock, Star, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { aiRoadmapService } from '@/services/aiRoadmapService';
 import { aiService } from '@/services/aiService';
+import { supabase } from '@/lib/supabase';
 import FormattedText from '@/components/FormattedText';
 
 interface RoadmapRecommendation {
@@ -31,6 +33,7 @@ interface RecommendationData {
 
 const AIRoadmapGeneration = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [surveyData, setSurveyData] = useState<any>(null);
@@ -48,13 +51,50 @@ const AIRoadmapGeneration = () => {
   const checkSurveyData = async () => {
     if (!user?.id) return;
 
+    console.log('🔍 Checking survey data for user:', user.id);
+
     try {
+      // First try the aiRoadmapService (backend approach)
+      console.log('🔄 Trying backend survey check...');
       const result = await aiRoadmapService.getUserSurveyData(user.id);
       if (result.success && result.data) {
-        setSurveyData(result.data);
+        // Validate that we have meaningful survey data
+        const hasValidData = result.data && 
+          typeof result.data === 'object' && 
+          Object.keys(result.data).length > 0;
+        
+        if (hasValidData) {
+          setSurveyData(result.data);
+          console.log('✅ Survey data found via backend:', result.data);
+          return;
+        }
+      }
+
+      // Fallback: Direct Supabase query if backend fails
+      console.log('🔄 Backend failed, trying direct Supabase query...');
+      const { data: supabaseData, error: supabaseError } = await supabase
+        .from('user_survey_responses')
+        .select('responses')
+        .eq('user_id', user.id)
+        .eq('is_latest', true)
+        .single();
+
+      if (supabaseError && supabaseError.code !== 'PGRST116') {
+        console.error('❌ Supabase survey query error:', supabaseError);
+        setSurveyData(null);
+        return;
+      }
+
+      if (supabaseData?.responses) {
+        console.log('✅ Survey data found via Supabase:', supabaseData.responses);
+        setSurveyData(supabaseData.responses);
+      } else {
+        console.log('⚠️ No survey data found for user:', user.id);
+        setSurveyData(null);
       }
     } catch (error) {
-      console.error('Error checking survey data:', error);
+      console.error('❌ Error checking survey data:', error);
+      setSurveyData(null);
     }
   };
 
@@ -165,7 +205,7 @@ const AIRoadmapGeneration = () => {
                       To generate personalized recommendations, please complete the survey from your dashboard.
                     </p>
                     <Button 
-                      onClick={() => window.location.href = '/dashboard'}
+                      onClick={() => navigate('/dashboard')}
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     >
                       Go to Dashboard
@@ -183,10 +223,10 @@ const AIRoadmapGeneration = () => {
                       </p>
                       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          <strong>Your Profile:</strong> {surveyData.userType} • {surveyData.skillLevel} • 
+                          <strong>Your Profile:</strong> {surveyData.userType || 'User'} • {surveyData.skillLevel || 'Beginner'} • 
                           {Array.isArray(surveyData.techInterest) 
-                            ? surveyData.techInterest.slice(0, 2).join(', ')
-                            : surveyData.techInterest
+                            ? surveyData.techInterest.slice(0, 2).join(', ') + (surveyData.techInterest.length > 2 ? '...' : '')
+                            : surveyData.techInterest || 'General Interest'
                           }
                         </p>
                       </div>

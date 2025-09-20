@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { SurveyAnswers, SurveyState, SurveyQuestion } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 // Survey questions configuration
 export const SURVEY_QUESTIONS: SurveyQuestion[] = [
@@ -215,11 +216,18 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
       const surveyShownThisSession = sessionStorage.getItem(`arcadelearn_survey_shown_${user.id}`);
       
       // Check backend for survey completion status
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
-      const response = await fetch(`${apiBaseUrl}/user/${user.id}/survey/status`);
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+      let backendResponse;
+      try {
+        const response = await fetch(`${backendUrl}/api/user/${user.id}/survey/status`);
+        backendResponse = response.ok ? await response.json() : null;
+      } catch (error) {
+        console.log('Backend not available, checking Supabase directly...');
+        backendResponse = null;
+      }
       
-      if (response.ok) {
-        const { completed, isNewUser } = await response.json();
+      if (backendResponse) {
+        const { completed, isNewUser } = backendResponse;
         
         if (completed) {
           // User has already completed the survey - mark as completed and hide
@@ -245,17 +253,47 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
           }, 500);
         }
       } else {
-        // Fallback: if backend is unavailable, use localStorage logic
-        if (surveyCompleted !== 'true' && !surveyShownThisSession) {
-          // Only show if not shown this session
-          sessionStorage.setItem(`arcadelearn_survey_shown_${user.id}`, 'true');
-          loadSurveyProgressLocally();
-          
-          setTimeout(() => {
-            if (!state.isCompleted) {
-              dispatch({ type: 'SHOW_SURVEY' });
-            }
-          }, 500);
+        // Fallback: Direct Supabase check
+        try {
+          const { data: surveyData, error: surveyError } = await supabase
+            .from('user_survey_responses')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('is_latest', true)
+            .single();
+
+          if (surveyData) {
+            // User has completed survey
+            localStorage.setItem(`arcadelearn_survey_completed_${user.id}`, 'true');
+            localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
+            dispatch({ type: 'LOAD_SURVEY_STATE', state: { isCompleted: true, isVisible: false } });
+            return;
+          }
+
+          // No survey found, show it if not shown this session
+          if (!surveyShownThisSession) {
+            sessionStorage.setItem(`arcadelearn_survey_shown_${user.id}`, 'true');
+            loadSurveyProgressLocally();
+            
+            setTimeout(() => {
+              if (!state.isCompleted) {
+                dispatch({ type: 'SHOW_SURVEY' });
+              }
+            }, 500);
+          }
+        } catch (supabaseError) {
+          console.error('Supabase check failed:', supabaseError);
+          // Conservative fallback: only show if definitely not completed and not shown this session
+          if (surveyCompleted !== 'true' && !surveyShownThisSession) {
+            sessionStorage.setItem(`arcadelearn_survey_shown_${user.id}`, 'true');
+            loadSurveyProgressLocally();
+            
+            setTimeout(() => {
+              if (!state.isCompleted) {
+                dispatch({ type: 'SHOW_SURVEY' });
+              }
+            }, 500);
+          }
         }
       }
     } catch (error) {
@@ -296,22 +334,35 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
   const completeSurvey = async () => {
     if (!user) return;
 
+    console.log('🔄 Starting survey completion process for user:', user.id);
+    console.log('📝 Survey answers:', state.answers);
+
     try {
-      // Save completed survey to backend
+      // Try to save completed survey to backend first
+      console.log('💾 Attempting to save survey via backend...');
       await saveSurveyToBackend(state.answers as SurveyAnswers);
+      console.log('✅ Survey saved via backend successfully');
+    } catch (backendError) {
+      console.error('❌ Backend save failed, trying direct Supabase save:', backendError);
       
-      // Mark as completed in localStorage
-      localStorage.setItem(`arcadelearn_survey_completed_${user.id}`, 'true');
-      localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
-      
-      dispatch({ type: 'COMPLETE_SURVEY' });
-    } catch (error) {
-      console.error('Failed to save survey:', error);
-      // Still complete the survey locally even if backend fails
-      localStorage.setItem(`arcadelearn_survey_completed_${user.id}`, 'true');
-      localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
-      dispatch({ type: 'COMPLETE_SURVEY' });
+      // Fallback: Save directly to Supabase
+      try {
+        console.log('💾 Attempting to save survey via Supabase fallback...');
+        await saveSurveyToSupabase(state.answers as SurveyAnswers);
+        console.log('✅ Survey saved via Supabase fallback successfully');
+      } catch (supabaseError) {
+        console.error('❌ Supabase fallback save also failed:', supabaseError);
+        // Continue anyway - we'll still mark as completed locally
+      }
     }
+    
+    // Mark as completed in localStorage regardless of save success
+    console.log('💾 Marking survey as completed in localStorage');
+    localStorage.setItem(`arcadelearn_survey_completed_${user.id}`, 'true');
+    localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
+    
+    console.log('🎉 Survey completion process finished');
+    dispatch({ type: 'COMPLETE_SURVEY' });
   };
 
   const showSurvey = () => {
@@ -394,8 +445,8 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
   const saveSurveyToBackend = async (answers: SurveyAnswers) => {
     if (!user) throw new Error('User not authenticated');
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
-    const response = await fetch(`${apiBaseUrl}/user/${user.id}/survey`, {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+    const response = await fetch(`${backendUrl}/api/user/${user.id}/survey`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -408,6 +459,73 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     }
 
     return response.json();
+  };
+
+  const saveSurveyToSupabase = async (answers: SurveyAnswers) => {
+    if (!user) throw new Error('User not authenticated');
+
+    // Process survey data similar to backend
+    const skillLevelMap = { 'Beginner': 1, 'Intermediate': 2, 'Advanced': 3 };
+    const timeCommitmentMap = { 
+      '<5 hours': 3, 
+      '5–10 hours': 7, 
+      '10+ hours': 15
+    };
+
+    // Create preference tags from survey responses
+    const preferenceTags = [];
+    if (answers.techInterest) {
+      const interests = Array.isArray(answers.techInterest) ? answers.techInterest : [answers.techInterest];
+      preferenceTags.push(...interests.map(interest => `tech:${interest.toLowerCase()}`));
+    }
+    if (answers.goal) {
+      const goals = Array.isArray(answers.goal) ? answers.goal : [answers.goal];
+      preferenceTags.push(...goals.map(goal => `goal:${goal.toLowerCase()}`));
+    }
+    if (answers.learningStyle) {
+      const styles = Array.isArray(answers.learningStyle) ? answers.learningStyle : [answers.learningStyle];
+      preferenceTags.push(...styles.map(style => `style:${style.toLowerCase()}`));
+    }
+
+    const surveyRecord = {
+      user_id: user.id,
+      survey_version: 'v1.0',
+      responses: answers,
+      user_profile: {
+        userType: answers.userType,
+        skillLevel: answers.skillLevel,
+        techInterest: answers.techInterest,
+        goal: answers.goal,
+        timeCommitment: answers.timeCommitment,
+        learningStyle: answers.learningStyle,
+        wantsRecommendations: answers.wantsRecommendations
+      },
+      preference_tags: preferenceTags,
+      skill_level_numeric: skillLevelMap[answers.skillLevel as string] || 1,
+      time_commitment_hours: timeCommitmentMap[answers.timeCommitment as string] || 5,
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      is_latest: true
+    };
+
+    // Mark any existing responses as not latest
+    await supabase
+      .from('user_survey_responses')
+      .update({ is_latest: false })
+      .eq('user_id', user.id);
+
+    // Insert new response
+    const { data, error } = await supabase
+      .from('user_survey_responses')
+      .insert(surveyRecord)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to save survey to Supabase: ${error.message}`);
+    }
+
+    return data;
   };
 
   const value: SurveyContextType = {
