@@ -12,7 +12,21 @@ dist
 dist-ssr
 *.local
 .github/
+
+# Environment Variables - ALL VARIANTS
 .env
+.env.*
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.staging
+.env.staging.local
+.env.production
+.env.production.local
+backend/.env
+backend/.env.*
 
 # Editor directories and files
 .vscode/*
