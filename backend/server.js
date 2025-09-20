@@ -244,6 +244,38 @@ app.get('/api/user/:userId/survey/status', async (req, res) => {
   }
 });
 
+// AI Roadmap Generation Routes
+app.post('/api/user/:userId/ai-roadmap', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await surveyService.generateAIRoadmap(userId);
+    
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    console.error('AI roadmap generation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/user/:userId/recommendations', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await surveyService.getUserRecommendations(userId);
+    
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Contact Form Routes
 app.post('/api/contact/send-email', async (req, res) => {
   try {

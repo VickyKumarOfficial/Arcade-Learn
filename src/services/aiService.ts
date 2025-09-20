@@ -244,6 +244,71 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
       return false;
     }
   }
+
+  /**
+   * Generate personalized learning roadmap based on user survey data
+   */
+  async generatePersonalizedRoadmap(surveyData: any): Promise<ChatCompletionResponse> {
+    try {
+      // Build comprehensive prompt for roadmap generation
+      const interests = Array.isArray(surveyData.techInterest) ? surveyData.techInterest.join(', ') : surveyData.techInterest;
+      const goals = Array.isArray(surveyData.goal) ? surveyData.goal.join(', ') : surveyData.goal;
+      const learningStyles = Array.isArray(surveyData.learningStyle) ? surveyData.learningStyle.join(', ') : surveyData.learningStyle;
+
+      const prompt = `As Nova, the AI assistant for ArcadeLearn, generate a comprehensive, personalized learning roadmap for a user with the following profile:
+
+**User Profile:**
+- User Type: ${surveyData.userType}
+- Current Skill Level: ${surveyData.skillLevel}
+- Tech Interests: ${interests}
+- Goals: ${goals}
+- Time Commitment: ${surveyData.timeCommitment}
+- Learning Styles: ${learningStyles}
+- Wants Recommendations: ${surveyData.wantsRecommendations}
+
+**Please provide:**
+
+## 🎯 Personalized Learning Roadmap
+
+### Recommended Learning Path
+Suggest 3-4 specific learning tracks that perfectly match their interests and goals, in order of priority.
+
+### 📚 Learning Components
+For each recommended track, include:
+- **Duration estimate** based on their time commitment
+- **Key skills** they'll develop
+- **Prerequisites** (if any)
+- **Difficulty progression**
+
+### 🎓 Learning Approach
+Based on their preferred learning styles (${learningStyles}), recommend:
+- **Study methods** that match their preferences
+- **Resource types** (videos, projects, reading, etc.)
+- **Practice strategies**
+
+### ⏰ Time Management
+Given their ${surveyData.timeCommitment} commitment:
+- **Weekly schedule** suggestions
+- **Milestone timeline**
+- **Progress tracking tips**
+
+### 🚀 Next Steps
+Provide immediate, actionable next steps to start their learning journey.
+
+### 💡 Pro Tips
+Share 2-3 specific tips for success based on their profile as a ${surveyData.userType} at ${surveyData.skillLevel} level.
+
+Make this roadmap inspiring, practical, and perfectly tailored to their specific situation. Focus on achievable goals that align with their available time and learning preferences.`;
+
+      return this.getSimpleResponse(prompt);
+    } catch (error) {
+      console.error('Error generating personalized roadmap:', error);
+      return {
+        success: false,
+        error: 'Failed to generate personalized roadmap. Please try again.'
+      };
+    }
+  }
 }
 
 export const aiService = new AIService();

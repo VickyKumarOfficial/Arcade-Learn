@@ -220,5 +220,249 @@ export const surveyService = {
       }
       return acc;
     }, {});
+  },
+
+  /**
+   * Generate AI-powered roadmap recommendations based on user survey
+   * @param {string} userId - User ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
+  async generateAIRoadmap(userId) {
+    try {
+      // First, get user's survey data
+      const surveyResult = await this.getUserSurvey(userId);
+      if (!surveyResult.success || !surveyResult.data) {
+        return { 
+          success: false, 
+          error: 'User must complete survey first to generate AI recommendations' 
+        };
+      }
+
+      const surveyData = surveyResult.data;
+      
+      // Build comprehensive AI prompt based on survey responses
+      const prompt = this._buildAIRoadmapPrompt(surveyData);
+      
+      // For now, we'll create a mock AI response since this is backend
+      // In production, you'd call an AI service here
+      const aiRecommendations = await this._generateMockAIRecommendations(surveyData);
+      
+      // Save recommendation to database
+      const { data: recommendation, error: saveError } = await supabase
+        .from('user_recommendations')
+        .insert({
+          user_id: userId,
+          recommended_roadmaps: aiRecommendations.roadmaps,
+          recommendation_reason: aiRecommendations.reasoning,
+          ai_confidence_score: aiRecommendations.confidence,
+          ai_model_version: 'v1.0',
+          generation_method: 'rule_based'
+        })
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error('Error saving AI recommendation:', saveError);
+        return { success: false, error: saveError.message };
+      }
+
+      return {
+        success: true,
+        data: {
+          recommendations: aiRecommendations,
+          savedRecommendation: recommendation
+        }
+      };
+
+    } catch (error) {
+      console.error('Error in generateAIRoadmap:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Get user's existing recommendations
+   * @param {string} userId - User ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
+  async getUserRecommendations(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('user_recommendations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('generated_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching user recommendations:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data: data };
+    } catch (error) {
+      console.error('Error in getUserRecommendations:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Build AI prompt for roadmap generation
+   * @private
+   */
+  _buildAIRoadmapPrompt(surveyData) {
+    const interests = Array.isArray(surveyData.techInterest) ? surveyData.techInterest.join(', ') : surveyData.techInterest;
+    const goals = Array.isArray(surveyData.goal) ? surveyData.goal.join(', ') : surveyData.goal;
+    const learningStyles = Array.isArray(surveyData.learningStyle) ? surveyData.learningStyle.join(', ') : surveyData.learningStyle;
+
+    return `Generate a personalized learning roadmap for a user with the following profile:
+
+User Type: ${surveyData.userType}
+Current Skill Level: ${surveyData.skillLevel}
+Tech Interests: ${interests}
+Goals: ${goals}
+Time Commitment: ${surveyData.timeCommitment}
+Learning Styles: ${learningStyles}
+Wants Recommendations: ${surveyData.wantsRecommendations}
+
+Based on this information, recommend:
+1. 3-5 specific learning roadmaps that match their interests and goals
+2. The recommended order of learning
+3. Time estimates for each roadmap component
+4. Specific resources and learning materials
+5. Reasoning for why these recommendations fit their profile
+
+Focus on practical, achievable paths that align with their available time and learning preferences.`;
+  },
+
+  /**
+   * Generate mock AI recommendations (replace with actual AI service call)
+   * @private
+   */
+  async _generateMockAIRecommendations(surveyData) {
+    // This is a sophisticated rule-based recommendation system
+    // In production, replace with actual AI service call
+    
+    const roadmapMappings = {
+      'Web Development': ['frontend-react', 'fullstack-mern', 'javascript-fundamentals'],
+      'Data Science': ['python-data-science', 'machine-learning-basics', 'data-analysis'],
+      'Mobile Apps': ['react-native', 'flutter-development', 'ios-swift'],
+      'DevOps': ['docker-kubernetes', 'aws-fundamentals', 'ci-cd-pipeline'],
+      'AI/ML': ['machine-learning-basics', 'deep-learning', 'python-ai'],
+      'Cybersecurity': ['security-fundamentals', 'ethical-hacking', 'network-security'],
+      'Game Development': ['unity-game-dev', 'unreal-engine', 'game-design'],
+      'Not sure yet': ['programming-fundamentals', 'web-development-intro', 'career-exploration']
+    };
+
+    const skillLevelAdjustments = {
+      'Beginner': { prefix: 'intro-to-', estimateMultiplier: 1.5 },
+      'Intermediate': { prefix: '', estimateMultiplier: 1.0 },
+      'Advanced': { prefix: 'advanced-', estimateMultiplier: 0.8 }
+    };
+
+    const timeCommitmentFactors = {
+      '<5 hours': { weeklyHours: 3, totalWeeks: 16 },
+      '5–10 hours': { weeklyHours: 7, totalWeeks: 12 },
+      '10+ hours': { weeklyHours: 15, totalWeeks: 8 }
+    };
+
+    let recommendedRoadmaps = [];
+    let reasoning = [];
+
+    // Primary recommendations based on tech interests
+    const interests = Array.isArray(surveyData.techInterest) ? surveyData.techInterest : [surveyData.techInterest];
+    const primaryInterest = interests[0];
+    
+    if (roadmapMappings[primaryInterest]) {
+      const mappedRoadmaps = roadmapMappings[primaryInterest];
+      const adjustment = skillLevelAdjustments[surveyData.skillLevel] || skillLevelAdjustments['Beginner'];
+      const timeFactors = timeCommitmentFactors[surveyData.timeCommitment] || timeCommitmentFactors['5–10 hours'];
+
+      mappedRoadmaps.slice(0, 3).forEach((roadmapId, index) => {
+        const estimatedWeeks = Math.ceil(timeFactors.totalWeeks * adjustment.estimateMultiplier);
+        recommendedRoadmaps.push({
+          roadmap_id: roadmapId,
+          score: 0.9 - (index * 0.1),
+          priority: index + 1,
+          estimated_completion_weeks: estimatedWeeks,
+          weekly_hours_needed: timeFactors.weeklyHours,
+          reasoning: `Perfect match for ${primaryInterest} interest at ${surveyData.skillLevel} level`
+        });
+      });
+
+      reasoning.push(`Primary recommendation based on your ${primaryInterest} interest`);
+      reasoning.push(`Adjusted for ${surveyData.skillLevel} skill level`);
+      reasoning.push(`Designed for ${surveyData.timeCommitment} weekly commitment`);
+    }
+
+    // Secondary recommendations based on goals
+    const goals = Array.isArray(surveyData.goal) ? surveyData.goal : [surveyData.goal];
+    if (goals.includes('Get a job') || goals.includes('Switch careers')) {
+      reasoning.push('Prioritized job-market relevant skills for career transition');
+    }
+
+    // Confidence calculation
+    let confidence = 0.7;
+    if (surveyData.wantsRecommendations === 'Yes') confidence += 0.1;
+    if (interests.length <= 2) confidence += 0.1; // More focused interests = higher confidence
+    if (surveyData.skillLevel !== 'Beginner') confidence += 0.1;
+
+    return {
+      roadmaps: recommendedRoadmaps,
+      reasoning: {
+        summary: `Personalized recommendations for ${surveyData.userType} interested in ${interests.join(', ')}`,
+        details: reasoning,
+        learning_approach: this._getLearningApproach(surveyData),
+        next_steps: this._getNextSteps(surveyData)
+      },
+      confidence: Math.min(confidence, 1.0)
+    };
+  },
+
+  /**
+   * Get learning approach recommendations
+   * @private
+   */
+  _getLearningApproach(surveyData) {
+    const styles = Array.isArray(surveyData.learningStyle) ? surveyData.learningStyle : [surveyData.learningStyle];
+    let approach = [];
+
+    if (styles.includes('Videos')) {
+      approach.push('Start with video tutorials for visual learning');
+    }
+    if (styles.includes('Projects')) {
+      approach.push('Build practical projects alongside theory');
+    }
+    if (styles.includes('Interactive tutorials')) {
+      approach.push('Use interactive coding platforms and exercises');
+    }
+    if (styles.includes('Reading')) {
+      approach.push('Supplement with comprehensive documentation and guides');
+    }
+
+    return approach.length > 0 ? approach : ['Balanced mix of theory and practice'];
+  },
+
+  /**
+   * Get next steps recommendations
+   * @private
+   */
+  _getNextSteps(surveyData) {
+    const steps = [
+      'Review the recommended roadmaps below',
+      'Start with the highest priority roadmap',
+      'Set up a consistent learning schedule'
+    ];
+
+    if (surveyData.skillLevel === 'Beginner') {
+      steps.push('Focus on building strong fundamentals first');
+    }
+
+    if (surveyData.timeCommitment === '<5 hours') {
+      steps.push('Break learning into small, manageable daily sessions');
+    }
+
+    steps.push('Track your progress and adjust as needed');
+    return steps;
   }
 };
