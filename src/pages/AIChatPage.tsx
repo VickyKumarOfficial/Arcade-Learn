@@ -325,17 +325,17 @@ const AIChatPage = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center pt-[36px] sm:pt-[40px]">
+      <div className="min-h-screen bg-background flex items-center justify-center pt-[36px] sm:pt-[40px]">
         <Card className="p-8 max-w-md w-full mx-4">
           <div className="text-center">
-            <Brain className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Sign In Required</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
+            <Brain className="h-12 w-12 text-primary mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2 text-foreground">Sign In Required</h2>
+            <p className="text-muted-foreground mb-6">
               Please sign in to access the AI chat feature.
             </p>
             <Button 
               onClick={() => window.location.href = '/signin'}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Sign In
             </Button>
@@ -346,23 +346,23 @@ const AIChatPage = () => {
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex overflow-hidden pt-[36px] sm:pt-[40px] border-t border-gray-200 dark:border-gray-700">
+    <div className="h-screen bg-background flex overflow-hidden pt-[36px] sm:pt-[40px] border-t border-border">
       {/* Sidebar */}
       <div 
         className={`fixed top-[36px] sm:top-[40px] bottom-0 left-0 z-50 transform transition-all duration-300 ease-in-out ${
           sidebarOpen || sidebarHovered ? 'w-80' : 'w-16'
-        } bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg`}
+        } bg-card border-r border-border shadow-lg`}
         onMouseEnter={() => setSidebarHovered(true)}
         onMouseLeave={() => setSidebarHovered(false)}
       >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-2 hover:bg-muted"
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -404,16 +404,16 @@ const AIChatPage = () => {
               >
                 {/* Search */}
                 <div className="relative mb-4 px-2">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search chats..."
-                    className="pl-10 bg-gray-50 dark:bg-gray-700 border-0"
+                    className="pl-10 bg-muted border-0"
                   />
                 </div>
 
                 {/* Recent Chats */}
                 <div className="space-y-1">
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-2 mb-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground px-2 mb-2">
                     Recent Chats
                   </h3>
                   {loading ? (
@@ -594,16 +594,16 @@ const AIChatPage = () => {
             // Welcome Screen
             <div className="flex items-center justify-center h-full">
               <div className="text-center max-w-md">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-800 p-6 rounded-full inline-block mb-6">
-                  <Brain className="h-12 w-12 text-white" />
+                <div className="bg-primary p-6 rounded-full inline-block mb-6">
+                  <Brain className="h-12 w-12 text-primary-foreground" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                <h2 className="text-2xl font-bold text-foreground mb-4">
                   Welcome to AI Assistant
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                <p className="text-muted-foreground mb-6">
                   I'm powered by Groq's advanced AI models! Ask me anything about coding, programming concepts, or get help with your projects.
                 </p>
-                <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="space-y-2 text-sm text-muted-foreground">
                   <p>💡 Explain programming concepts and algorithms</p>
                   <p>🐛 Debug code and fix errors</p>
                   <p>📚 Learn new languages and frameworks</p>

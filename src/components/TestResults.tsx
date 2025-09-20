@@ -30,7 +30,7 @@ export const TestResults: React.FC<TestResultsProps> = ({
         {Array.from({ length: count }).map((_, i) => (
           <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
         ))}
-        {count === 0 && <span className="text-gray-400">No stars earned</span>}
+        {count === 0 && <span className="text-muted-foreground">No stars earned</span>}
       </div>
     );
   };
@@ -90,7 +90,7 @@ export const TestResults: React.FC<TestResultsProps> = ({
               value={result.score} 
               className={`h-3 ${result.passed ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"}`}
             />
-            <div className="flex justify-between items-center mt-1 text-xs text-gray-500">
+            <div className="flex justify-between items-center mt-1 text-xs text-muted-foreground">
               <div>0%</div>
               <div className="border-l-2 border-green-500 pl-1">{test?.passingScore || 80}% (passing)</div>
               <div>100%</div>
@@ -99,28 +99,28 @@ export const TestResults: React.FC<TestResultsProps> = ({
           
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+            <div className="bg-primary/10 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <BarChart2 className="w-5 h-5 text-blue-500" />
+                <BarChart2 className="w-5 h-5 text-primary" />
                 <h4 className="font-medium">Rating Points</h4>
               </div>
-              <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+              <div className="text-2xl font-bold text-primary">
                 {result.rating}
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 Score × 2 = {result.score} × 2
               </div>
             </div>
             
-            <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg">
+            <div className="bg-primary/10 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Award className="w-5 h-5 text-yellow-500" />
+                <Award className="w-5 h-5 text-primary" />
                 <h4 className="font-medium">Stars Earned</h4>
               </div>
               <div className="text-xl mt-1">
                 {renderStars(result.stars)}
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 {result.rating} ÷ 100 = {result.stars}
               </div>
             </div>

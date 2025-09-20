@@ -129,15 +129,15 @@ const HowItWorksSection = () => {
   ];
 
   return (
-    <section className="py-16 sm:py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20 overflow-x-hidden">
+    <section className="py-16 sm:py-20 bg-background overflow-x-hidden">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Section Header */}
         <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-normal px-2">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-6 leading-normal px-2">
             How It
-            <span className="bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent"> Works</span>
+            <span className="text-primary"> Works</span>
           </h2>
-          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed px-2">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-2">
             Your complete learning journey from beginner to industry-ready professional. 
             Follow our proven 7-step process to master new skills and advance your career.
           </p>
@@ -163,32 +163,32 @@ const HowItWorksSection = () => {
                     <div className={`
                       relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-4 sm:mb-6 transition-all duration-300 transform hover:scale-110
                       ${isActive 
-                        ? `bg-gradient-to-r ${step.color} shadow-lg scale-110` 
+                        ? `bg-primary shadow-lg scale-110` 
                         : isCompleted 
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-md'
-                          : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600'
+                          ? 'bg-primary/80 shadow-md'
+                          : 'bg-card border-2 border-border'
                       }
                     `}>
                       <Icon className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 ${
                         isActive || isCompleted 
-                          ? 'text-white' 
-                          : 'text-gray-600 dark:text-gray-400'
+                          ? 'text-primary-foreground' 
+                          : 'text-muted-foreground'
                       }`} />
                       {isCompleted && !isActive && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 bg-green-500 rounded-full flex items-center justify-center">
-                          <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
+                        <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 bg-primary rounded-full flex items-center justify-center">
+                          <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-primary-foreground" />
                         </div>
                       )}
-                      <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-2 border-gray-200 dark:border-gray-600">
-                        <span className="text-xs sm:text-sm lg:text-base font-bold text-gray-700 dark:text-gray-300">{step.id}</span>
+                      <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-background rounded-full flex items-center justify-center border-2 border-border">
+                        <span className="text-xs sm:text-sm lg:text-base font-bold text-foreground">{step.id}</span>
                       </div>
                     </div>
 
                     {/* Step Title */}
                     <h3 className={`text-sm sm:text-base lg:text-lg font-semibold text-center transition-colors px-1 ${
                       isActive 
-                        ? 'text-blue-600 dark:text-blue-400' 
-                        : 'text-gray-800 dark:text-gray-200'
+                        ? 'text-primary' 
+                        : 'text-foreground'
                     }`}>
                       {step.title}
                     </h3>
@@ -199,9 +199,9 @@ const HowItWorksSection = () => {
 
             {/* Progress Line - Now below the steps with added spacing */}
             <div className="relative px-4 sm:px-8 mt-6 sm:mt-8 mb-4 sm:mb-6">
-              <div className="hidden md:block h-2 bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-800 dark:to-purple-800 rounded-full"></div>
+              <div className="hidden md:block h-2 bg-muted rounded-full"></div>
               <div 
-                className="hidden md:block absolute top-0 left-4 sm:left-0 h-2 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-1000"
+                className="hidden md:block absolute top-0 left-4 sm:left-0 h-2 bg-primary rounded-full transition-all duration-1000"
                 style={{ width: `calc(${((activeStep + 1) / steps.length) * 100}% - 32px)` }}
               ></div>
               
@@ -212,8 +212,8 @@ const HowItWorksSection = () => {
                     key={index}
                     className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-300 ${
                       index <= activeStep
-                        ? 'bg-blue-500 border-blue-500'
-                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
+                        ? 'bg-primary border-primary'
+                        : 'bg-card border-border'
                     }`}
                   />
                 ))}
@@ -224,36 +224,36 @@ const HowItWorksSection = () => {
 
         {/* Active Step Details */}
         <div className="mb-12 sm:mb-16">
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl mx-2 sm:mx-0">
+          <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-xl mx-2 sm:mx-0">
             <CardContent className="p-4 sm:p-6 lg:p-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
                 <div>
                   <div className="flex items-center mb-4 sm:mb-6">
-                    <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r ${steps[activeStep].color} flex items-center justify-center mr-3 sm:mr-4`}>
-                      {React.createElement(steps[activeStep].icon, { className: "w-6 h-6 sm:w-8 sm:h-8 text-white" })}
+                    <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary flex items-center justify-center mr-3 sm:mr-4`}>
+                      {React.createElement(steps[activeStep].icon, { className: "w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" })}
                     </div>
                     <div>
                       <Badge className="mb-2 text-xs sm:text-sm">Step {steps[activeStep].id}</Badge>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                      <h3 className="text-xl sm:text-2xl font-bold text-foreground">
                         {steps[activeStep].title}
                       </h3>
                     </div>
                   </div>
-                  <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 leading-relaxed">
+                  <p className="text-base sm:text-lg text-muted-foreground mb-4 sm:mb-6 leading-relaxed">
                     {steps[activeStep].description}
                   </p>
                   <ul className="space-y-2 sm:space-y-3">
                     {steps[activeStep].details.map((detail, index) => (
                       <li key={index} className="flex items-start sm:items-center">
-                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
-                        <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{detail}</span>
+                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
+                        <span className="text-sm sm:text-base text-foreground">{detail}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div className="flex justify-center mt-6 lg:mt-0">
-                  <div className={`w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 rounded-2xl bg-gradient-to-br ${steps[activeStep].color} flex items-center justify-center shadow-2xl`}>
-                    {React.createElement(steps[activeStep].icon, { className: "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 text-white opacity-80" })}
+                  <div className={`w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 rounded-2xl bg-primary flex items-center justify-center shadow-2xl`}>
+                    {React.createElement(steps[activeStep].icon, { className: "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 text-primary-foreground opacity-80" })}
                   </div>
                 </div>
               </div>
@@ -280,8 +280,8 @@ const HowItWorksSection = () => {
                   onClick={() => setActiveStep(index)}
                   className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all ${
                     index === activeStep 
-                      ? 'bg-blue-500 scale-125' 
-                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
+                      ? 'bg-primary scale-125' 
+                      : 'bg-muted hover:bg-border'
                   }`}
                 />
               ))}
@@ -290,7 +290,7 @@ const HowItWorksSection = () => {
               size="sm"
               onClick={() => setActiveStep(Math.min(steps.length - 1, activeStep + 1))}
               disabled={activeStep === steps.length - 1}
-              className="flex items-center bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-xs sm:text-sm px-2 sm:px-4"
+              className="flex items-center bg-primary hover:bg-primary/90 text-xs sm:text-sm px-2 sm:px-4"
             >
               Next
               <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
@@ -302,15 +302,15 @@ const HowItWorksSection = () => {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <Card key={index} className="bg-card/60 backdrop-blur-sm border border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 <CardContent className="p-4 sm:p-6 text-center">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3">
+                  <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2 sm:mb-3">
                     {feature.title}
                   </h3>
-                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -321,14 +321,14 @@ const HowItWorksSection = () => {
 
         {/* Call to Action */}
         <div className="text-center mt-12 sm:mt-16 px-2 sm:px-0">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white">
+          <div className="bg-primary rounded-xl sm:rounded-2xl p-6 sm:p-8 text-primary-foreground">
             <h3 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Ready to Start Your Journey?</h3>
             <p className="text-lg sm:text-xl mb-4 sm:mb-6 opacity-90">
               Join thousands of learners who have successfully transformed their careers with our roadmaps.
             </p>
             <Button 
               size="lg" 
-              className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base"
+              className="bg-background text-foreground hover:bg-muted font-semibold px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base"
               onClick={() => navigate("/roadmaps")}
             >
               Explore Roadmaps
