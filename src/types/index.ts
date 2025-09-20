@@ -28,6 +28,7 @@ export interface TestResult {
   score: number; // 0-100
   rating: number; // score * 2 (0-200)
   stars: number; // rating / 100 (0-2 stars max)
+  moduleScore: number; // NEW: calculated score for module (0.5-10 based on 80-100%)
   passed: boolean; // score >= 80
   attemptCount: number;
   completedAt: Date;
@@ -70,6 +71,7 @@ export interface Roadmap {
   completedComponents: number;
   icon: string;
   color: string;
+  tags: string[]; // Tags for career recommendation matching
 }
 
 // Rating Badge System (replacing Achievement system)
@@ -132,8 +134,8 @@ export interface SurveyState {
 // Updated User Data (Rating System)
 export interface UserGameData {
   totalRating: number; // Sum of all component ratings
-  totalStars: number; // totalRating / 100
-  averageScore: number; // Average test score across all components
+  totalStars: number; // Based on totalScore thresholds
+  totalScore: number; // Overall score from completed modules (replaces averageScore)
   completedTests: number;
   currentStreak: number;
   longestStreak: number;
@@ -153,6 +155,7 @@ export interface CareerOption {
   requiredSkills: string[];
   roadmapIds: string[];
   companies: string[];
+  tags: string[]; // Tags for career recommendation matching
 }
 
 export interface UserProgress {

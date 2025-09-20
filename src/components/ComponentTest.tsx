@@ -9,6 +9,7 @@ import { AlertCircle, CheckCircle, Clock, AlertTriangle, Shield, Eye, X } from '
 import { ComponentTest as ComponentTestType, TestQuestion, TestResult } from '@/types';
 import { componentTests } from '@/data/componentTests';
 import { useGameTest } from '@/contexts/GameTestContext';
+import { calculateModuleScore } from '@/lib/gamification';
 
 interface ComponentTestProps {
   testId: string;
@@ -101,6 +102,7 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
       score: 0,
       rating: 0,
       stars: 0,
+      moduleScore: calculateModuleScore(0), // Calculate moduleScore for terminated test
       passed: false,
       attemptCount: previousAttempts + 1,
       completedAt: new Date(),
@@ -331,8 +333,13 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
     
     const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
     const passed = score >= test.passingScore;
-    const rating = score * 2; // Each percentage point is worth 2 rating points
-    const stars = Math.floor(rating / 100); // Each 100 rating points = 1 star
+    const rating = score * 2; // Legacy: each percentage point is worth 2 rating points
+    
+    // Calculate module score using our imported function (properly handles 80% edge case)
+    const moduleScore = calculateModuleScore(score);
+    
+    // Calculate stars based on score (legacy calculation for individual test stars)
+    const stars = Math.floor(score / 50); // 0-1 stars for 0-100%
     
     const result: TestResult = {
       testId,
@@ -341,6 +348,7 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
       score,
       rating,
       stars,
+      moduleScore, // Add moduleScore to the test result
       passed,
       attemptCount: previousAttempts + 1,
       completedAt: new Date(),

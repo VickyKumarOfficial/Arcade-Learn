@@ -228,7 +228,46 @@ app.get('/api/user/:userId/survey/status', async (req, res) => {
     const result = await surveyService.isSurveyCompleted(userId);
     
     if (result.success) {
-      res.json({ completed: result.completed });
+      // Check if user is new by checking when they were created
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+      const isNewUser = userData?.user && new Date() - new Date(userData.user.created_at) < 24 * 60 * 60 * 1000; // New if created within 24 hours
+      
+      res.json({ 
+        completed: result.completed,
+        isNewUser: isNewUser || false
+      });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// AI Roadmap Generation Routes
+app.post('/api/user/:userId/ai-roadmap', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await surveyService.generateAIRoadmap(userId);
+    
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    console.error('AI roadmap generation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/user/:userId/recommendations', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await surveyService.getUserRecommendations(userId);
+    
+    if (result.success) {
+      res.json(result.data);
     } else {
       res.status(400).json({ error: result.error });
     }
