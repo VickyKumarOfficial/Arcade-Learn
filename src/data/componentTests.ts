@@ -6,7 +6,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'html-css-basics',
     title: 'HTML & CSS Fundamentals Test',
     description: 'Test your knowledge of HTML structure and CSS styling',
-    timeLimit: 15,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -55,7 +55,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'javascript-fundamentals',
     title: 'JavaScript Fundamentals Test',
     description: 'Test your understanding of JavaScript basics',
-    timeLimit: 20,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -104,7 +104,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'react-basics',
     title: 'React Basics Test',
     description: 'Test your knowledge of React fundamentals',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -153,7 +153,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'typescript',
     title: 'TypeScript Essentials Test',
     description: 'Test your understanding of TypeScript features',
-    timeLimit: 20,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -202,7 +202,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'state-management',
     title: 'State Management Test',
     description: 'Test your knowledge of React state management patterns',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -251,7 +251,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'testing',
     title: 'React Testing Test',
     description: 'Test your knowledge of React testing practices',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -301,7 +301,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'nodejs-basics',
     title: 'Node.js Fundamentals Test',
     description: 'Test your understanding of Node.js runtime and core modules',
-    timeLimit: 20,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -350,7 +350,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'express-framework',
     title: 'Express.js Framework Test',
     description: 'Test your knowledge of Express.js web framework',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -399,7 +399,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'databases',
     title: 'Database Integration Test',
     description: 'Test your knowledge of database integration with Node.js',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -449,7 +449,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'mern-setup',
     title: 'MERN Stack Setup Test',
     description: 'Test your knowledge of MERN stack development environment',
-    timeLimit: 20,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -498,7 +498,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'authentication',
     title: 'User Authentication Test',
     description: 'Test your knowledge of JWT authentication and authorization',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -548,7 +548,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'python-fundamentals',
     title: 'Python for Data Science Test',
     description: 'Test your knowledge of Python programming for data science',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -597,7 +597,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'pandas-numpy',
     title: 'Data Manipulation Test',
     description: 'Test your knowledge of Pandas and NumPy for data analysis',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -647,7 +647,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'docker-basics',
     title: 'Docker Containerization Test',
     description: 'Test your knowledge of Docker containerization',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -696,7 +696,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'kubernetes',
     title: 'Kubernetes Orchestration Test',
     description: 'Test your knowledge of Kubernetes container orchestration',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -746,7 +746,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'dart-fundamentals',
     title: 'Dart Programming Fundamentals Test',
     description: 'Test your knowledge of Dart language basics and syntax for Flutter development',
-    timeLimit: 20,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -795,7 +795,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'flutter-setup',
     title: 'Flutter Development Environment Test',
     description: 'Test your knowledge of Flutter setup and development environment',
-    timeLimit: 15,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -844,7 +844,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'flutter-widgets',
     title: 'Flutter Widgets and UI Test',
     description: 'Test your knowledge of Flutter widgets and UI components',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -893,7 +893,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'flutter-state-management',
     title: 'Flutter State Management Test',
     description: 'Test your knowledge of state management in Flutter applications',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -942,7 +942,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'flutter-deployment',
     title: 'Flutter App Deployment Test',
     description: 'Test your knowledge of building and deploying Flutter applications',
-    timeLimit: 20,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -992,7 +992,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'security-fundamentals',
     title: 'Cybersecurity Fundamentals Test',
     description: 'Test your knowledge of basic cybersecurity principles and concepts',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1041,7 +1041,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'network-security',
     title: 'Network Security Test',
     description: 'Test your knowledge of network security protocols and practices',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1090,7 +1090,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'penetration-testing',
     title: 'Penetration Testing Test',
     description: 'Test your knowledge of penetration testing methodologies and tools',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1139,7 +1139,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'web-app-security',
     title: 'Web Application Security Test',
     description: 'Test your knowledge of web application vulnerabilities and security measures',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1188,7 +1188,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'incident-response',
     title: 'Incident Response Test',
     description: 'Test your knowledge of cybersecurity incident response procedures',
-    timeLimit: 20,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1238,7 +1238,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'blockchain-basics',
     title: 'Blockchain Fundamentals Test',
     description: 'Test your knowledge of blockchain technology and cryptocurrency basics',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1287,7 +1287,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'ethereum-solidity',
     title: 'Ethereum & Solidity Test',
     description: 'Test your knowledge of Ethereum platform and Solidity programming',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1336,7 +1336,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'web3-dapps',
     title: 'Web3 DApps Development Test',
     description: 'Test your knowledge of building decentralized applications',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1385,7 +1385,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'defi-protocols',
     title: 'DeFi Protocols Test',
     description: 'Test your knowledge of Decentralized Finance protocols and concepts',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1434,7 +1434,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'nft-marketplace',
     title: 'NFT Marketplace Development Test',
     description: 'Test your knowledge of Non-Fungible Tokens and marketplace development',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1484,7 +1484,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'python-data-science',
     title: 'Python for Data Science Test',
     description: 'Test your knowledge of Python libraries and tools for data science',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1533,7 +1533,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'machine-learning-basics',
     title: 'Machine Learning Fundamentals Test',
     description: 'Test your knowledge of machine learning concepts and algorithms',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1582,7 +1582,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'deep-learning',
     title: 'Deep Learning Test',
     description: 'Test your knowledge of neural networks and deep learning frameworks',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1631,7 +1631,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'computer-vision',
     title: 'Computer Vision Test',
     description: 'Test your knowledge of computer vision techniques and applications',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1680,7 +1680,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'mlops-production',
     title: 'MLOps & Production Test',
     description: 'Test your knowledge of deploying and managing ML models in production',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1730,7 +1730,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'csharp-programming',
     title: 'C# Programming Fundamentals Test',
     description: 'Test your knowledge of C# programming language basics',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1779,7 +1779,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'unity-basics',
     title: 'Unity Engine Basics Test',
     description: 'Test your knowledge of Unity game engine fundamentals',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1828,7 +1828,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'game-physics',
     title: 'Game Physics Test',
     description: 'Test your knowledge of physics systems in Unity game development',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1877,7 +1877,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'animation-ui',
     title: 'Animation & UI Systems Test',
     description: 'Test your knowledge of Unity animation and user interface systems',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1926,7 +1926,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'game-publishing',
     title: 'Game Publishing Test',
     description: 'Test your knowledge of building and publishing games from Unity',
-    timeLimit: 20,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -1976,7 +1976,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'cloud-fundamentals',
     title: 'Cloud Computing Fundamentals Test',
     description: 'Test your knowledge of cloud computing basics and service models',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2025,7 +2025,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'aws-services',
     title: 'AWS Services Test',
     description: 'Test your knowledge of Amazon Web Services and core cloud services',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2074,7 +2074,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'microservices-architecture',
     title: 'Microservices Architecture Test',
     description: 'Test your knowledge of microservices design patterns and implementation',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2123,7 +2123,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'infrastructure-as-code',
     title: 'Infrastructure as Code Test',
     description: 'Test your knowledge of IaC tools and practices',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2172,7 +2172,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'monitoring-observability',
     title: 'Monitoring & Observability Test',
     description: 'Test your knowledge of cloud monitoring and observability practices',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2222,7 +2222,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'product-strategy',
     title: 'Product Strategy Test',
     description: 'Test your knowledge of product strategy and vision development',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2271,7 +2271,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'user-research',
     title: 'User Research Test',
     description: 'Test your knowledge of user research methods and customer discovery',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2320,7 +2320,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'product-analytics',
     title: 'Product Analytics Test',
     description: 'Test your knowledge of data-driven product decisions and metrics',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2369,7 +2369,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'agile-development',
     title: 'Agile Development Test',
     description: 'Test your knowledge of agile methodologies and product development processes',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2418,7 +2418,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'go-to-market',
     title: 'Go-to-Market Strategy Test',
     description: 'Test your knowledge of product launch and market entry strategies',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2468,7 +2468,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'testing-fundamentals',
     title: 'Software Testing Fundamentals Test',
     description: 'Test your knowledge of software testing principles and methodologies',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2517,7 +2517,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'selenium-automation',
     title: 'Selenium Web Automation Test',
     description: 'Test your knowledge of Selenium WebDriver and web automation',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2566,7 +2566,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'api-testing',
     title: 'API Testing Test',
     description: 'Test your knowledge of API testing methods and tools',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2615,7 +2615,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'performance-testing',
     title: 'Performance Testing Test',
     description: 'Test your knowledge of load testing and performance optimization',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2664,7 +2664,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'cicd-testing',
     title: 'CI/CD Integration Test',
     description: 'Test your knowledge of integrating tests in CI/CD pipelines',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2714,7 +2714,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'design-thinking',
     title: 'Design Thinking Test',
     description: 'Test your knowledge of human-centered design process and methodology',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2763,7 +2763,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'ux-research',
     title: 'UX Research Test',
     description: 'Test your knowledge of user research methods and usability testing',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2812,7 +2812,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'ui-design-principles',
     title: 'UI Design Principles Test',
     description: 'Test your knowledge of visual design, typography, and layout principles',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2861,7 +2861,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'design-tools',
     title: 'Design Tools Test',
     description: 'Test your knowledge of design tools and prototyping techniques',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2910,7 +2910,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'responsive-design',
     title: 'Responsive & Accessible Design Test',
     description: 'Test your knowledge of responsive design and accessibility principles',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -2960,7 +2960,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'electronics-basics',
     title: 'Electronics Fundamentals Test',
     description: 'Test your knowledge of basic electronics and circuit principles',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -3009,7 +3009,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'arduino-programming',
     title: 'Arduino Programming Test',
     description: 'Test your knowledge of Arduino microcontroller programming',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -3058,7 +3058,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'raspberry-pi',
     title: 'Raspberry Pi Test',
     description: 'Test your knowledge of Raspberry Pi and Linux systems for embedded development',
-    timeLimit: 30,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -3107,7 +3107,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'iot-protocols',
     title: 'IoT Communication Protocols Test',
     description: 'Test your knowledge of IoT communication protocols and networking',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
@@ -3156,7 +3156,7 @@ export const componentTests: Record<string, ComponentTest> = {
     id: 'iot-cloud-integration',
     title: 'IoT Cloud Integration Test',
     description: 'Test your knowledge of connecting IoT devices to cloud platforms',
-    timeLimit: 25,
+    timeLimit: 5,
     passingScore: 80,
     maxAttempts: 3,
     questions: [
