@@ -1,7 +1,73 @@
 import { UserGameData, Achievement, RoadmapComponent } from '@/types';
 import { roadmaps } from '@/data/roadmaps';
 
-// XP calculation - fixed amount per component completion
+// NEW SCORING SYSTEM - Module completion scoring
+export const calculateModuleScore = (testScore: number): number => {
+  // 80% minimum required to pass
+  if (testScore < 80) return 0;
+  
+  // Calculation based on examples:
+  // If score is 80 then rating points = 0.5
+  // If score is 81 then rating points = (81-80)*0.5 = 0.5
+  // If score is 82 then rating points = (82-80)*0.5 = 1.0
+  // If score is 90 then rating points = (90-80)*0.5 = 5.0
+  // If score is 100 then rating points = (100-80)*0.5 = 10.0
+  
+  if (testScore === 80) {
+    return 0.5; // Special case: exactly 80% = 0.5 points
+  } else {
+    return (testScore - 80) * 0.5; // For scores > 80
+  }
+};
+
+// Star level calculation based on total score
+export const calculateStarsFromScore = (totalScore: number): number => {
+  if (totalScore >= 750) return 4;
+  if (totalScore >= 450) return 3;
+  if (totalScore >= 250) return 2;
+  if (totalScore >= 100) return 1;
+  return 0;
+};
+
+// Get user level tag based on total score
+export const getUserLevelTag = (totalScore: number): string => {
+  if (totalScore >= 999) return "Expert";
+  if (totalScore >= 100) return "Intermediate";
+  return "Beginner";
+};
+
+// Get next star threshold and progress
+export const getStarProgress = (totalScore: number): {
+  currentStars: number;
+  nextThreshold: number;
+  progress: number;
+  isExpert: boolean;
+} => {
+  const currentStars = calculateStarsFromScore(totalScore);
+  const thresholds = [100, 250, 450, 750, 999];
+  
+  if (totalScore >= 999) {
+    return {
+      currentStars,
+      nextThreshold: 999,
+      progress: 100,
+      isExpert: true
+    };
+  }
+  
+  const nextThreshold = thresholds[currentStars] || 999;
+  const prevThreshold = currentStars > 0 ? thresholds[currentStars - 1] : 0;
+  const progress = Math.round(((totalScore - prevThreshold) / (nextThreshold - prevThreshold)) * 100);
+  
+  return {
+    currentStars,
+    nextThreshold,
+    progress: Math.max(0, Math.min(100, progress)),
+    isExpert: false
+  };
+};
+
+// XP calculation - fixed amount per component completion (LEGACY - keeping for backwards compatibility)
 export const calculateComponentXP = (component: RoadmapComponent): number => {
   // Base XP: 10 per component, with bonus based on estimated hours
   const baseXP = 10;
@@ -251,7 +317,7 @@ export const updateStreak = (userData: UserGameData): UserGameData => {
 export const initializeUserGameData = (): UserGameData => ({
   totalRating: 0,
   totalStars: 0,
-  averageScore: 0,
+  totalScore: 0,
   completedTests: 0,
   currentStreak: 0,
   longestStreak: 0,

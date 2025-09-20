@@ -3,16 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { UserGameData } from "@/types";
 import { Star, Target, TrendingUp } from "lucide-react";
+import { getUserLevelTag, getStarProgress } from "@/lib/gamification";
 
 interface UserStatsCardProps {
   userData: UserGameData;
 }
 
 export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
-  // Calculate average rating correctly (rating points / completed tests)
-  const averageRating = userData.completedTests > 0 ? userData.totalRating / userData.completedTests : 0;
-  const averageRatingOutOf10 = averageRating / 20; // Convert to 0-10 scale (200 max rating / 20 = 10)
-  const completionRate = userData.averageScore;
+  // Use new scoring system
+  const totalScore = userData.totalScore;
+  const levelTag = getUserLevelTag(totalScore);
+  const starProgress = getStarProgress(totalScore);
+  const completionRate = userData.completedTests > 0 ? (userData.completedTests / 10) * 100 : 0; // Assuming 10 tests total for now
 
   return (
     <Card className="bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-600 text-white border-0 shadow-xl overflow-hidden relative">
@@ -24,9 +26,14 @@ export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
       <CardHeader className="pb-4 relative z-10">
         <CardTitle className="flex items-center justify-between">
           <span className="text-xl font-bold">Your Progress</span>
-          <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
-            ⭐ {userData.totalStars} Stars
-          </Badge>
+          <div className="flex items-center space-x-2">
+            <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
+              ⭐ {userData.totalStars} Stars
+            </Badge>
+            <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+              {levelTag}
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       
@@ -35,10 +42,10 @@ export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
         <div className="grid grid-cols-2 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              {averageRatingOutOf10.toFixed(1)}
+              {totalScore}
             </div>
-            <div className="text-sm opacity-90">Avg Rating</div>
-            <div className="text-xs opacity-75 mt-1">Out of 10.0</div>
+            <div className="text-sm opacity-90">Total Score</div>
+            <div className="text-xs opacity-75 mt-1">Points Earned</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">
@@ -52,18 +59,20 @@ export const UserStatsCard = ({ userData }: UserStatsCardProps) => {
         {/* Test Performance Progress */}
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="opacity-90">Test Performance</span>
-            <span className="opacity-90">{completionRate.toFixed(1)}%</span>
+            <span className="opacity-90">Overall Score</span>
+            <span className="opacity-90">{totalScore} pts</span>
           </div>
           <div className="relative">
             <Progress 
-              value={completionRate} 
+              value={starProgress.progress} 
               className="h-3 bg-white/20" 
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 rounded-full opacity-80" style={{width: `${completionRate}%`}}></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 rounded-full opacity-80" style={{width: `${starProgress.progress}%`}}></div>
           </div>
           <div className="flex justify-between text-xs opacity-75">
-            <span>Average Score: {userData.averageScore.toFixed(1)}%</span>
+            <span>
+              {starProgress.isExpert ? 'Expert Level Achieved!' : `Next: ${starProgress.nextThreshold} pts`}
+            </span>
             <span>{userData.completedTests} tests completed</span>
           </div>
         </div>

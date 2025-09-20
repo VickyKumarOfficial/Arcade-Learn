@@ -1,14 +1,14 @@
 # EmailJS Setup Guide for Production
 
 ## ✅ Current Status
-✅ EmailJS credentials are already configured in `.env` file
+✅ EmailJS credentials are already configured in .env file
 ✅ Email service updated to use real credentials  
 ✅ Production-ready error handling implemented
 ✅ Vercel configuration ready for deployment
 
 ## 🔑 Environment Variables for Vercel
 
-In your Vercel dashboard, add these environment variables (use values from your local `.env` file):
+In your Vercel dashboard, add these environment variables (use values from your local .env file):
 
 ```
 VITE_SUPABASE_URL=your_supabase_url
@@ -19,13 +19,12 @@ VITE_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
 VITE_GROQ_API_KEY=your_groq_api_key
 ```
 
-> **Note**: Copy the actual values from your local `.env` file when setting up Vercel environment variables.
+> Note: Copy the actual values from your local .env file when setting up Vercel environment variables.
 
 ## 📧 EmailJS Template Requirements
 
-Your EmailJS template (ID: `template_r3zw7hn`) should include these variables:
+Your EmailJS template (ID: template_r3zw7hn) should include these variables:
 
-```
 {{to_email}} - Recipient email (vickykofficial890@gmail.com)
 {{from_name}} - Sender's full name
 {{from_email}} - Sender's email address
@@ -34,11 +33,9 @@ Your EmailJS template (ID: `template_r3zw7hn`) should include these variables:
 {{phone}} - Sender's phone number
 {{message}} - Email message content
 {{user_name}} - User's name for personalization
-```
 
 ## 📝 Email Template Example
 
-```html
 Subject: {{subject}}
 
 From: {{from_name}} ({{from_email}})
@@ -50,20 +47,19 @@ Message:
 ---
 This message was sent via Arcade Learn contact form.
 Reply to: {{reply_to}}
-```
 
 ## 🧪 How It Works
 
-1. **Development (localhost)**: Tries backend first → EmailJS → mailto fallback
-2. **Production**: Uses EmailJS directly → mailto fallback if needed
-3. **Smart Fallback**: Opens default email client if EmailJS fails
+1. Development (localhost): Tries backend first → EmailJS → mailto fallback
+2. Production: Uses EmailJS directly → mailto fallback if needed
+3. Smart Fallback: Opens default email client if EmailJS fails
 
 ## 🚀 Production Deployment Steps
 
 1. ✅ Code is ready (no changes needed)
 2. ✅ Environment variables are documented above
 3. ✅ Vercel configuration is ready
-4. 📋 **Action Required**: Add environment variables to Vercel dashboard
+4. 📋 Action Required: Add environment variables to Vercel dashboard
 5. 🚀 Deploy to production
 
 ## 📱 Testing Checklist

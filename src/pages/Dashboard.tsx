@@ -18,6 +18,7 @@ import {
   Lock,
   LogIn
 } from "lucide-react";
+import { getUserLevelTag, getStarProgress } from "@/lib/gamification";
 import Navigation from "@/components/Navigation";
 import { UserStatsCard } from "@/components/UserStatsCard";
 import { useGameTest } from "@/contexts/GameTestContext";
@@ -122,9 +123,11 @@ const Dashboard = () => {
     );
   }
   
-  // Calculate rating and star based stats
-  const averageRating = state.userData.completedTests > 0 ? state.userData.totalRating / state.userData.completedTests : 0;
+  // Calculate stats with new scoring system
+  const totalScore = state.userData.totalScore;
   const totalStars = state.userData.totalStars;
+  const levelTag = getUserLevelTag(totalScore);
+  const starProgress = getStarProgress(totalScore);
   
   // Calculate completed roadmaps with real-time data
   const completedRoadmaps = getCompletedRoadmaps(state.userData.completedComponents);
