@@ -182,66 +182,97 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     if (isAuthenticated && user) {
       checkSurveyStatus();
     } else {
-      // Reset survey state when user logs out
+      // Reset survey state and clear session storage when user logs out
       dispatch({ type: 'RESET_SURVEY' });
+      // Clear all session storage keys related to surveys
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('arcadelearn_survey_shown_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
     }
   }, [isAuthenticated, user]);
 
   // Save survey progress to localStorage whenever state changes (for persistence)
   useEffect(() => {
-    if (user && state.answers && Object.keys(state.answers).length > 0) {
+    if (user && state.answers && Object.keys(state.answers).length > 0 && !state.isCompleted) {
       saveSurveyProgressLocally();
     }
-  }, [state.answers, state.currentQuestionIndex, user]);
+  }, [state.answers, state.currentQuestionIndex, user, state.isCompleted]);
 
   const checkSurveyStatus = async () => {
     if (!user) return;
 
     try {
-      // First check localStorage for quick response
+      // First check localStorage for completion status
       const surveyCompleted = localStorage.getItem(`arcadelearn_survey_completed_${user.id}`);
       if (surveyCompleted === 'true') {
         dispatch({ type: 'LOAD_SURVEY_STATE', state: { isCompleted: true, isVisible: false } });
         return;
       }
 
-      // Then check backend
+      // Check if we've already shown survey to this user in this session
+      const surveyShownThisSession = sessionStorage.getItem(`arcadelearn_survey_shown_${user.id}`);
+      
+      // Check backend for survey completion status
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
       const response = await fetch(`${apiBaseUrl}/user/${user.id}/survey/status`);
       
       if (response.ok) {
-        const { completed } = await response.json();
+        const { completed, isNewUser } = await response.json();
         
         if (completed) {
-          // User has already completed the survey - update localStorage and hide survey
+          // User has already completed the survey - mark as completed and hide
           localStorage.setItem(`arcadelearn_survey_completed_${user.id}`, 'true');
           localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
           dispatch({ type: 'LOAD_SURVEY_STATE', state: { isCompleted: true, isVisible: false } });
           return;
         }
-      }
-
-      // If not completed, check for saved progress first
-      loadSurveyProgressLocally();
-      
-      // If no saved progress was loaded, show fresh survey
-      setTimeout(() => {
-        if (!state.isCompleted && Object.keys(state.answers).length === 0) {
-          dispatch({ type: 'SHOW_SURVEY' });
+        
+        // Only show survey for new users who haven't completed it and haven't been shown it this session
+        if (isNewUser && !surveyShownThisSession) {
+          // Check for saved progress first
+          loadSurveyProgressLocally();
+          
+          // Mark that we've shown the survey to this user in this session
+          sessionStorage.setItem(`arcadelearn_survey_shown_${user.id}`, 'true');
+          
+          // Show survey after a brief delay to allow state to settle
+          setTimeout(() => {
+            if (!state.isCompleted) {
+              dispatch({ type: 'SHOW_SURVEY' });
+            }
+          }, 500);
         }
-      }, 100);
+      } else {
+        // Fallback: if backend is unavailable, use localStorage logic
+        if (surveyCompleted !== 'true' && !surveyShownThisSession) {
+          // Only show if not shown this session
+          sessionStorage.setItem(`arcadelearn_survey_shown_${user.id}`, 'true');
+          loadSurveyProgressLocally();
+          
+          setTimeout(() => {
+            if (!state.isCompleted) {
+              dispatch({ type: 'SHOW_SURVEY' });
+            }
+          }, 500);
+        }
+      }
     } catch (error) {
       console.error('Failed to check survey status:', error);
-      // Fallback: only show survey if not marked as completed in localStorage
+      // Conservative fallback: only show if definitely not completed and not shown this session
       const surveyCompleted = localStorage.getItem(`arcadelearn_survey_completed_${user.id}`);
-      if (surveyCompleted !== 'true') {
+      const surveyShownThisSession = sessionStorage.getItem(`arcadelearn_survey_shown_${user.id}`);
+      
+      if (surveyCompleted !== 'true' && !surveyShownThisSession) {
+        sessionStorage.setItem(`arcadelearn_survey_shown_${user.id}`, 'true');
         loadSurveyProgressLocally();
-        // Small delay to allow state to update before checking
+        
         setTimeout(() => {
           if (!state.isCompleted) {
             dispatch({ type: 'SHOW_SURVEY' });
           }
-        }, 100);
+        }, 500);
       }
     }
   };
@@ -336,29 +367,28 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
       const savedProgress = localStorage.getItem(`arcadelearn_survey_progress_${user.id}`);
       if (savedProgress) {
         const progressData = JSON.parse(savedProgress);
-        console.log('Loading saved progress:', progressData);
+        console.log('Loading saved survey progress:', progressData);
         
         // Validate the progress data and ensure it's within bounds
         const validatedState = {
           currentQuestionIndex: Math.max(0, Math.min(progressData.currentQuestionIndex || 0, SURVEY_QUESTIONS.length - 1)),
           answers: progressData.answers || {},
           isCompleted: progressData.isCompleted || false,
-          isVisible: !progressData.isCompleted // Only show if not completed
+          isVisible: false // Don't automatically show, let checkSurveyStatus decide
         };
         
-        console.log('Validated state to load:', validatedState);
+        console.log('Validated survey state to load:', validatedState);
         dispatch({ type: 'LOAD_SURVEY_STATE', state: validatedState });
         
-        // If survey is not completed and has progress, show it
-        if (!validatedState.isCompleted) {
-          dispatch({ type: 'SHOW_SURVEY' });
-        }
+        return true; // Indicate that progress was loaded
       }
     } catch (error) {
       console.error('Failed to load survey progress:', error);
-      // If there's an error loading progress, start fresh
-      dispatch({ type: 'SHOW_SURVEY' });
+      // Clear corrupted data
+      localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
     }
+    
+    return false; // No progress was loaded
   };
 
   const saveSurveyToBackend = async (answers: SurveyAnswers) => {
