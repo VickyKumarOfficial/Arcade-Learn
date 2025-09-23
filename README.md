@@ -209,19 +209,6 @@ graph TD
 
 ---
 
-## 👥 **Team**
-
-| **Roll No** | **Name** | **Role** |
-|-------------|----------|----------|
-| 2410030001 | Harshitha Reddy | Project Lead |
-| 2410030021 | Dwarkesh | Backend Developer |
-| 2410030023 | Bee Shiva | Frontend Developer |
-| 2410030059 | Jahnavi | UI/UX Designer |
-| 2410030110 | Smruti | Quality Assurance |
-| 2410030111 | Nicky | DevOps Engineer |
-
----
-
 ## 🚀 **Deployment**
 
 ### **Deploy to Production**
