@@ -186,7 +186,7 @@ const Footer = () => {
               <p className="flex items-center justify-center md:justify-start">
                 © {currentYear} ArcadeLearn. Made with 
                 <Heart className="h-4 w-4 mx-1 text-red-500 fill-current" />
-                for developers worldwide.
+                for Everyone worldwide.
               </p>
             </div>
             
