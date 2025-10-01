@@ -39,7 +39,7 @@ const Roadmaps = () => {
               </p>
             </div>
 
-            <RoadmapsSection onInteraction={handleInteraction} />
+            <RoadmapsSection onInteraction={handleInteraction} isFullPage={true} />
           </div>
 
           {/* Authentication Prompt Overlay - For non-authenticated users */}

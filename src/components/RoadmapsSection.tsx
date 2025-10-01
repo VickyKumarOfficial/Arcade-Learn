@@ -3,13 +3,16 @@ import { useState } from "react";
 import { roadmaps } from "@/data/roadmaps";
 import RoadmapCard from "./RoadmapCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface RoadmapsSectionProps {
   onInteraction?: () => void;
+  isFullPage?: boolean; // New prop to indicate if this is the full Roadmaps page
 }
 
-const RoadmapsSection = ({ onInteraction }: RoadmapsSectionProps) => {
+const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('View All Courses');
   
@@ -124,35 +127,37 @@ const RoadmapsSection = ({ onInteraction }: RoadmapsSectionProps) => {
               </button>
             ))}
             
-            {/* Search Bar */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search roadmaps..."
-                value={searchTerm}
-                onChange={(e) => {
-                  if (!user && onInteraction) {
-                    onInteraction();
-                    return;
-                  }
-                  setSearchTerm(e.target.value);
-                }}
-                onFocus={() => {
-                  if (!user && onInteraction) {
-                    onInteraction();
-                  }
-                }}
-                className="px-6 py-3 rounded-full shadow-md border-2 border-transparent bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-300 dark:focus:border-blue-400 focus:outline-none transition-all duration-200 w-64"
-              />
-              <svg
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+            {/* Search Bar - Only show on full Roadmaps page */}
+            {isFullPage && (
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search roadmaps..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    if (!user && onInteraction) {
+                      onInteraction();
+                      return;
+                    }
+                    setSearchTerm(e.target.value);
+                  }}
+                  onFocus={() => {
+                    if (!user && onInteraction) {
+                      onInteraction();
+                    }
+                  }}
+                  className="px-6 py-3 rounded-full shadow-md border-2 border-transparent bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-300 dark:focus:border-blue-400 focus:outline-none transition-all duration-200 w-64"
+                />
+                <svg
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            )}
           </div>
         </div>
 
@@ -162,7 +167,7 @@ const RoadmapsSection = ({ onInteraction }: RoadmapsSectionProps) => {
           ))}
         </div>
         
-        {/* Show "View All Courses" button when displaying limited popular courses */}
+        {/* Show "View All Roadmaps" button when displaying limited popular courses */}
         {searchTerm === '' && selectedCategory === 'View All Courses' && filteredRoadmaps.length === popularRoadmapIds.length && (
           <div className="text-center mt-8 sm:mt-12">
             <button
@@ -171,11 +176,16 @@ const RoadmapsSection = ({ onInteraction }: RoadmapsSectionProps) => {
                   onInteraction();
                   return;
                 }
-                setSearchTerm('*');
+                // If on full Roadmaps page, show all courses; if on Home page, navigate to Roadmaps
+                if (isFullPage) {
+                  setSearchTerm('*');
+                } else {
+                  navigate('/roadmaps');
+                }
               }}
               className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
-              View All {roadmaps.length} Courses
+              View All Roadmaps
             </button>
           </div>
         )}
