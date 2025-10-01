@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,8 @@ import {
   Sparkles,
   User,
   Bot,
-  Trash2
+  Trash2,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { aiChatService, type AIChat, type AIChatMessage } from '@/services/aiChatService';
@@ -51,6 +53,7 @@ interface ChatHistory {
 
 const AIChatPage = () => {
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [message, setMessage] = useState('');
@@ -555,6 +558,17 @@ const AIChatPage = () => {
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
+              {/* Back Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                title="Back to Home"
+              >
+                <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              </Button>
+              
               <div className="bg-gradient-to-r from-blue-500 to-blue-800 p-2 rounded-full">
                 <Brain className="h-6 w-6 text-white" />
               </div>
@@ -601,14 +615,14 @@ const AIChatPage = () => {
                   Welcome to AI Assistant
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  I'm powered by Groq's advanced AI models! Ask me anything about coding, programming concepts, or get help with your projects.
+                  Ask me anything about coding, programming concepts, or get help with your projects.
                 </p>
                 <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
                   <p>💡 Explain programming concepts and algorithms</p>
                   <p>🐛 Debug code and fix errors</p>
                   <p>📚 Learn new languages and frameworks</p>
                   <p>🚀 Get architecture and best practice advice</p>
-                  <p>⚡ Fast responses powered by Groq AI</p>
+                  <p>⚡ Fast responses by AI</p>
                 </div>
                 {!aiConnected && (
                   <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">

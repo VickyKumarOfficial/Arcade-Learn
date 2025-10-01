@@ -2,8 +2,14 @@
 import { useState } from "react";
 import { roadmaps } from "@/data/roadmaps";
 import RoadmapCard from "./RoadmapCard";
+import { useAuth } from "@/contexts/AuthContext";
 
-const RoadmapsSection = () => {
+interface RoadmapsSectionProps {
+  onInteraction?: () => void;
+}
+
+const RoadmapsSection = ({ onInteraction }: RoadmapsSectionProps) => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('View All Courses');
   
@@ -94,7 +100,14 @@ const RoadmapsSection = () => {
             {specificCategories.map((category) => (
               <button
                 key={category}
-                onClick={() => {setSelectedCategory(category); setSearchTerm('');}}
+                onClick={() => {
+                  if (!user && onInteraction) {
+                    onInteraction();
+                    return;
+                  }
+                  setSelectedCategory(category); 
+                  setSearchTerm('');
+                }}
                 className={`px-6 py-3 rounded-full shadow-md border-2 transition-all duration-200 cursor-pointer ${
                   selectedCategory === category
                     ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white border-blue-300 dark:border-blue-400'
@@ -117,7 +130,18 @@ const RoadmapsSection = () => {
                 type="text"
                 placeholder="Search roadmaps..."
                 value={searchTerm}
-                onChange={(e) => {setSearchTerm(e.target.value);}}
+                onChange={(e) => {
+                  if (!user && onInteraction) {
+                    onInteraction();
+                    return;
+                  }
+                  setSearchTerm(e.target.value);
+                }}
+                onFocus={() => {
+                  if (!user && onInteraction) {
+                    onInteraction();
+                  }
+                }}
                 className="px-6 py-3 rounded-full shadow-md border-2 border-transparent bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-300 dark:focus:border-blue-400 focus:outline-none transition-all duration-200 w-64"
               />
               <svg
@@ -142,7 +166,13 @@ const RoadmapsSection = () => {
         {searchTerm === '' && selectedCategory === 'View All Courses' && filteredRoadmaps.length === popularRoadmapIds.length && (
           <div className="text-center mt-8 sm:mt-12">
             <button
-              onClick={() => {setSearchTerm('*');}}
+              onClick={() => {
+                if (!user && onInteraction) {
+                  onInteraction();
+                  return;
+                }
+                setSearchTerm('*');
+              }}
               className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               View All {roadmaps.length} Courses
@@ -154,7 +184,13 @@ const RoadmapsSection = () => {
         {searchTerm === '*' && selectedCategory === 'View All Courses' && (
           <div className="text-center mt-8 sm:mt-12">
             <button
-              onClick={() => {setSearchTerm('');}}
+              onClick={() => {
+                if (!user && onInteraction) {
+                  onInteraction();
+                  return;
+                }
+                setSearchTerm('');
+              }}
               className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               Show Popular Courses Only
