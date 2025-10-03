@@ -38,9 +38,9 @@ const Footer = () => {
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5QzkyQUMiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
       
-      <div className="container mx-auto px-4 py-12 sm:py-16 lg:py-20 relative z-10">
+      <div className="container mx-auto px-4 py-12 sm:py-16 lg:py-5 relative z-10">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-6">
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
@@ -56,42 +56,6 @@ const Footer = () => {
               Empowering developers through curated learning roadmaps and hands-on projects. 
               Transform your career with structured, gamified learning experiences.
             </p>
-            
-            {/* Social Links */}
-            <div className="flex space-x-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
-                onClick={() => window.open('#', '_blank')}
-              >
-                <Github className="h-4 w-4 text-foreground" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
-                onClick={() => window.open('#', '_blank')}
-              >
-                <Twitter className="h-4 w-4 text-foreground" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
-                onClick={() => window.open('#', '_blank')}
-              >
-                <Linkedin className="h-4 w-4 text-foreground" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
-                onClick={() => window.open('mailto:contact@arcadelearn.com', '_blank')}
-              >
-                <Mail className="h-4 w-4 text-foreground" />
-              </Button>
-            </div>
           </div>
 
           {/* Product Links */}
@@ -155,8 +119,59 @@ const Footer = () => {
           </div>
         </div>
 
+        {/* Social Media & Back to Top Section */}
+        <div className="flex justify-between items-center mb-6 border-border">
+          {/* Social Media Buttons - Left Side */}
+          <div className="flex space-x-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
+              onClick={() => window.open('#', '_blank')}
+            >
+              <Github className="h-4 w-4 text-foreground" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
+              onClick={() => window.open('#', '_blank')}
+            >
+              <Twitter className="h-4 w-4 text-foreground" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
+              onClick={() => window.open('#', '_blank')}
+            >
+              <Linkedin className="h-4 w-4 text-foreground" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
+              onClick={() => window.open('mailto:contact@arcadelearn.com', '_blank')}
+            >
+              <Mail className="h-4 w-4 text-foreground" />
+            </Button>
+          </div>
+          
+          {/* Back to Top Button - Right Side */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={scrollToTop}
+            className="bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary text-foreground transition-all duration-200 group"
+          >
+            <ArrowUp className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" />
+            Back to Top
+          </Button>
+        </div>
+      </div>
+
         {/* Newsletter Section */}
-        <div className="bg-muted/30 backdrop-blur-sm border border-border rounded-2xl p-6 lg:p-8 mb-12">
+        <div className="bg-muted/30 backdrop-blur-sm border border-border rounded-2xl p-6 lg:p-8 mb-8">
           <div className="text-center lg:text-left lg:flex lg:items-center lg:justify-between">
             <div className="mb-4 lg:mb-0">
               <h3 className="text-xl font-semibold mb-2">Stay Updated</h3>
@@ -176,31 +191,18 @@ const Footer = () => {
             </div>
           </div>
         </div>
-
         {/* Bottom Section */}
-        <div className="border-t border-border pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-muted-foreground text-sm text-center md:text-left">
-              <p className="flex items-center justify-center md:justify-start">
-                © {currentYear} ArcadeLearn. Made with 
-                <Heart className="h-4 w-4 mx-1 text-red-500 fill-current" />
-                for Everyone worldwide.
-              </p>
-            </div>
-            
-            {/* Back to Top Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={scrollToTop}
-              className="bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary text-foreground transition-all duration-200 group"
-            >
-              <ArrowUp className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" />
-              Back to Top
-            </Button>
+        <div className="border-t border-border pt-1">
+          <div className="flex justify-center text-muted-foreground text-sm text-center">
+            <p className="flex items-center justify-center py-2">
+              © {currentYear} ArcadeLearn. Made with 
+              <Heart className="h-4 w-4 mx-1 text-red-500 fill-current" />
+              for Everyone worldwide.
+            </p>
           </div>
         </div>
-      </div>
+
+
     </footer>
   );
 };
