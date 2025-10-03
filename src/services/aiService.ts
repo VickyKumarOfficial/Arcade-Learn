@@ -1,17 +1,13 @@
-import Groq from "groq-sdk";
+import { GoogleGenAI } from "@google/genai";
 
-// Initialize Groq client
-const groq = new Groq({
-  apiKey: import.meta.env.VITE_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true // Required for client-side usage
-});
+// Initialize Gemini AI client
+const genAI = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
 
 // Debug: Check if API key is loaded
-console.log('🔑 Groq API Key Status:', {
-  loaded: !!import.meta.env.VITE_GROQ_API_KEY,
-  length: import.meta.env.VITE_GROQ_API_KEY?.length || 0,
-  startsWithGsk: import.meta.env.VITE_GROQ_API_KEY?.startsWith('gsk_') || false,
-  firstChars: import.meta.env.VITE_GROQ_API_KEY?.substring(0, 8) + '...' || 'MISSING'
+console.log('🔑 Gemini API Key Status:', {
+  loaded: !!import.meta.env.VITE_GEMINI_API_KEY,
+  length: import.meta.env.VITE_GEMINI_API_KEY?.length || 0,
+  firstChars: import.meta.env.VITE_GEMINI_API_KEY?.substring(0, 8) + '...' || 'MISSING'
 });
 
 export interface ChatMessage {
@@ -97,34 +93,47 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
   async getChatCompletion(messages: ChatMessage[]): Promise<ChatCompletionResponse> {
     try {
       // Validate API key
-      if (!import.meta.env.VITE_GROQ_API_KEY) {
-        console.error('Groq API key is not configured');
+      if (!import.meta.env.VITE_GEMINI_API_KEY) {
+        console.error('Gemini API key is not configured');
         return {
           success: false,
           error: 'AI service is not properly configured. Please check your environment variables.'
         };
       }
 
-      // Prepare messages with system prompt
-      const messagesWithSystem: ChatMessage[] = [
-        { role: 'system', content: this.systemPrompt },
-        ...messages
-      ];
-
-      // Create chat completion
+      // Create chat completion using Gemini
       try {
-        const completion = await groq.chat.completions.create({
-          messages: messagesWithSystem,
-          model: "openai/gpt-oss-120b", // Using Llama 3 8B model available on Groq
-          temperature: 0.7,
-          max_tokens: 2000, // Increased for more detailed responses
-          top_p: 0.9,
-          stream: false
+        // Build the prompt with system prompt and user messages
+        let prompt = this.systemPrompt + '\n\n';
+        
+        // Add conversation history
+        for (const msg of messages) {
+          if (msg.role === 'user') {
+            prompt += `User: ${msg.content}\n\n`;
+          } else if (msg.role === 'assistant') {
+            prompt += `Assistant: ${msg.content}\n\n`;
+          }
+        }
+        
+        // For multi-turn conversations, we need to add "Assistant:" at the end to prompt a response
+        if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
+          prompt += 'Assistant: ';
+        }
+
+        // Generate content using the new SDK
+        const response = await genAI.models.generateContent({
+          model: 'gemini-2.0-flash-exp',
+          contents: prompt,
+          config: {
+            temperature: 0.7,
+            maxOutputTokens: 2000,
+            topP: 0.9,
+          }
         });
 
-        const response = completion.choices[0]?.message?.content;
+        const text = response.text;
 
-        if (!response) {
+        if (!text) {
           return {
             success: false,
             error: 'No response received from AI service'
@@ -132,7 +141,7 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
         }
 
         // Clean up the response for better formatting
-        const cleanedResponse = this.cleanResponse(response);
+        const cleanedResponse = this.cleanResponse(text);
 
         return {
           success: true,
@@ -140,7 +149,7 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
         };
 
       } catch (error: any) {
-        console.error('Groq API Error Details:', {
+        console.error('Gemini API Error Details:', {
           error: error,
           message: error.message,
           status: error.status,
@@ -150,9 +159,9 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
         // Handle specific error types
         let errorMessage = 'Failed to get AI response. Please try again.';
         
-        if (error?.message?.includes('rate limit')) {
+        if (error?.message?.includes('rate limit') || error?.message?.includes('quota')) {
           errorMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
-        } else if (error?.message?.includes('API key') || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+        } else if (error?.message?.includes('API key') || error?.message?.includes('401') || error?.message?.includes('Unauthorized') || error?.message?.includes('API_KEY_INVALID')) {
           errorMessage = 'Invalid API key. Please check your configuration.';
         } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
           errorMessage = 'Network error. Please check your internet connection and try again.';
@@ -169,7 +178,7 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
       // Handle specific error types
       let errorMessage = 'Failed to get AI response. Please try again.';
       
-      if (error?.message?.includes('rate limit')) {
+      if (error?.message?.includes('rate limit') || error?.message?.includes('quota')) {
         errorMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
       } else if (error?.message?.includes('API key')) {
         errorMessage = 'Invalid API key. Please check your configuration.';
