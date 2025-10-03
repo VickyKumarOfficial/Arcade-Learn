@@ -96,7 +96,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     }
   };
 
-  const handleOAuth = async (provider: "google" | "github") => {
+  const handleOAuth = async (provider: "google") => {
     setLoading(true);
     setError("");
     
@@ -124,9 +124,9 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-800 dark:to-purple-800">
-      <div className="bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-gray-100 p-8 rounded-xl shadow-xl w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center gradient-text">
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="bg-card text-foreground p-8 rounded-xl shadow-xl w-full max-w-md border border-border">
+        <h2 className="text-2xl font-bold mb-6 text-center text-primary">
           {isRegister ? "Create your account" : "Sign in to ArcadeLearn"}
         </h2>
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -216,26 +216,26 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
           )}
         </form>
         <div className="my-4 flex items-center gap-2">
-          <div className="flex-1 h-px bg-gray-300" />
-          <span className="text-gray-500 text-xs">or</span>
-          <div className="flex-1 h-px bg-gray-300" />
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-muted-foreground text-xs">or</span>
+          <div className="flex-1 h-px bg-border" />
         </div>
         <Button
           variant="outline"
-          className="w-full mb-2"
+          className="w-full flex items-center justify-center"
           onClick={() => handleOAuth("google")}
         >
-          <span className="mr-2">🔵</span> Continue with Google
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => handleOAuth("github")}
-        >
-          <span className="mr-2">🐙</span> Continue with GitHub
+          <div className="flex items-center justify-center">
+            <img 
+              src="/assets/google-removebg-preview.png" 
+              alt="Google logo" 
+              className="w-6 h-6 mr-3 object-contain" 
+            /> 
+            <span>Continue with Google</span>
+          </div>
         </Button>
 
-        <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="mt-4 text-center text-sm text-muted-foreground">
           {isRegister ? (
             <p>
               Already have an account?{" "}
@@ -253,7 +253,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
                     password: "",
                   });
                 }}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-primary hover:text-primary/90 font-medium"
               >
                 Log in
               </button>
@@ -275,7 +275,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
                     password: "",
                   });
                 }}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-primary hover:text-primary/90 font-medium"
               >
                 Create an account
               </button>
@@ -303,6 +303,13 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
           outline: none;
           border-color: #3b82f6;
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        /* Provider logo styles */
+        img[alt="Google logo"] {
+          display: inline-flex;
+          object-fit: contain;
+          aspect-ratio: 1;
+          vertical-align: middle;
         }
         
         /* Dark mode styles */

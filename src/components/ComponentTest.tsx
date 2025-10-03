@@ -41,7 +41,7 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
   // Handle case where test is not found
   if (!test) {
     return (
-      <Card className="w-full max-w-md mx-auto bg-white dark:bg-gray-800">
+      <Card className="w-full max-w-md mx-auto bg-card">
         <CardHeader>
           <CardTitle className="text-red-600 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
@@ -401,7 +401,7 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
     const answeredQuestions = currentQuestion + 1;
     
     return (
-      <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-background/90 z-[9999] flex items-center justify-center p-4">
         <Card className="w-full max-w-lg mx-auto bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 max-h-[90vh] overflow-y-auto">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-red-600 dark:text-red-400 flex items-center justify-center gap-2 text-lg sm:text-xl">
@@ -427,18 +427,18 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
               )}
               
               {isForceEnd && (
-                <div className="bg-blue-100 dark:bg-blue-900/50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 font-semibold mb-2">
+                <div className="bg-primary/10 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-primary font-semibold mb-2">
                     <AlertTriangle className="w-5 h-5" />
                     Test Summary
                   </div>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <p className="text-sm text-foreground">
                     You chose to end the test early. Your progress has been saved.
                   </p>
                 </div>
               )}
               
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 sm:p-4">
+              <div className="bg-muted rounded-lg p-3 sm:p-4">
                 <div className="text-center">
                   {isCheatingViolation ? (
                     <>
@@ -457,21 +457,21 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
                     </>
                   ) : (
                     <>
-                      <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                      <div className="text-xl sm:text-2xl font-bold text-primary mb-1">
                         {currentScore}%
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         Score at Early Termination
                       </div>
-                      <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      <div className="text-xs text-primary mt-1">
                         Your progress has been saved
                       </div>
                       {scoreMessage && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 break-words">
+                        <div className="text-xs text-muted-foreground mt-2 break-words">
                           Details: {scoreMessage}
                         </div>
                       )}
-                      <div className="text-xs text-gray-400 mt-1 break-words">
+                      <div className="text-xs text-muted-foreground mt-1 break-words">
                         Reason: {terminationReason}
                       </div>
                     </>
@@ -494,15 +494,15 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                  <p className="text-green-800 dark:text-green-200 text-sm text-center">
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                  <p className="text-primary text-sm text-center">
                     <strong>Test ended early by user choice.</strong><br />
                     You can retake the test anytime to improve your score.
                   </p>
                 </div>
               )}
               
-              <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              <div className="text-xs text-muted-foreground text-center">
                 {isCheatingViolation ? 'Violation detected' : 'Test ended'} at: {new Date().toLocaleTimeString()}
               </div>
             </div>
@@ -528,12 +528,12 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
+          <p className="text-sm text-muted-foreground">
             We detected that you switched away from the test. This is your first warning. 
             If this happens again, your test will be automatically terminated.
           </p>
-          <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg">
-            <p className="text-xs text-yellow-800 dark:text-yellow-200">
+          <div className="mt-4 p-3 bg-primary/10 rounded-lg">
+            <p className="text-xs text-primary">
               <strong>Test Rules:</strong>
               <br />• Stay focused on the test tab
               <br />• No copying or pasting allowed
@@ -560,17 +560,17 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
     return (
       <div className="p-4">
         <Card className="w-full max-w-3xl mx-auto">
-          <CardHeader className={`${testResult.passed ? "bg-green-50 dark:bg-green-900/30" : "bg-red-50 dark:bg-red-900/30"} p-4 sm:p-6`}>
+          <CardHeader className={`${testResult.passed ? "bg-primary/10" : "bg-destructive/10"} p-4 sm:p-6 border-b border-border`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <CardTitle className="text-lg sm:text-2xl flex items-center gap-2">
+              <CardTitle className="text-lg sm:text-2xl flex items-center gap-2 text-foreground">
                 {testResult.passed ? (
-                  <CheckCircle className="text-green-500 w-5 h-5 sm:w-6 sm:h-6" />
+                  <CheckCircle className="text-primary w-5 h-5 sm:w-6 sm:h-6" />
                 ) : (
-                  <AlertCircle className="text-red-500 w-5 h-5 sm:w-6 sm:h-6" />
+                  <AlertCircle className="text-destructive w-5 h-5 sm:w-6 sm:h-6" />
                 )}
                 {testResult.passed ? "Test Passed!" : "Test Failed"}
               </CardTitle>
-              <Badge className={`${testResult.passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"} text-xs sm:text-sm`}>
+              <Badge className={`${testResult.passed ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"} text-xs sm:text-sm`}>
                 Score: {testResult.score}%
               </Badge>
             </div>
@@ -584,13 +584,13 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
             <div className="space-y-4 sm:space-y-6">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs sm:text-sm font-medium">Score</span>
-                    <span className="text-xs sm:text-sm text-gray-500">Target: {test.passingScore}%</span>
+                    <span className="text-xs sm:text-sm font-medium text-foreground">Score</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">Target: {test.passingScore}%</span>
                   </div>
-                  <div className="relative w-full bg-gray-200 rounded-full h-3 sm:h-4">
+                  <div className="relative w-full bg-muted rounded-full h-3 sm:h-4">
                     {/* Background progress bar */}
                     <div 
-                      className={`h-full rounded-full transition-all duration-300 ${testResult.passed ? "bg-green-500" : "bg-red-500"}`}
+                      className={`h-full rounded-full transition-all duration-300 ${testResult.passed ? "bg-primary" : "bg-destructive"}`}
                       style={{ width: `${testResult.score}%` }}
                     />
                     
@@ -623,18 +623,18 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
                     )}
                   </div>
                 </div>              <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6">
-                <div className="bg-blue-50 dark:bg-blue-900/30 p-3 sm:p-4 rounded-lg text-center">
-                  <div className="text-base sm:text-lg font-bold text-blue-700 dark:text-blue-400">
+                <div className="bg-primary/10 p-3 sm:p-4 rounded-lg text-center border border-primary/20">
+                  <div className="text-base sm:text-lg font-bold text-primary">
                     {testResult.rating}
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Rating Points</div>
+                  <div className="text-xs text-muted-foreground">Rating Points</div>
                 </div>
-                <div className="bg-yellow-50 dark:bg-yellow-900/30 p-3 sm:p-4 rounded-lg text-center">
-                  <div className="text-base sm:text-lg font-bold text-yellow-700 dark:text-yellow-400">
+                <div className="bg-primary/10 p-3 sm:p-4 rounded-lg text-center border border-primary/20">
+                  <div className="text-base sm:text-lg font-bold text-primary">
                     {"⭐".repeat(testResult.stars)}
                     {testResult.stars === 0 && "0"}
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Stars Earned</div>
+                  <div className="text-xs text-muted-foreground">Stars Earned</div>
                 </div>
               </div>
               
@@ -673,12 +673,12 @@ export const ComponentTest: React.FC<ComponentTestProps> = ({
     <>
       {/* Pre-test rules modal */}
       {showPreTestRules && (
-        <div className="fixed inset-0 bg-black/80 z-[10000] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md lg:max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-background/80 z-[10000] flex items-center justify-center p-4">
+          <div className="bg-card rounded-lg p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md lg:max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto border border-border">
             <div className="text-center">
               <AlertTriangle className="h-12 w-12 sm:h-16 sm:w-16 text-amber-500 mx-auto mb-4" />
-              <h3 className="text-lg sm:text-xl font-bold mb-4 dark:text-white">Test Security Rules</h3>
-              <div className="text-left text-xs sm:text-sm text-gray-600 dark:text-gray-300 space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-bold mb-4 text-foreground">Test Security Rules</h3>
+              <div className="text-left text-xs sm:text-sm text-muted-foreground space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                 <div className="flex items-start space-x-2">
                   <span className="text-amber-500 font-bold">⚠️</span>
                   <span>The test will run in fullscreen mode for security</span>

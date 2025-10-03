@@ -36,7 +36,7 @@ const BackToTopButton = () => {
       onClick={scrollToTop}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed bottom-6 right-6 z-50 flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110 ${
+      className={`fixed bottom-6 right-6 z-50 flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110 ${
         isHovered 
           ? "rounded-full px-4 py-3 w-auto h-12" 
           : "rounded-full w-12 h-12"

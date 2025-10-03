@@ -45,14 +45,14 @@ const Dashboard = () => {
   // Show loading while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
+      <div className="min-h-screen bg-background">
         <Navigation />
         <div className="pt-[92px] sm:pt-[108px] pb-12">
           <div className="container mx-auto px-4 flex items-center justify-center min-h-[60vh]">
-            <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg p-8">
+            <Card className="bg-card backdrop-blur-sm border border-border shadow-lg p-8">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading...</p>
               </div>
             </Card>
           </div>
@@ -64,20 +64,20 @@ const Dashboard = () => {
   // Show login prompt for non-authenticated users
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
+      <div className="min-h-screen bg-background">
         <Navigation />
         <div className="pt-[92px] sm:pt-[108px] pb-12">
           <div className="container mx-auto px-4 flex items-center justify-center min-h-[60vh]">
-            <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-xl max-w-md w-full">
+            <Card className="bg-card backdrop-blur-sm border border-border shadow-xl max-w-md w-full">
               <CardContent className="p-8 text-center">
                 <div className="mb-6">
-                  <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
-                    <Lock className="w-8 h-8 text-white" />
+                  <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
+                    <Lock className="w-8 h-8 text-primary-foreground" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
                     Dashboard Access Required
                   </h2>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     Please log in to view your learning dashboard, track your progress, and start your learning journey.
                   </p>
                 </div>
@@ -101,14 +101,14 @@ const Dashboard = () => {
                     Create New Account
                   </Button>
                   
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  <div className="pt-4 border-t border-border">
+                    <p className="text-sm text-muted-foreground mb-3">
                       New to ArcadeLearn?
                     </p>
                     <Button 
                       onClick={() => navigate('/roadmaps')}
                       variant="ghost"
-                      className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      className="w-full text-primary hover:text-primary/90 hover:bg-primary/10"
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
                       Browse Learning Roadmaps
@@ -151,12 +151,12 @@ const Dashboard = () => {
   const totalUnlockedBadges = state.userData.badges.filter(b => b.unlocked).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
       {/* Badges Modal */}
       {showAllAchievements && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
           <Card className="w-full max-w-4xl mx-auto">
             <CardHeader>
               <CardTitle>Your Badges</CardTitle>

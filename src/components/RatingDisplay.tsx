@@ -65,9 +65,9 @@ export const RatingDisplay = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
           
-          <Card className="max-w-md w-full bg-gradient-to-br from-blue-900 to-indigo-900 border-0 shadow-2xl overflow-hidden">
+          <Card className="max-w-md w-full bg-card border border-border shadow-2xl overflow-hidden">
             <CardContent className="p-0">
               {/* Particles Animation */}
               <div className="absolute inset-0 overflow-hidden">
@@ -148,11 +148,11 @@ export const RatingDisplay = ({
                   </div>
                   
                   <motion.div
-                    className="h-2 bg-blue-800/50 rounded-full overflow-hidden"
+                    className="h-2 bg-muted rounded-full overflow-hidden"
                     initial={{ width: '100%' }}
                   >
                     <motion.div
-                      className="h-full bg-gradient-to-r from-blue-400 to-indigo-300"
+                      className="h-full bg-primary"
                       initial={{ width: '0%' }}
                       animate={{ width: `${progress}%` }}
                       transition={{ 
@@ -166,7 +166,7 @@ export const RatingDisplay = ({
                 {/* Stars Earned */}
                 {starsGained > 0 && (
                   <motion.div
-                    className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-yellow-900/20 to-amber-700/20 rounded-lg"
+                    className="flex flex-col items-center justify-center p-4 bg-primary/20 rounded-lg"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ 
                       opacity: showStars ? 1 : 0,

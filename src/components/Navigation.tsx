@@ -49,21 +49,19 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-[36px] sm:top-[44px] left-0 right-0 z-50 bg-white/85 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-lg">
+    <nav className="fixed top-[36px] sm:top-[44px] left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
           <div 
             className="flex items-center space-x-2 cursor-pointer" 
             onClick={() => navigate('/')}
           >
-            {/* <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-800 rounded-lg flex items-center justify-center"> */}
               <img src="/logo-bgfree.png" alt="Arcade Learn Logo" className="h-7 w-12" />
-            {/* </div> */}
             <span className="text-lg sm:text-xl font-bold">
-              <span className="bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
+              <span className="text-primary">
               Arcade
               </span>
-              <span className="bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent ml-1">
+              <span className="text-foreground ml-1">
               Learn
               </span>
             </span>
@@ -75,10 +73,10 @@ const Navigation = () => {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
+                className={`text-sm font-medium transition-colors hover:text-primary ${
                   location.pathname === item.path
-                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 pb-1'
-                    : 'text-gray-700 dark:text-gray-300'
+                    ? 'text-primary border-b-2 border-primary pb-1'
+                    : 'text-foreground'
                 }`}
               >
                 {item.label}
@@ -89,10 +87,10 @@ const Navigation = () => {
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`flex items-center space-x-1 text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
+                  className={`flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary ${
                     location.pathname.startsWith('/ai')
-                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 pb-1'
-                      : 'text-gray-700 dark:text-gray-300'
+                      ? 'text-primary border-b-2 border-primary pb-1'
+                      : 'text-foreground'
                   }`}
                 >
                   <Sparkles className="h-4 w-4" />
@@ -101,7 +99,7 @@ const Navigation = () => {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                className="w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl" 
+                className="w-64 bg-card border border-border shadow-xl" 
                 align="center" 
                 side="bottom" 
                 sideOffset={8}
@@ -111,17 +109,17 @@ const Navigation = () => {
                   <DropdownMenuItem 
                     key={item.path}
                     onClick={() => navigate(item.path)} 
-                    className="cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-700 focus:bg-gray-50 dark:focus:bg-gray-700"
+                    className="cursor-pointer p-4 hover:bg-muted focus:bg-muted"
                   >
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 mt-1">
-                        <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <item.icon className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <div className="text-sm font-medium text-foreground">
                           {item.label}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-xs text-muted-foreground mt-1">
                           {item.description}
                         </div>
                       </div>
@@ -136,11 +134,11 @@ const Navigation = () => {
             {/* User Stats - Desktop (only show if authenticated) */}
             {isAuthenticated && (
               <div className="hidden lg:flex items-center space-x-2 mr-2">
-                <Badge className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30 text-xs">
+                <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">
                   ⭐ {state.userData.totalStars}
                 </Badge>
                 {state.userData.currentStreak > 0 && (
-                  <Badge className="bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30 text-xs">
+                  <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">
                     🔥 {state.userData.currentStreak}
                   </Badge>
                 )}
@@ -149,34 +147,32 @@ const Navigation = () => {
             {/* Dark Mode Toggle Switch */}
             <div 
               onClick={toggleDarkMode}
-              className={`relative inline-flex items-center w-12 sm:w-14 h-6 sm:h-7 rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 ${
-                isDarkMode 
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg hover:shadow-xl' 
-                  : 'bg-gray-300 dark:bg-gray-600 shadow-md hover:shadow-lg'
-              }`}
+              className={`relative inline-flex items-center w-12 sm:w-14 h-6 sm:h-7 rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 
+                bg-muted border border-border shadow-md hover:shadow-lg
+              `}
               aria-label="Toggle dark mode"
             >
               {/* Slider Circle */}
               <div
-                className={`absolute w-4 sm:w-5 h-4 sm:h-5 bg-white rounded-full shadow-lg transform transition-all duration-300 ease-in-out flex items-center justify-center hover:scale-110 ${
+                className={`absolute w-4 sm:w-5 h-4 sm:h-5 bg-primary rounded-full shadow-lg transform transition-all duration-300 ease-in-out flex items-center justify-center hover:scale-110 ${
                   isDarkMode ? 'translate-x-6 sm:translate-x-8' : 'translate-x-1'
                 }`}
               >
                 {/* Icon inside the slider */}
                 {isDarkMode ? (
-                  <Moon className="h-2 sm:h-3 w-2 sm:w-3 text-purple-600 animate-pulse" />
+                  <Moon className="h-2 sm:h-3 w-2 sm:w-3 text-primary-foreground" />
                 ) : (
-                  <Sun className="h-2 sm:h-3 w-2 sm:w-3 text-yellow-500 animate-pulse" />
+                  <Sun className="h-2 sm:h-3 w-2 sm:w-3 text-primary-foreground" />
                 )}
               </div>
               
               {/* Background Icons */}
               <div className="absolute inset-0 flex items-center justify-between px-1 sm:px-2">
                 <Sun className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${
-                  isDarkMode ? 'opacity-40 text-white scale-90' : 'opacity-0 scale-75'
+                  isDarkMode ? 'opacity-40 text-foreground scale-90' : 'opacity-0 scale-75'
                 }`} />
                 <Moon className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${
-                  isDarkMode ? 'opacity-0 scale-75' : 'opacity-40 text-gray-600 scale-90'
+                  isDarkMode ? 'opacity-0 scale-75' : 'opacity-40 text-foreground scale-90'
                 }`} />
               </div>
             </div>
@@ -207,7 +203,7 @@ const Navigation = () => {
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                       <Avatar className="h-9 w-9">
                         <AvatarImage src={user?.avatarUrl} alt={user?.firstName} />
-                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
                           {user && getInitials(user.firstName, user.lastName)}
                         </AvatarFallback>
                       </Avatar>
@@ -247,7 +243,7 @@ const Navigation = () => {
                 </Button>
                 <Button 
                   size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-primary hover:bg-primary/90"
                   onClick={() => navigate('/signup')}
                 >
                   Sign up
@@ -387,7 +383,7 @@ const Navigation = () => {
                       Log In
                     </Button>
                     <Button 
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      className="w-full bg-primary hover:bg-primary/90"
                       onClick={() => {
                         navigate('/signup');
                         setIsMobileMenuOpen(false);
