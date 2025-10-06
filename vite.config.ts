@@ -8,6 +8,12 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: [
+      "arcadelearn.onrender.com",
+      ".onrender.com", // Allow all Render subdomains
+      "localhost",
+      "127.0.0.1"
+    ],
   },
   plugins: [react()],
   resolve: {
