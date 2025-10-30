@@ -12,7 +12,7 @@
 Create or update your `.env` file in the project root:
 
 ```bash
-VITE_GEMINI_API_KEY=AIza...your_actual_key_here
+VITE_GOOGLE_CLOUD_API_KEY=AIza...your_actual_key_here
 ```
 
 ### Step 3: Install Dependencies (if needed)
@@ -83,7 +83,7 @@ console.log(result);
 
 | Issue | Solution |
 |-------|----------|
-| "API key is not configured" | Check your `.env` file has `VITE_GEMINI_API_KEY` |
+| "API key is not configured" | Check your `.env` file has `VITE_GOOGLE_CLOUD_API_KEY` |
 | "Invalid API key" | Verify key is correct in Google AI Studio |
 | "Rate limit exceeded" | Wait a few seconds, Gemini has usage quotas |
 | No response | Check browser console for errors |
@@ -91,7 +91,7 @@ console.log(result);
 ## 📝 Environment Variables Checklist
 
 Make sure your `.env` has:
-- ✅ `VITE_GEMINI_API_KEY` - Your Gemini API key
+- ✅ `VITE_GOOGLE_CLOUD_API_KEY` - Your Gemini API key
 - ✅ `VITE_SUPABASE_URL` - Your Supabase URL
 - ✅ `VITE_SUPABASE_ANON_KEY` - Your Supabase anon key
 - ✅ Other optional variables (EmailJS, etc.)

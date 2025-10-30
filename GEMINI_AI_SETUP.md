@@ -17,7 +17,7 @@ This project uses Google's Gemini AI (via the `@google/genai` SDK) to power the 
 Add your Gemini API key to your `.env` file:
 
 ```bash
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
+VITE_GOOGLE_CLOUD_API_KEY=your_gemini_api_key_here
 ```
 
 ### 2. Model Configuration

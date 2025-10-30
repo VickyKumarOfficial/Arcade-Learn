@@ -1,13 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Initialize Gemini AI client
-const genAI = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
+const genAI = new GoogleGenAI({ apiKey: import.meta.env.VITE_GOOGLE_CLOUD_API_KEY || '' });
 
 // Debug: Check if API key is loaded
 console.log('🔑 Gemini API Key Status:', {
-  loaded: !!import.meta.env.VITE_GEMINI_API_KEY,
-  length: import.meta.env.VITE_GEMINI_API_KEY?.length || 0,
-  firstChars: import.meta.env.VITE_GEMINI_API_KEY?.substring(0, 8) + '...' || 'MISSING'
+  loaded: !!import.meta.env.VITE_GOOGLE_CLOUD_API_KEY,
+  length: import.meta.env.VITE_GOOGLE_CLOUD_API_KEY?.length || 0,
+  firstChars: import.meta.env.VITE_GOOGLE_CLOUD_API_KEY?.substring(0, 8) + '...' || 'MISSING'
 });
 
 export interface ChatMessage {
@@ -93,7 +93,7 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
   async getChatCompletion(messages: ChatMessage[]): Promise<ChatCompletionResponse> {
     try {
       // Validate API key
-      if (!import.meta.env.VITE_GEMINI_API_KEY) {
+      if (!import.meta.env.VITE_GOOGLE_CLOUD_API_KEY) {
         console.error('Gemini API key is not configured');
         return {
           success: false,
