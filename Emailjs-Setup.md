@@ -16,7 +16,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_EMAILJS_SERVICE_ID=your_emailjs_service_id
 VITE_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
 VITE_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_GOOGLE_CLOUD_API_KEY=your_gemini_api_key
 ```
 
 > Note: Copy the actual values from your local .env file when setting up Vercel environment variables.
