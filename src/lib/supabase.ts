@@ -183,6 +183,79 @@ export type Database = {
           created_at?: string
         }
       }
+      parsed_resumes: {
+        Row: {
+          id: string
+          user_id: string
+          file_name: string
+          file_size: number
+          file_url: string | null
+          resume_data: any
+          parser_version: string
+          parsing_accuracy_score: number | null
+          created_at: string
+          updated_at: string
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          file_name: string
+          file_size: number
+          file_url?: string | null
+          resume_data: any
+          parser_version?: string
+          parsing_accuracy_score?: number | null
+          created_at?: string
+          updated_at?: string
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          file_name?: string
+          file_size?: number
+          file_url?: string | null
+          resume_data?: any
+          parser_version?: string
+          parsing_accuracy_score?: number | null
+          created_at?: string
+          updated_at?: string
+          is_active?: boolean
+        }
+      }
+      resume_edit_history: {
+        Row: {
+          id: string
+          resume_id: string
+          field_path: string
+          old_value: string | null
+          new_value: string | null
+          edited_at: string
+          edit_reason: string
+          edited_by: string | null
+        }
+        Insert: {
+          id?: string
+          resume_id: string
+          field_path: string
+          old_value?: string | null
+          new_value?: string | null
+          edited_at?: string
+          edit_reason?: string
+          edited_by?: string | null
+        }
+        Update: {
+          id?: string
+          resume_id?: string
+          field_path?: string
+          old_value?: string | null
+          new_value?: string | null
+          edited_at?: string
+          edit_reason?: string
+          edited_by?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never

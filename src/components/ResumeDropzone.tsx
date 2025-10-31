@@ -22,7 +22,7 @@ const defaultFileState: FileState = {
 };
 
 interface ResumeDropzoneProps {
-  onFileUrlChange: (fileUrl: string) => void;
+  onFileUrlChange: (fileUrl: string, file?: File) => void;
   className?: string;
 }
 
@@ -56,7 +56,7 @@ export const ResumeDropzone = ({
         size: newFile.size,
         fileUrl,
       });
-      onFileUrlChange(fileUrl);
+      onFileUrlChange(fileUrl, newFile); // Pass the file object too
     },
     [onFileUrlChange]
   );

@@ -174,6 +174,13 @@ user_roadmap_progress (
 - `GET /api/admin/analytics/subscriptions` - Subscription analytics
 - `GET /api/admin/analytics/certificates` - Certificate analytics
 
+### Resume Management
+- `POST /api/user/:userId/resume` - Save parsed resume (Supabase + JSON file)
+- `GET /api/user/:userId/resume/active` - Get user's active resume
+- `GET /api/user/:userId/resumes` - Get all resumes for a user
+- `PUT /api/user/:userId/resume/:resumeId` - Update resume data
+- `GET /api/admin/resumes/all` - Get all resume JSONs (for AI batch processing)
+
 ## 🔧 Services
 
 ### UserProgressService
@@ -187,6 +194,28 @@ Generates and manages digital certificates for completed roadmaps.
 
 ### AnalyticsService
 Provides comprehensive analytics for platform usage, learning patterns, and user engagement.
+
+### ResumeService
+Handles resume data storage in both Supabase and local JSON files. JSON files enable future AI processing, recommendations, and batch analytics.
+
+**Key Features:**
+- Dual storage: Supabase (primary) + JSON files (for AI)
+- Automatic accuracy scoring
+- Metadata extraction for AI recommendations
+- Organized storage: `data/resumes/{userId}/{resumeId}.json`
+
+## 📁 Data Storage
+
+### Resume JSON Files
+Location: `backend/data/resumes/{userId}/{resumeId}.json`
+
+JSON files are stored for future AI/recommendation features:
+- Skills matching for job recommendations
+- Career path analysis
+- Resume comparison analytics
+- Batch AI processing
+
+**Note:** The `data/` directory is gitignored to keep user data private.
 
 ## 🚀 Deployment
 
