@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Navigation from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,9 @@ import {
   Save, 
   X, 
   Calendar,
-  Shield
+  Shield,
+  FileText,
+  ArrowRight
 } from "lucide-react";
 
 interface EditableField {
@@ -25,6 +28,7 @@ interface EditableField {
 
 const Profile = () => {
   const { user, isAuthenticated, updateProfile } = useAuth();
+  const navigate = useNavigate();
   const [editMode, setEditMode] = useState<EditableField>({
     firstName: false,
     lastName: false,
@@ -234,6 +238,50 @@ const Profile = () => {
                   user?.phone || "",
                   "Enter your phone number"
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Resume Management */}
+            <Card className="mb-8 border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  Resume Management
+                </CardTitle>
+                <CardDescription>
+                  Build professional resumes or upload existing ones for ATS analysis and career matching
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">✓</span>
+                    </div>
+                    <p>Upload and parse existing resumes with 90%+ accuracy</p>
+                  </div>
+                  <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">✓</span>
+                    </div>
+                    <p>Build stunning resumes with professional templates</p>
+                  </div>
+                  <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">✓</span>
+                    </div>
+                    <p>Match your skills with relevant career opportunities</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/resume')} 
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  size="lg"
+                >
+                  <FileText className="h-5 w-5 mr-2" />
+                  Manage Resume
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
               </CardContent>
             </Card>
 
