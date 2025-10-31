@@ -7,6 +7,7 @@ import { certificateService } from './services/certificateService.js';
 import { analyticsService } from './services/analyticsService.js';
 import { surveyService } from './services/surveyService.js';
 import { emailService } from './services/emailService.js';
+import { resumeService } from './services/resumeService.js';
 
 dotenv.config();
 
@@ -396,6 +397,100 @@ app.get('/api/admin/analytics/certificates', async (req, res) => {
     
     if (result.success) {
       res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== Resume Routes ====================
+
+// Save parsed resume (stores in Supabase + JSON file)
+app.post('/api/user/:userId/resume', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { resumeData, fileName, fileSize, fileUrl } = req.body;
+    
+    const result = await resumeService.saveResume(
+      userId,
+      resumeData,
+      fileName,
+      fileSize,
+      fileUrl
+    );
+
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user's active resume
+app.get('/api/user/:userId/resume/active', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await resumeService.getActiveResume(userId);
+
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all resumes for a user
+app.get('/api/user/:userId/resumes', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await resumeService.getAllResumes(userId);
+
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update resume
+app.put('/api/user/:userId/resume/:resumeId', async (req, res) => {
+  try {
+    const { userId, resumeId } = req.params;
+    const { resumeData } = req.body;
+    
+    const result = await resumeService.updateResume(resumeId, resumeData, userId);
+
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all resume JSONs (for AI batch processing - admin only)
+app.get('/api/admin/resumes/all', async (req, res) => {
+  try {
+    const result = await resumeService.getAllResumeJSONs();
+
+    if (result.success) {
+      res.json({
+        total: result.data.length,
+        resumes: result.data
+      });
     } else {
       res.status(400).json({ error: result.error });
     }

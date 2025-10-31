@@ -18,6 +18,11 @@ jspm_packages/
 .env.test.local
 .env.production.local
 
+# User data (resumes, sensitive information)
+data/
+data/resumes/
+*.json
+
 # Runtime data
 pids
 *.pid
