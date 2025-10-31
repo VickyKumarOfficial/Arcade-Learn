@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Upload, Wand2, Sparkles, Loader2, Save, Download, Check, AlertCircle } from "lucide-react";
+import { FileText, Upload, Wand2, Sparkles, Loader2, Save, Download, Check, AlertCircle, ArrowRight } from "lucide-react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useAuth } from "@/contexts/AuthContext";
 import { ResumeDropzone } from "@/components/ResumeDropzone";
@@ -19,6 +20,7 @@ import type { TextItems, Lines, ResumeSectionToLines, Resume } from "@/types/res
 const Resume = () => {
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [fileUrl, setFileUrl] = useState<string>("");
   const [fileName, setFileName] = useState<string>("");
   const [fileSize, setFileSize] = useState<number>(0);
@@ -254,7 +256,7 @@ const Resume = () => {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow duration-300 border-2">
+            <Card className="hover:shadow-lg transition-shadow duration-300 border-2 border-purple-200 dark:border-purple-800">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Wand2 className="h-6 w-6 text-purple-600" />
@@ -265,7 +267,7 @@ const Resume = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-start gap-2">
                     <Sparkles className="h-4 w-4 text-yellow-500 mt-1" />
                     <p className="text-sm text-muted-foreground">
@@ -281,12 +283,23 @@ const Resume = () => {
                   <div className="flex items-start gap-2">
                     <Sparkles className="h-4 w-4 text-yellow-500 mt-1" />
                     <p className="text-sm text-muted-foreground">
-                      Download as PDF with one click
+                      Export as PDF or JSON instantly
                     </p>
                   </div>
-                  <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-950 rounded-md">
-                    <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
-                      Coming Soon...
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => navigate('/resume-builder')}
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold"
+                      size="lg"
+                    >
+                      <Wand2 className="h-5 w-5 mr-2" />
+                      Start Building Resume
+                      <ArrowRight className="h-5 w-5 ml-2" />
+                    </Button>
+                  </div>
+                  <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950 rounded-md border border-purple-200 dark:border-purple-800">
+                    <p className="text-xs font-medium text-purple-900 dark:text-purple-100">
+                      ✨ Now Available! Create your professional resume with our powerful builder inspired by OpenResume
                     </p>
                   </div>
                 </div>
