@@ -14,6 +14,7 @@ import Roadmaps from "./pages/Roadmaps";
 import RoadmapDetailTest from "./pages/RoadmapDetailTest";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import Aim from "./pages/Aim";
 import Resume from "./pages/Resume";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import Careers from "./pages/Careers";
@@ -45,6 +46,7 @@ const App = () => (
                     <Route path="/roadmap/:id" element={<RoadmapDetailTest />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/aim" element={<Aim />} />
                     <Route path="/resume" element={<Resume />} />
                     <Route path="/resume-builder" element={<ResumeBuilder />} />
                     <Route path="/careers" element={<Careers />} />
