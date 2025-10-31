@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Sun, Moon, Menu, X, Trophy, Star, LogOut, User, Settings, ChevronDown, Sparkles, Brain, Bot } from "lucide-react";
+import { Sun, Moon, Menu, X, Trophy, Star, LogOut, User, Settings, ChevronDown, Sparkles, Brain, Bot, Target } from "lucide-react";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useState } from "react";
 import { useGameTest } from "@/contexts/GameTestContext";
@@ -223,6 +223,10 @@ const Navigation = () => {
                     <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/aim')} className="cursor-pointer">
+                      <Target className="mr-2 h-4 w-4" />
+                      <span>Aim</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={logout} className="cursor-pointer">
                       <LogOut className="mr-2 h-4 w-4" />
