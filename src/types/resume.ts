@@ -79,6 +79,7 @@ export interface Resume {
   educations: ResumeEducation[];
   projects: ResumeProject[];
   skills: ResumeSkills;
+  custom: ResumeCustom;
 }
 
 // ========== Feature Scoring System ==========
@@ -138,4 +139,5 @@ export const initialResume: Resume = {
   educations: [initialEducation],
   projects: [initialProject],
   skills: initialSkills,
+  custom: initialCustom,
 };
