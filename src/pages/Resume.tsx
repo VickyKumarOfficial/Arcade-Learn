@@ -1,11 +1,72 @@
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { FileText, Upload, Wand2, Sparkles } from "lucide-react";
+import { FileText, Upload, Wand2, Sparkles, Loader2 } from "lucide-react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useAuth } from "@/contexts/AuthContext";
+import { ResumeDropzone } from "@/components/ResumeDropzone";
+import { readPdf } from "@/services/resumeParser/readPdf";
+import { groupTextItemsIntoLines } from "@/services/resumeParser/groupTextItemsIntoLines";
+import { groupLinesIntoSections } from "@/services/resumeParser/groupLinesIntoSections";
+import { extractResumeFromSections } from "@/services/resumeParser/extractResumeFromSections";
+import type { TextItems, Lines, ResumeSectionToLines, Resume } from "@/types/resume";
 
 const Resume = () => {
   const { isAuthenticated } = useAuth();
+  const [fileUrl, setFileUrl] = useState<string>("");
+  const [textItems, setTextItems] = useState<TextItems>([]);
+  const [lines, setLines] = useState<Lines>([]);
+  const [sections, setSections] = useState<ResumeSectionToLines>({});
+  const [resume, setResume] = useState<Resume | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  // Process PDF when file URL changes
+  useEffect(() => {
+    const processPdf = async () => {
+      if (!fileUrl) {
+        setTextItems([]);
+        return;
+      }
+
+      setIsProcessing(true);
+      setError("");
+
+      try {
+        const extractedTextItems = await readPdf(fileUrl);
+        setTextItems(extractedTextItems);
+        
+        // Step 2: Group text items into lines
+        const extractedLines = groupTextItemsIntoLines(extractedTextItems);
+        setLines(extractedLines);
+        
+        // Step 3: Group lines into sections
+        const extractedSections = groupLinesIntoSections(extractedLines);
+        setSections(extractedSections);
+        
+        // Step 4: Extract resume attributes with Feature Scoring System
+        const extractedResume = extractResumeFromSections(extractedSections);
+        setResume(extractedResume);
+        
+        console.log("✅ Step 1 Complete: PDF parsed successfully -", extractedTextItems.length, "text items extracted");
+        console.log("✅ Step 2 Complete: Grouped into", extractedLines.length, "lines");
+        console.log("✅ Step 3 Complete: Detected sections:", Object.keys(extractedSections));
+        console.log("✅ Step 4 Complete: Extracted resume data:", extractedResume);
+      } catch (err) {
+        console.error("❌ Error parsing PDF:", err);
+        setError("Failed to parse PDF. Please ensure it's a valid PDF file.");
+        setTextItems([]);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    processPdf();
+  }, [fileUrl]);
+
+  const handleFileUrlChange = (newFileUrl: string) => {
+    setFileUrl(newFileUrl);
+  };
 
   // Redirect non-authenticated users to AuthGuard
   if (!isAuthenticated) {
@@ -51,29 +112,61 @@ const Resume = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="h-4 w-4 text-yellow-500 mt-1" />
-                    <p className="text-sm text-muted-foreground">
-                      90%+ accuracy with Feature Scoring System
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="h-4 w-4 text-yellow-500 mt-1" />
-                    <p className="text-sm text-muted-foreground">
-                      Extract skills, experience, education automatically
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="h-4 w-4 text-yellow-500 mt-1" />
-                    <p className="text-sm text-muted-foreground">
-                      Get matched with relevant career opportunities
-                    </p>
-                  </div>
-                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                      Coming Soon...
-                    </p>
+                <div className="space-y-4">
+                  <ResumeDropzone onFileUrlChange={handleFileUrlChange} />
+                  
+                  {isProcessing && (
+                    <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 dark:bg-blue-950 rounded-md">
+                      <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        Processing your resume...
+                      </p>
+                    </div>
+                  )}
+                  
+                  {error && (
+                    <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md">
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        {error}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {textItems.length > 0 && !isProcessing && (
+                    <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-md">
+                      <div className="flex items-start gap-2">
+                        <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                            🎉 All 4 steps complete! Extracted: {resume?.profile.name || 'Name'}, {resume?.profile.email || 'Email'}, {resume?.educations.length || 0} education(s), {resume?.workExperiences.length || 0} work experience(s)!
+                          </p>
+                          <p className="text-xs text-green-700 dark:text-green-300">
+                            Resume parsing complete. Check console for full details.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-yellow-500 mt-1" />
+                      <p className="text-sm text-muted-foreground">
+                        90%+ accuracy with Feature Scoring System
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-yellow-500 mt-1" />
+                      <p className="text-sm text-muted-foreground">
+                        Extract skills, experience, education automatically
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-yellow-500 mt-1" />
+                      <p className="text-sm text-muted-foreground">
+                        Get matched with relevant career opportunities
+                      </p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -137,12 +230,55 @@ const Resume = () => {
                 <li><strong>Section Detection:</strong> Identify resume sections (Profile, Education, Work Experience, etc.)</li>
                 <li><strong>Feature Scoring:</strong> Extract attributes using machine learning-inspired scoring system</li>
               </ol>
-              <div className="mt-4 p-3 bg-white dark:bg-gray-900 rounded-md border">
-                <p className="text-xs text-muted-foreground">
-                  <strong>Note:</strong> This feature is currently under development. We're adapting the OpenResume parser 
-                  to work seamlessly with Arcade-Learn's career recommendation system.
-                </p>
-              </div>
+              {textItems.length > 0 && (
+                <div className="mt-4 p-3 bg-white dark:bg-gray-900 rounded-md border border-green-500">
+                  <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-2">
+                    <strong>✅ Parsing Progress:</strong>
+                  </p>
+                  <ul className="text-xs text-muted-foreground space-y-1 list-none">
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-600">✓</span>
+                      <strong>Step 1 Complete:</strong> {textItems.length} text items extracted from PDF
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-600">✓</span>
+                      <strong>Step 2 Complete:</strong> Grouped into {lines.length} lines with noise removal
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-600">✓</span>
+                      <strong>Step 3 Complete:</strong> Detected {Object.keys(sections).length} sections ({Object.keys(sections).join(", ")})
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-600">✓</span>
+                      <strong>Step 4 Complete:</strong> Extracted resume attributes with Feature Scoring System
+                    </li>
+                  </ul>
+                  {resume && (
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">
+                        <strong>📋 Parsed Data Preview:</strong>
+                      </p>
+                      <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                        <li><strong>Name:</strong> {resume.profile.name || 'N/A'}</li>
+                        <li><strong>Email:</strong> {resume.profile.email || 'N/A'}</li>
+                        <li><strong>Phone:</strong> {resume.profile.phone || 'N/A'}</li>
+                        <li><strong>Education:</strong> {resume.educations.length} entries</li>
+                        <li><strong>Work Experience:</strong> {resume.workExperiences.length} entries</li>
+                        <li><strong>Projects:</strong> {resume.projects.length} entries</li>
+                        <li><strong>Skills:</strong> {resume.skills.featuredSkills.length} featured</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!fileUrl && (
+                <div className="mt-4 p-3 bg-white dark:bg-gray-900 rounded-md border">
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Note:</strong> Upload a resume PDF above to see the parsing algorithm in action. 
+                    Currently, Step 1 (PDF Reading) is implemented and working!
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
