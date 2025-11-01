@@ -1,0 +1,81 @@
+{
+  "resumeId": "cdbfd469-009b-40db-bf08-310d71fb7c51",
+  "userId": "839e5c04-b5b8-4c94-bc9d-cda48fc81f06",
+  "savedAt": "2025-11-01T14:45:13.235Z",
+  "parserVersion": "v1.0",
+  "accuracyScore": 85,
+  "data": {
+    "profile": {
+      "name": "GET IN TOUCH!",
+      "email": "luxcruse2@gmail.com",
+      "phone": "+91-7013592797",
+      "location": "GET IN TOUCH",
+      "url": "",
+      "summary": ""
+    },
+    "educations": [
+      {
+        "school": "College",
+        "degree": "B.Tech/B.E. ( Computers )",
+        "gpa": "9.1",
+        "date": "",
+        "descriptions": []
+      },
+      {
+        "school": "Schooling",
+        "degree": "CBSE",
+        "gpa": "2.7",
+        "date": "2024",
+        "descriptions": []
+      }
+    ],
+    "workExperiences": [
+      {
+        "company": "WieLearn | March 2025 - Present",
+        "jobTitle": "",
+        "date": "WieLearn | March 2025 - Present",
+        "descriptions": [
+          "-Intern:Planned weekly content tasks using Notion, contributed to writing and publishing SEO-",
+          "optimized blogs, and aligned posts with market trends. Collaborated with the team to ensure",
+          "timely execution and brand consistency across digital platforms."
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "project": "cookwithfem | March 2025 - July 2025",
+        "date": "cookwithfem | March 2025 - July 2025",
+        "descriptions": [
+          "-WieLearn is a creative media agency that helps influencers and brands grow their digital",
+          "presence through content strategy, blog creation, and social media optimization.",
+          "Worked with a top-tier influencer (3M+ followers) to build SEO-optimized blogs using",
+          "WordPress, streamline team workflows in Notion, and execute growth strategies across",
+          "YouTube and Instagram."
+        ]
+      }
+    ],
+    "skills": {
+      "featuredSkills": [],
+      "descriptions": [
+        "-HTML",
+        "-CSS",
+        "-SEO Analysis",
+        "-Content Writing",
+        "-Wordpress",
+        "-C",
+        "-Javascript"
+      ]
+    },
+    "custom": {
+      "descriptions": []
+    }
+  },
+  "metadata": {
+    "totalYearsExperience": 0,
+    "totalProjects": 1,
+    "totalSkills": 0,
+    "educationLevel": "Bachelors",
+    "industries": [],
+    "technologies": []
+  }
+}

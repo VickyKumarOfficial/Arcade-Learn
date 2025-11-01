@@ -64,7 +64,7 @@ const Aim = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/resume/status`
         );
-        
+        console.log("Backend url =",import.meta.env.VITE_BACKEND_URL);
         setHasResume(response.data.hasResume);
         setResumeLoading(false);
       } catch (error) {
@@ -79,16 +79,20 @@ const Aim = () => {
   // Fetch job recommendations
   useEffect(() => {
     const fetchRecommendations = async () => {
-      if (!user?.id) return;
+      if (!user?.id || !hasResume) return;
 
       try {
         setLoadingRecs(true);
+        console.log('Fetching job recommendations (Aim)...', { userId: user.id, hasResume });
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/jobs/recommendations?limit=5`
         );
-        
-        setRecommendations(response.data.recommendations || []);
-        setUserProfile(response.data.userProfile || null);
+        console.log("Backend url =", import.meta.env.VITE_BACKEND_URL);
+        console.log('Job recommendations response (Aim):', response.data.recommendations);
+        const recs = response.data?.recommendations || [];
+        console.log('Setting recommendations:', recs, 'Length:', recs.length);
+        setRecommendations(recs);
+        setUserProfile(response.data?.userProfile || null);
       } catch (error) {
         console.error('Error fetching job recommendations:', error);
       } finally {
@@ -96,10 +100,10 @@ const Aim = () => {
       }
     };
 
-    if (isAuthenticated && user?.id) {
+    if (hasResume === true) {
       fetchRecommendations();
     }
-  }, [isAuthenticated, user?.id, hasResume]); // Re-fetch when resume status changes
+  }, [user?.id, hasResume]); // Re-fetch when resume status changes
 
   // Handle file upload
   const handleFileChange = useCallback(async (file: File) => {
@@ -401,18 +405,6 @@ const Aim = () => {
                       </div>
                     </div>
                   )}
-                  
-                  <div className="pt-4 border-t">
-                    <Button 
-                      onClick={() => navigate('/resume-builder')} 
-                      variant="ghost"
-                      className="w-full"
-                      size="sm"
-                    >
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Or Build New Resume
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -458,9 +450,9 @@ const Aim = () => {
                     <div className="space-y-3">
                       {recommendations.slice(0, 5).map((rec, index) => (
                         <div 
-                          key={rec.job.id}
+                          key={rec.id}
                           className="p-4 rounded-lg border border-border hover:border-primary transition-all cursor-pointer"
-                          onClick={() => window.open(rec.job.url, '_blank')}
+                          onClick={() => window.open(rec.url, '_blank')}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
@@ -470,20 +462,20 @@ const Aim = () => {
                                 </Badge>
                                 <Badge className="bg-primary/20 text-primary">
                                   <BarChart3 className="h-3 w-3 mr-1" />
-                                  {rec.matchScore}%
+                                  {rec.matchPercentage}%
                                 </Badge>
                               </div>
                               <h4 className="font-semibold text-foreground truncate mb-1">
-                                {rec.job.title}
+                                {rec.title}
                               </h4>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                                 <Building2 className="h-3 w-3" />
-                                <span>{rec.job.company_name}</span>
-                                {rec.job.location && (
+                                <span>{rec.company_name}</span>
+                                {rec.location && (
                                   <>
                                     <span>•</span>
                                     <MapPin className="h-3 w-3" />
-                                    <span>{rec.job.location}</span>
+                                    <span>{rec.location}</span>
                                   </>
                                 )}
                               </div>
@@ -500,14 +492,6 @@ const Aim = () => {
                           </div>
                         </div>
                       ))}
-                      <Button 
-                        onClick={() => navigate('/jobs')} 
-                        variant="outline" 
-                        className="w-full mt-4"
-                      >
-                        View All Jobs
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
                     </div>
                   )}
                 </CardContent>

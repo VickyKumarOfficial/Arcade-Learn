@@ -1,0 +1,61 @@
+{
+  "resumeId": "f26a2e64-e95c-40ec-8b13-4ef224fe9aed",
+  "userId": "839e5c04-b5b8-4c94-bc9d-cda48fc81f06",
+  "savedAt": "2025-11-01T15:39:05.853Z",
+  "parserVersion": "v1.0",
+  "accuracyScore": 65,
+  "data": {
+    "profile": {
+      "name": "VICKY VICKY",
+      "email": "vickykofficial890@gmail.com",
+      "phone": "08875660473",
+      "location": "VICKY VICKY",
+      "url": "",
+      "summary": "design, and development to build engaging learning experiences."
+    },
+    "educations": [],
+    "workExperiences": [
+      {
+        "company": "Core Team Member – Video Production &",
+        "jobTitle": "",
+        "date": "2000",
+        "descriptions": [
+          "Produced and edited 100+ animated educational videos for YouTube",
+          "(4.8M+ views, 44K+ subscribers)."
+        ]
+      },
+      {
+        "company": "Designed visual assets, thumbnails, and brand materials",
+        "jobTitle": "",
+        "date": "",
+        "descriptions": []
+      }
+    ],
+    "projects": [
+      {
+        "project": "ARcade Learn",
+        "date": "",
+        "descriptions": [
+          "Edtech platorm"
+        ]
+      }
+    ],
+    "skills": {
+      "featuredSkills": [],
+      "descriptions": [
+        "React C Python AIML DAV"
+      ]
+    },
+    "custom": {
+      "descriptions": []
+    }
+  },
+  "metadata": {
+    "totalYearsExperience": 0,
+    "totalProjects": 1,
+    "totalSkills": 0,
+    "educationLevel": "None",
+    "industries": [],
+    "technologies": []
+  }
+}

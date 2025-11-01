@@ -39,12 +39,16 @@ class JobRecommendationService {
         };
       }
 
+    //   console.log("User's resume data = ",resume);
+
       const resumeData = resume.resume_data;
 
       // 2. Extract user skills, experience, and preferences
       const userSkills = this.extractSkills(resumeData);
       const userExperience = this.extractExperience(resumeData);
       const userLocation = resumeData.profile?.location || '';
+
+      console.log("User skills = ",userSkills);
 
       // 3. Fetch all active jobs
       const { data: jobs, error: jobsError } = await this.supabase
@@ -123,8 +127,13 @@ class JobRecommendationService {
     // Skills from descriptions
     if (resumeData.skills?.descriptions) {
       resumeData.skills.descriptions.forEach((desc) => {
+        // Remove leading/trailing dashes, bullets, and whitespace
+        const cleanedDesc = desc.replace(/^[-•*]+\s*/, '').trim();
+        
         // Split by common delimiters
-        const extractedSkills = desc.split(/[,;•\n]/).map((s) => s.trim());
+        const extractedSkills = cleanedDesc.split(/[,;•\n]/).map((s) => 
+          s.replace(/^[-•*]+\s*/, '').trim()
+        );
         skills.push(...extractedSkills.filter((s) => s.length > 0));
       });
     }
