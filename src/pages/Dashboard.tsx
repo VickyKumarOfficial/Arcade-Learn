@@ -82,15 +82,19 @@ const Dashboard = () => {
   // Fetch job recommendations
   useEffect(() => {
     const fetchRecommendations = async () => {
-      if (!user?.id || hasResume === false) return;
+      if (!user?.id || !hasResume) return;
 
       try {
         setLoadingRecs(true);
+        console.log('Fetching job recommendations (Dashboard)...', { userId: user.id, hasResume });
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/jobs/recommendations?limit=3`
         );
-        
-        setRecommendations(response.data.recommendations || []);
+        console.log("Backend url =", import.meta.env.VITE_BACKEND_URL);
+        console.log('Job recommendations response (Dashboard):', response.data.recommendations);
+        const recs = response.data?.recommendations || [];
+        console.log('Setting recommendations:', recs, 'Length:', recs.length);
+        setRecommendations(recs);
       } catch (error) {
         console.error('Error fetching job recommendations:', error);
       } finally {
@@ -98,7 +102,7 @@ const Dashboard = () => {
       }
     };
 
-    if (hasResume !== null) {
+    if (hasResume === true) {
       fetchRecommendations();
     }
   }, [user?.id, hasResume]);
@@ -394,26 +398,26 @@ const Dashboard = () => {
                   <div className="space-y-3">
                     {recommendations.slice(0, 3).map((rec, index) => (
                       <div 
-                        key={rec.job.id}
+                        key={rec.id}
                         className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-600 transition-all cursor-pointer"
-                        onClick={() => window.open(rec.job.url, '_blank')}
+                        onClick={() => window.open(rec.url, '_blank')}
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                              {rec.job.title}
+                              {rec.title}
                             </h4>
                             <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                              {rec.job.company_name}
+                              {rec.company_name}
                             </p>
                           </div>
                           <Badge variant="secondary" className="bg-green-500/20 text-green-600 dark:text-green-400 text-xs flex-shrink-0">
-                            {Math.round(rec.matchScore)}% match
+                            {rec.matchPercentage}% match
                           </Badge>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <MapPin className="w-3 h-3" />
-                          <span className="truncate">{rec.job.location}</span>
+                          <span className="truncate">{rec.location}</span>
                         </div>
                       </div>
                     ))}
