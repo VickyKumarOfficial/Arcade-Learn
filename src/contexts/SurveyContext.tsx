@@ -178,28 +178,48 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(surveyReducer, initialState);
   const { user, isAuthenticated } = useAuth();
 
-  // Load survey status when user logs in
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      checkSurveyStatus();
-    } else {
-      // Reset survey state and clear session storage when user logs out
-      dispatch({ type: 'RESET_SURVEY' });
-      // Clear all session storage keys related to surveys
-      Object.keys(sessionStorage).forEach(key => {
-        if (key.startsWith('arcadelearn_survey_shown_')) {
-          sessionStorage.removeItem(key);
-        }
-      });
-    }
-  }, [isAuthenticated, user]);
+  // Function definitions (moved before useEffect hooks)
+  const saveSurveyProgressLocally = () => {
+    if (!user) return;
+    
+    const progressData = {
+      currentQuestionIndex: state.currentQuestionIndex,
+      answers: state.answers,
+      isCompleted: state.isCompleted,
+    };
+    localStorage.setItem(`arcadelearn_survey_progress_${user.id}`, JSON.stringify(progressData));
+  };
 
-  // Save survey progress to localStorage whenever state changes (for persistence)
-  useEffect(() => {
-    if (user && state.answers && Object.keys(state.answers).length > 0 && !state.isCompleted) {
-      saveSurveyProgressLocally();
+  const loadSurveyProgressLocally = () => {
+    if (!user) return;
+
+    try {
+      const savedProgress = localStorage.getItem(`arcadelearn_survey_progress_${user.id}`);
+      if (savedProgress) {
+        const progressData = JSON.parse(savedProgress);
+        console.log('Loading saved survey progress:', progressData);
+        
+        // Validate the progress data and ensure it's within bounds
+        const validatedState = {
+          currentQuestionIndex: Math.max(0, Math.min(progressData.currentQuestionIndex || 0, SURVEY_QUESTIONS.length - 1)),
+          answers: progressData.answers || {},
+          isCompleted: progressData.isCompleted || false,
+          isVisible: false // Don't automatically show, let checkSurveyStatus decide
+        };
+        
+        console.log('Validated survey state to load:', validatedState);
+        dispatch({ type: 'LOAD_SURVEY_STATE', state: validatedState });
+        
+        return true; // Indicate that progress was loaded
+      }
+    } catch (error) {
+      console.error('Failed to load survey progress:', error);
+      // Clear corrupted data
+      localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
     }
-  }, [state.answers, state.currentQuestionIndex, user, state.isCompleted]);
+    
+    return false; // No progress was loaded
+  };
 
   const checkSurveyStatus = async () => {
     if (!user) return;
@@ -400,48 +420,6 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     return typeof answer === 'string' && answer.length > 0;
   };
 
-  const saveSurveyProgressLocally = () => {
-    if (!user) return;
-    
-    const progressData = {
-      currentQuestionIndex: state.currentQuestionIndex,
-      answers: state.answers,
-      isCompleted: state.isCompleted,
-    };
-    localStorage.setItem(`arcadelearn_survey_progress_${user.id}`, JSON.stringify(progressData));
-  };
-
-  const loadSurveyProgressLocally = () => {
-    if (!user) return;
-
-    try {
-      const savedProgress = localStorage.getItem(`arcadelearn_survey_progress_${user.id}`);
-      if (savedProgress) {
-        const progressData = JSON.parse(savedProgress);
-        console.log('Loading saved survey progress:', progressData);
-        
-        // Validate the progress data and ensure it's within bounds
-        const validatedState = {
-          currentQuestionIndex: Math.max(0, Math.min(progressData.currentQuestionIndex || 0, SURVEY_QUESTIONS.length - 1)),
-          answers: progressData.answers || {},
-          isCompleted: progressData.isCompleted || false,
-          isVisible: false // Don't automatically show, let checkSurveyStatus decide
-        };
-        
-        console.log('Validated survey state to load:', validatedState);
-        dispatch({ type: 'LOAD_SURVEY_STATE', state: validatedState });
-        
-        return true; // Indicate that progress was loaded
-      }
-    } catch (error) {
-      console.error('Failed to load survey progress:', error);
-      // Clear corrupted data
-      localStorage.removeItem(`arcadelearn_survey_progress_${user.id}`);
-    }
-    
-    return false; // No progress was loaded
-  };
-
   const saveSurveyToBackend = async (answers: SurveyAnswers) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -527,6 +505,29 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
 
     return data;
   };
+
+  // Load survey status when user logs in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      checkSurveyStatus();
+    } else {
+      // Reset survey state and clear session storage when user logs out
+      dispatch({ type: 'RESET_SURVEY' });
+      // Clear all session storage keys related to surveys
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('arcadelearn_survey_shown_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+  }, [isAuthenticated, user]);
+
+  // Save survey progress to localStorage whenever state changes (for persistence)
+  useEffect(() => {
+    if (user && state.answers && Object.keys(state.answers).length > 0 && !state.isCompleted) {
+      saveSurveyProgressLocally();
+    }
+  }, [state.answers, state.currentQuestionIndex, user, state.isCompleted]);
 
   const value: SurveyContextType = {
     state,

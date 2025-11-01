@@ -1,0 +1,177 @@
+/* Activity Heatmap Custom Styles */
+
+/* Ensure the heatmap container has proper sizing and responsiveness */
+#activity-heatmap {
+  min-height: 200px !important;
+  width: 100% !important;
+  display: block !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+#activity-heatmap .heat-js-container {
+  min-height: 180px !important;
+  width: 100% !important;
+  max-width: none !important;
+  display: block !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#activity-heatmap .heat-js-map {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 800px !important; /* Minimum width for readability */
+}
+
+#activity-heatmap .heat-js-map-contents {
+  border-radius: var(--radius) !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Responsive adjustments for mobile devices */
+@media (max-width: 768px) {
+  #activity-heatmap {
+    min-height: 160px !important;
+  }
+  
+  #activity-heatmap .heat-js-container {
+    min-height: 140px !important;
+  }
+  
+  #activity-heatmap .heat-js-map {
+    min-width: 600px !important; /* Smaller minimum for mobile */
+  }
+  
+  #activity-heatmap .heat-js-day {
+    min-width: 8px !important;
+    min-height: 8px !important;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1200px) {
+  #activity-heatmap {
+    min-height: 220px !important;
+  }
+  
+  #activity-heatmap .heat-js-container {
+    min-height: 200px !important;
+  }
+  
+  #activity-heatmap .heat-js-day {
+    min-width: 12px !important;
+    min-height: 12px !important;
+  }
+}
+
+.activity-level-1 {
+  background-color: hsl(var(--primary) / 0.2) !important;
+}
+
+.activity-level-2 {
+  background-color: hsl(var(--primary) / 0.4) !important;
+}
+
+.activity-level-3 {
+  background-color: hsl(var(--primary) / 0.6) !important;
+}
+
+.activity-level-4 {
+  background-color: hsl(var(--primary) / 0.8) !important;
+}
+
+.activity-level-5 {
+  background-color: hsl(var(--primary)) !important;
+}
+
+/* Heat.js Day and Month Name Styling */
+#activity-heatmap .heat-js-day-name {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+}
+
+#activity-heatmap .heat-js-month-name {
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+}
+
+#activity-heatmap .heat-js-day {
+  border-radius: 0.25rem !important;
+  border: 1px solid hsl(var(--border)) !important;
+  min-width: 10px !important;
+  min-height: 10px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+#activity-heatmap .heat-js-day:hover {
+  border-color: hsl(var(--primary)) !important;
+  transform: scale(1.1) !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  position: relative !important;
+}
+
+/* Responsive text sizes */
+@media (max-width: 768px) {
+  #activity-heatmap .heat-js-day-name {
+    font-size: 0.65rem !important;
+  }
+  
+  #activity-heatmap .heat-js-month-name {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  #activity-heatmap .heat-js-day-name {
+    font-size: 0.8rem !important;
+  }
+  
+  #activity-heatmap .heat-js-month-name {
+    font-size: 0.95rem !important;
+  }
+}
+
+/* Dark mode specific overrides */
+.dark #activity-heatmap .heat-js-day {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark #activity-heatmap .heat-js-day:hover {
+  border-color: hsl(var(--primary)) !important;
+}
+
+/* Year selector styling */
+#activity-heatmap .heat-js-year-selector {
+  color: hsl(var(--foreground)) !important;
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 600 !important;
+}
+
+#activity-heatmap .heat-js-year-selector:hover {
+  background: hsl(var(--accent)) !important;
+}
+
+/* Tooltip styling */
+.heat-js-tooltip {
+  background: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
