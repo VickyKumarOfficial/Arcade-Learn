@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,14 +7,42 @@ import { roadmaps } from "@/data/roadmaps";
 import Navigation from "@/components/Navigation";
 import BackToTopButton from "@/components/BackToTopButton";
 import { useAuth } from "@/contexts/AuthContext";
-import { Briefcase, Trophy, Target, Star, BarChart3, Zap, LogIn, UserPlus } from "lucide-react";
+import { Briefcase, Trophy, Target, Star, BarChart3, Zap, LogIn, UserPlus, Upload, ArrowRight, Sparkles, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Careers = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [hasResume, setHasResume] = useState<boolean | null>(null);
+  const [resumeLoading, setResumeLoading] = useState(true);
+  const [showResumeBanner, setShowResumeBanner] = useState(true);
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Check if user has uploaded resume
+  useEffect(() => {
+    const checkResumeStatus = async () => {
+      if (!user?.id) {
+        setResumeLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/resume/status`
+        );
+        
+        setHasResume(response.data.hasResume);
+        setResumeLoading(false);
+      } catch (error) {
+        console.error('Error checking resume status:', error);
+        setResumeLoading(false);
+      }
+    };
+
+    checkResumeStatus();
+  }, [user?.id]);
   
   const categories = ['all', ...new Set(careerOptions.map(career => 
     career.roadmapIds.map(id => roadmaps.find(r => r.id === id)?.category).filter(Boolean)
@@ -55,6 +83,71 @@ const Careers = () => {
               required skills, and top companies hiring for these positions.
             </p>
           </div>
+
+          {/* Resume Upload Prompt Banner - Only for authenticated users without resume */}
+          {user && !resumeLoading && hasResume === false && showResumeBanner && (
+            <div className="mb-8 px-2 sm:px-4">
+              <Card className="border-2 border-blue-500 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full -ml-12 -mb-12"></div>
+                
+                <button
+                  onClick={() => setShowResumeBanner(false)}
+                  className="absolute top-3 right-3 p-1 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-full transition-colors z-10"
+                  aria-label="Close banner"
+                >
+                  <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                </button>
+
+                <CardContent className="pt-6 pb-6 relative z-10">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                    <div className="flex-shrink-0">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <Target className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-yellow-500" />
+                        Get Personalized Job Recommendations!
+                      </h3>
+                      <p className="text-gray-700 dark:text-gray-300 mb-4">
+                        Upload your resume to unlock AI-powered job matching based on your skills, experience, and career goals. 
+                        We'll filter and recommend the best opportunities tailored just for you.
+                      </p>
+                      <div className="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-blue-500" />
+                          <span>90%+ accuracy parsing</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-purple-500" />
+                          <span>Skill-based matching</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-green-500" />
+                          <span>Instant recommendations</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0 w-full md:w-auto">
+                      <Button
+                        onClick={() => navigate('/aim')}
+                        size="lg"
+                        className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+                      >
+                        <Upload className="h-5 w-5 mr-2" />
+                        Upload Resume Now
+                        <ArrowRight className="h-5 w-5 ml-2" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Category Filter */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-4">

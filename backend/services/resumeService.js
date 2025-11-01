@@ -307,6 +307,67 @@ class ResumeService {
   }
 
   /**
+   * Check if user has uploaded resume
+   * Returns status and basic resume info for job recommendations
+   */
+  async getUserResumeStatus(userId) {
+    try {
+      const { data, error } = await this.supabase
+        .from('parsed_resumes')
+        .select('id, file_name, created_at, updated_at, parsing_accuracy_score, resume_data')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking resume status:', error);
+        return { success: false, error: error.message };
+      }
+
+      // User has no resume
+      if (!data) {
+        return { 
+          success: true, 
+          data: { 
+            hasResume: false, 
+            resumeData: null 
+          } 
+        };
+      }
+
+      // User has resume - extract key info for job matching
+      const resumeInfo = {
+        resumeId: data.id,
+        fileName: data.file_name,
+        uploadedAt: data.created_at,
+        updatedAt: data.updated_at,
+        accuracyScore: data.parsing_accuracy_score,
+        skills: data.resume_data?.skills?.featuredSkills || [],
+        experience: data.resume_data?.workExperiences || [],
+        education: data.resume_data?.educations || [],
+        profile: {
+          name: data.resume_data?.profile?.name || '',
+          email: data.resume_data?.profile?.email || '',
+          location: data.resume_data?.profile?.location || ''
+        }
+      };
+
+      return { 
+        success: true, 
+        data: { 
+          hasResume: true, 
+          resumeData: resumeInfo 
+        } 
+      };
+    } catch (error) {
+      console.error('Error in getUserResumeStatus:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Get all resume JSON files for batch AI processing
    * Used by future recommendation systems
    */

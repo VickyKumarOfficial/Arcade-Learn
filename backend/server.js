@@ -8,6 +8,7 @@ import { analyticsService } from './services/analyticsService.js';
 import { surveyService } from './services/surveyService.js';
 import { emailService } from './services/emailService.js';
 import { resumeService } from './services/resumeService.js';
+import { jobRecommendationService } from './services/jobRecommendationService.js';
 
 dotenv.config();
 
@@ -447,6 +448,22 @@ app.get('/api/user/:userId/resume/active', async (req, res) => {
   }
 });
 
+// Check if user has uploaded resume (for job recommendations)
+app.get('/api/user/:userId/resume/status', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await resumeService.getUserResumeStatus(userId);
+
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get all resumes for a user
 app.get('/api/user/:userId/resumes', async (req, res) => {
   try {
@@ -491,6 +508,26 @@ app.get('/api/admin/resumes/all', async (req, res) => {
         total: result.data.length,
         resumes: result.data
       });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===== Job Recommendation Routes =====
+
+// Get personalized job recommendations for user
+app.get('/api/user/:userId/jobs/recommendations', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    const result = await jobRecommendationService.getRecommendations(userId, limit);
+
+    if (result.success) {
+      res.json(result.data);
     } else {
       res.status(400).json({ error: result.error });
     }
