@@ -5,6 +5,11 @@
  */
 
 import supabaseAdmin from '../lib/supabase.js';
+import { 
+  normalizeSkills, 
+  extractSkillsFromText, 
+  calculateNormalizedSkillMatch 
+} from '../lib/skillNormalizer.js';
 
 class JobRecommendationService {
   constructor() {
@@ -105,7 +110,7 @@ class JobRecommendationService {
   }
 
   /**
-   * Extract skills from resume data
+   * Extract skills from resume data (with normalization)
    */
   extractSkills(resumeData) {
     const skills = [];
@@ -128,19 +133,15 @@ class JobRecommendationService {
     if (resumeData.workExperiences) {
       resumeData.workExperiences.forEach((exp) => {
         exp.descriptions?.forEach((desc) => {
-          // Simple keyword extraction for tech skills
-          const techKeywords = this.extractTechKeywords(desc);
-          skills.push(...techKeywords);
+          // Extract using skill normalizer (handles synonyms)
+          const techSkills = extractSkillsFromText(desc);
+          skills.push(...techSkills);
         });
       });
     }
 
-    // Deduplicate and normalize (case-insensitive)
-    const uniqueSkills = [...new Set(skills.map((s) => s.toLowerCase()))]
-      .filter((s) => s.length > 1) // Remove single chars
-      .map((s) => s.charAt(0).toUpperCase() + s.slice(1)); // Capitalize
-
-    return uniqueSkills;
+    // Normalize all skills (handles ML -> machine learning, JS -> javascript, etc.)
+    return normalizeSkills(skills);
   }
 
   /**
@@ -249,21 +250,22 @@ class JobRecommendationService {
   }
 
   /**
-   * Calculate skill match score (0-1)
+   * Calculate skill match score (0-1) with synonym normalization
    */
   calculateSkillMatch(job, userSkills) {
     if (!userSkills || userSkills.length === 0) return 0;
 
-    const jobText = `${job.title} ${job.description} ${job.department || ''}`.toLowerCase();
-    const matchedSkills = userSkills.filter((skill) =>
-      jobText.includes(skill.toLowerCase())
-    );
+    // Extract and normalize skills from job description
+    const jobText = `${job.title} ${job.description} ${job.department || ''}`;
+    const jobSkills = extractSkillsFromText(jobText);
 
-    // Score: percentage of user skills found in job + bonus for multiple matches
-    const baseScore = matchedSkills.length / Math.max(userSkills.length, 1);
-    const bonusScore = Math.min(0.3, matchedSkills.length * 0.05); // Up to +30% for many matches
+    // Calculate normalized match (handles ML = Machine Learning, JS = JavaScript, etc.)
+    const matchScore = calculateNormalizedSkillMatch(userSkills, jobSkills);
 
-    return Math.min(1, baseScore + bonusScore);
+    // Bonus for high number of matched skills
+    const bonusScore = Math.min(0.3, jobSkills.length * 0.02); // Up to +30%
+
+    return Math.min(1, matchScore + bonusScore);
   }
 
   /**

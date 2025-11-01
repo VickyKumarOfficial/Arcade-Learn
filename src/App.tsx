@@ -17,7 +17,6 @@ import Profile from "./pages/Profile";
 import Aim from "./pages/Aim";
 import Resume from "./pages/Resume";
 import ResumeBuilder from "./pages/ResumeBuilder";
-import Careers from "./pages/Careers";
 import Jobs from "./pages/Jobs";
 import NotFound from "./pages/NotFound";
 import SignIn from "@/pages/SignIn";
@@ -50,7 +49,6 @@ const App = () => (
                     <Route path="/aim" element={<Aim />} />
                     <Route path="/resume" element={<Resume />} />
                     <Route path="/resume-builder" element={<ResumeBuilder />} />
-                    <Route path="/careers" element={<Careers />} />
                     <Route path="/jobs" element={<Jobs />} />
                     <Route path="/faqs" element={<FAQs />} />
                     <Route path="/contactus" element={<ContactUs />} />

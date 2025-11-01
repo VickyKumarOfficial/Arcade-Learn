@@ -16,7 +16,7 @@ const Footer = () => {
   const footerLinks = {
     product: [
       { label: 'Roadmaps', path: '/roadmaps' },
-      { label: 'Careers', path: '/careers' },
+      { label: 'Jobs', path: '/jobs' },
       { label: 'FAQs', path: '/faqs' }
     ],
     resources: [
