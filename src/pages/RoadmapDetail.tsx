@@ -509,11 +509,11 @@ const RoadmapDetail = () => {
               {careerRecommendations.filter(rec => rec.similarity >= 0.05).length > 6 && (
                 <div className="mt-6 text-center">
                   <Button 
-                    onClick={() => navigate('/careers')}
+                    onClick={() => navigate('/jobs')}
                     variant="outline"
                     className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800 hover:bg-gradient-to-r hover:from-blue-100 hover:to-purple-100"
                   >
-                    View More Career Options ({careerRecommendations.filter(rec => rec.similarity >= 0.05).length - 6} more)
+                    View Job Opportunities
                   </Button>
                 </div>
               )}
@@ -525,12 +525,12 @@ const RoadmapDetail = () => {
               <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-2xl">
                 <CardContent className="p-8">
                   <h3 className="text-2xl font-bold mb-4">🎉 Congratulations!</h3>
-                  <p className="text-lg mb-6">You've completed this roadmap! You're now ready to explore career opportunities.</p>
+                  <p className="text-lg mb-6">You've completed this roadmap! You're now ready to explore job opportunities.</p>
                   <Button 
-                    onClick={() => navigate('/careers')}
+                    onClick={() => navigate('/jobs')}
                     className="bg-white text-green-600 hover:bg-gray-100 font-medium"
                   >
-                    Explore Career Options
+                    Explore Job Opportunities
                   </Button>
                 </CardContent>
               </Card>

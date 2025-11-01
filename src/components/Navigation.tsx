@@ -26,7 +26,7 @@ const Navigation = () => {
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Roadmaps', path: '/roadmaps' },
-    { label: 'Careers', path: '/careers' }
+    { label: 'Jobs', path: '/jobs' }
   ];
 
   const aiMenuItems = [
@@ -223,10 +223,6 @@ const Navigation = () => {
                     <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/aim')} className="cursor-pointer">
-                      <Target className="mr-2 h-4 w-4" />
-                      <span>Aim</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={logout} className="cursor-pointer">
                       <LogOut className="mr-2 h-4 w-4" />

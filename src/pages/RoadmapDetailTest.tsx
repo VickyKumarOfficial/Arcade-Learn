@@ -518,12 +518,12 @@ const RoadmapDetail = () => {
               <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-2xl">
                 <CardContent className="p-8">
                   <h3 className="text-2xl font-bold mb-4">🎉 Congratulations!</h3>
-                  <p className="text-lg mb-6">You've completed this roadmap! You're now ready to explore career opportunities.</p>
+                  <p className="text-lg mb-6">You've completed this roadmap! You're now ready to explore job opportunities.</p>
                   <Button 
-                    onClick={() => navigate('/careers')}
+                    onClick={() => navigate('/jobs')}
                     className="bg-white text-green-600 hover:bg-gray-100 font-medium"
                   >
-                    Explore Career Options
+                    Explore Job Opportunities
                   </Button>
                 </CardContent>
               </Card>
