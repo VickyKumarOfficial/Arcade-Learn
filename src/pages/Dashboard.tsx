@@ -44,6 +44,7 @@ import {
   StreakBadge, 
   ProgressBadge
 } from "@/components/StyledBadges";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
 
 const Dashboard = () => {
   const [showAllAchievements, setShowAllAchievements] = useState(false);
@@ -274,6 +275,13 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Activity Heatmap */}
+          {user?.id && (
+            <div className="mb-8 w-full">
+              <ActivityHeatmap userId={user.id} />
+            </div>
+          )}
 
           {/* Progress Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -582,31 +590,6 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           )}
-
-          {/* Heatmap Section (Placeholder) */}
-          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-purple-500" />
-                Learning Activity Heatmap
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <BarChart3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Heatmap Coming Soon!</h3>
-                <p className="text-sm">
-                  Track your daily learning activity with an interactive heatmap visualization.
-                </p>
-                <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    This section will show your learning consistency over time, 
-                    highlighting your most active learning days and helping you maintain streaks.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

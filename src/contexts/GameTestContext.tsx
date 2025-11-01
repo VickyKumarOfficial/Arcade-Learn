@@ -3,6 +3,8 @@ import { UserGameData, RatingBadge, TestResult } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { initializeTestUserGameData, updateTestStreak } from '@/lib/ratingSystem';
 import { processBadges } from '@/lib/testSystem';
+import { activityLogger } from '@/services/activityLogger';
+import { roadmaps } from '@/data/roadmaps';
 // import { userProgressService } from '@/services/userProgressService';
 
 interface GameTestState {
@@ -14,7 +16,7 @@ interface GameTestState {
 }
 
 type GameTestAction = 
-  | { type: 'COMPLETE_TEST'; payload: { result: TestResult } }
+  | { type: 'COMPLETE_TEST'; payload: { result: TestResult; userId?: string } }
   | { type: 'DISMISS_BADGE'; payload: { badgeId: string } }
   | { type: 'HIDE_RATING_ANIMATION' }
   | { type: 'LOAD_USER_DATA'; payload: UserGameData }
@@ -23,6 +25,7 @@ type GameTestAction =
 const GameTestContext = createContext<{
   state: GameTestState;
   dispatch: React.Dispatch<GameTestAction>;
+  completeTest: (result: TestResult) => void;
 } | null>(null);
 
 const gameTestReducer = (state: GameTestState, action: GameTestAction): GameTestState => {
@@ -119,6 +122,48 @@ const gameTestReducer = (state: GameTestState, action: GameTestAction): GameTest
       // Save to localStorage
       localStorage.setItem('arcade-learn-test-data', JSON.stringify(streakUpdatedData));
 
+      // Log newly unlocked achievements
+      if (action.payload.userId && newlyUnlocked.length > 0) {
+        newlyUnlocked.forEach(badge => {
+          activityLogger.logAchievementUnlocked(
+            action.payload.userId!,
+            badge.id,
+            badge.title
+          ).catch(err => console.warn('Failed to log achievement unlock:', err));
+        });
+      }
+
+      // Log test completion activity (only if passed)
+      if (action.payload.userId && result.passed) {
+        activityLogger.logTestCompleted(
+          action.payload.userId,
+          result.testId,
+          result.score,
+          result.roadmapId
+        ).catch(err => console.warn('Failed to log test completion:', err));
+        
+        // Check if this completion also completes the entire roadmap
+        if (shouldMarkCompleted && result.roadmapId) {
+          const roadmap = roadmaps.find(r => r.id === result.roadmapId);
+          if (roadmap) {
+            // Count completed components for this roadmap
+            const roadmapCompletedCount = updatedCompletedComponents.filter(key => 
+              key.startsWith(`${result.roadmapId}-`)
+            ).length;
+            
+            // If all components are now complete, log roadmap completion
+            if (roadmapCompletedCount === roadmap.components.length) {
+              activityLogger.logRoadmapCompleted(
+                action.payload.userId,
+                result.roadmapId,
+                roadmap.title,
+                componentKey
+              ).catch(err => console.warn('Failed to log roadmap completion:', err));
+            }
+          }
+        }
+      }
+
       return {
         ...state,
         userData: streakUpdatedData,
@@ -183,6 +228,14 @@ export const GameTestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const [state, dispatch] = useReducer(gameTestReducer, initialState);
   
+  // Wrapper function to include userId when completing test
+  const completeTest = (result: TestResult) => {
+    dispatch({ 
+      type: 'COMPLETE_TEST', 
+      payload: { result, userId: user?.id } 
+    });
+  };
+  
   // Load user data from backend when user is authenticated
   useEffect(() => {
     if (user) {
@@ -207,7 +260,7 @@ export const GameTestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [user, state.userData.testResults]);
   
   return (
-    <GameTestContext.Provider value={{ state, dispatch }}>
+    <GameTestContext.Provider value={{ state, dispatch, completeTest }}>
       {children}
     </GameTestContext.Provider>
   );

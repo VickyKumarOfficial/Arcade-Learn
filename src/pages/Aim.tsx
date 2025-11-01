@@ -25,6 +25,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import axios from "axios";
+import { activityLogger } from "@/services/activityLogger";
 import { readPdf } from "@/services/resumeParser/readPdf";
 import { groupTextItemsIntoLines } from "@/services/resumeParser/groupTextItemsIntoLines";
 import { groupLinesIntoSections } from "@/services/resumeParser/groupLinesIntoSections";
@@ -163,6 +164,14 @@ const Aim = () => {
         if (result.success) {
           setHasResume(true);
           const accuracyScore = resumeService.calculateAccuracyScore(resume);
+          
+          // Log resume upload activity
+          activityLogger.logResumeUpdated(
+            user.id,
+            file.name,
+            file.size
+          ).catch(err => console.warn('Failed to log resume upload:', err));
+          
           toast({
             title: "✅ Resume Uploaded Successfully!",
             description: `Parsed with ${accuracyScore}% accuracy. Finding job matches...`,

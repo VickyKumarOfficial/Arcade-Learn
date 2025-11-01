@@ -9,6 +9,7 @@ import { surveyService } from './services/surveyService.js';
 import { emailService } from './services/emailService.js';
 import { resumeService } from './services/resumeService.js';
 import { jobRecommendationService } from './services/jobRecommendationService.js';
+import { userActivityService } from './services/userActivityService.js';
 
 dotenv.config();
 
@@ -541,6 +542,181 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
+
+// ============================================================================
+// User Activity & Heatmap Routes
+// ============================================================================
+
+/**
+ * POST /api/user/:userId/activity/log
+ * Log a user activity
+ */
+app.post('/api/user/:userId/activity/log', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { activityType, metadata, activityDate } = req.body;
+
+    if (!activityType) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Activity type is required' 
+      });
+    }
+
+    const result = await userActivityService.logActivity(
+      userId,
+      activityType,
+      metadata || {},
+      activityDate
+    );
+
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    console.error('Error logging activity:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/user/:userId/activity/heatmap
+ * Get heatmap data for visualization
+ */
+app.get('/api/user/:userId/activity/heatmap', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { startDate, endDate, activityTypes } = req.query;
+
+    // Parse activity types if provided as comma-separated string
+    const types = activityTypes ? activityTypes.split(',') : null;
+
+    const result = await userActivityService.getHeatmapData(
+      userId,
+      startDate,
+      endDate,
+      types
+    );
+
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    console.error('Error fetching heatmap data:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      heatmapData: {}
+    });
+  }
+});
+
+/**
+ * GET /api/user/:userId/activity/stats
+ * Get activity statistics (streaks, totals, trends)
+ */
+app.get('/api/user/:userId/activity/stats', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { year } = req.query;
+
+    const result = await userActivityService.getActivityStats(
+      userId,
+      year ? parseInt(year) : null
+    );
+
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    console.error('Error fetching activity stats:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stats: {
+        totalActivities: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        mostActiveMonth: 'N/A',
+        mostActiveCount: 0,
+        avgActivitiesPerWeek: 0
+      }
+    });
+  }
+});
+
+/**
+ * GET /api/user/:userId/activity/recent
+ * Get recent activities
+ */
+app.get('/api/user/:userId/activity/recent', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { limit } = req.query;
+
+    const result = await userActivityService.getRecentActivities(
+      userId,
+      limit ? parseInt(limit) : 10
+    );
+
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    console.error('Error fetching recent activities:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      activities: []
+    });
+  }
+});
+
+/**
+ * POST /api/user/:userId/activity/bulk
+ * Bulk log multiple activities
+ */
+app.post('/api/user/:userId/activity/bulk', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { activities } = req.body;
+
+    if (!activities || !Array.isArray(activities) || activities.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Activities array is required' 
+      });
+    }
+
+    const result = await userActivityService.bulkLogActivities(userId, activities);
+
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    console.error('Error bulk logging activities:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      successCount: 0
+    });
+  }
+});
+
+// ============================================================================
 
 // 404 handler
 app.use((req, res) => {

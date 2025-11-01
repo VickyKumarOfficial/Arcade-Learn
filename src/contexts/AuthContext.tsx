@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { activityLogger } from '@/services/activityLogger';
 
 interface User {
   id: string;
@@ -139,6 +140,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 isAuthenticated: true,
                 session,
               });
+
+              // Log login activity (only for SIGNED_IN event to avoid duplicates)
+              if (event === 'SIGNED_IN' && user.id) {
+                activityLogger.logLogin(user.id, 'email').catch(err => 
+                  console.warn('Failed to log login activity:', err)
+                );
+              }
             } else if (event === 'SIGNED_OUT') {
               // Only clear auth state on explicit sign out
               setAuthState({
