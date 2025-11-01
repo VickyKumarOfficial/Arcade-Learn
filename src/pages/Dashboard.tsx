@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -16,8 +16,17 @@ import {
   Flame,
   BarChart3,
   Lock,
-  LogIn
+  LogIn,
+  Upload,
+  FileText,
+  Briefcase,
+  MapPin,
+  DollarSign,
+  ExternalLink,
+  ArrowRight,
+  Sparkles
 } from "lucide-react";
+import axios from "axios";
 import { getUserLevelTag, getStarProgress } from "@/lib/gamification";
 import Navigation from "@/components/Navigation";
 import { UserStatsCard } from "@/components/UserStatsCard";
@@ -38,9 +47,61 @@ import {
 
 const Dashboard = () => {
   const [showAllAchievements, setShowAllAchievements] = useState(false);
+  const [hasResume, setHasResume] = useState<boolean | null>(null);
+  const [resumeLoading, setResumeLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
   const { state } = useGameTest();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const navigate = useNavigate();
+
+  // Check if user has uploaded resume
+  useEffect(() => {
+    const checkResumeStatus = async () => {
+      if (!user?.id) {
+        setResumeLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/resume/status`
+        );
+        
+        setHasResume(response.data.hasResume);
+        setResumeLoading(false);
+      } catch (error) {
+        console.error('Error checking resume status:', error);
+        setResumeLoading(false);
+      }
+    };
+
+    checkResumeStatus();
+  }, [user?.id]);
+
+  // Fetch job recommendations
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!user?.id || hasResume === false) return;
+
+      try {
+        setLoadingRecs(true);
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/jobs/recommendations?limit=3`
+        );
+        
+        setRecommendations(response.data.recommendations || []);
+      } catch (error) {
+        console.error('Error fetching job recommendations:', error);
+      } finally {
+        setLoadingRecs(false);
+      }
+    };
+
+    if (hasResume !== null) {
+      fetchRecommendations();
+    }
+  }, [user?.id, hasResume]);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -212,66 +273,161 @@ const Dashboard = () => {
 
           {/* Progress Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Overall Progress */}
+            {/* Upload Resume Card */}
             <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-blue-500" />
-                  Overall Progress
+                <CardTitle className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-500" />
+                  Upload Resume
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                      {Math.round(overallProgress)}%
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {completedComponentsCount} of {totalComponents} components completed
-                    </div>
+                {resumeLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Checking resume...</p>
                   </div>
-                  <Progress value={overallProgress} className="h-3" />
-                  <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                ) : hasResume ? (
+                  <div className="text-center space-y-4">
+                    <div className="text-6xl">✅</div>
                     <div>
-                      <div className="font-bold text-green-600 dark:text-green-400">{completedRoadmaps.length}</div>
-                      <div className="text-gray-600 dark:text-gray-400">Completed</div>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
+                        Resume Uploaded
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Your resume is parsed and ready for job matching
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-bold text-blue-600 dark:text-blue-400">{inProgressRoadmaps.length}</div>
-                      <div className="text-gray-600 dark:text-gray-400">In Progress</div>
-                    </div>
-                    <div>
-                      <div className="font-bold text-gray-600 dark:text-gray-400">{roadmaps.length - completedRoadmaps.length - inProgressRoadmaps.length}</div>
-                      <div className="text-gray-600 dark:text-gray-400">Not Started</div>
-                    </div>
+                    <Button 
+                      onClick={() => navigate('/aim')}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      View Resume
+                    </Button>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-6xl mb-3">📄</div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        No Resume Yet
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Upload your resume to get personalized job recommendations
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <Sparkles className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                        <p>90%+ parsing accuracy</p>
+                      </div>
+                      <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <Sparkles className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                        <p>AI-powered job matching</p>
+                      </div>
+                      <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <Sparkles className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                        <p>Instant recommendations</p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => navigate('/aim')}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Resume Now
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Learning Streak */}
+            {/* Job Recommendations Card */}
             <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  Learning Streak
+                <CardTitle className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-orange-500" />
+                  Job Recommendations
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center space-y-4">
-                  <div className="text-6xl">🔥</div>
-                  <div>
-                    <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                      {state.userData.currentStreak}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Current Streak (days)
+                {loadingRecs ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Finding matches...</p>
+                  </div>
+                ) : !hasResume ? (
+                  <div className="text-center py-4 space-y-3">
+                    <div className="text-5xl">💼</div>
+                    <div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        Upload Resume First
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Get personalized job recommendations based on your skills and experience
+                      </div>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Longest streak: {state.userData.longestStreak} days
+                ) : recommendations.length === 0 ? (
+                  <div className="text-center py-4 space-y-3">
+                    <div className="text-5xl">🔍</div>
+                    <div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        No Matches Yet
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Check back soon for new opportunities
+                      </div>
+                      <Button 
+                        onClick={() => navigate('/jobs')}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Browse All Jobs
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recommendations.slice(0, 3).map((rec, index) => (
+                      <div 
+                        key={rec.job.id}
+                        className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-600 transition-all cursor-pointer"
+                        onClick={() => window.open(rec.job.url, '_blank')}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                              {rec.job.title}
+                            </h4>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                              {rec.job.company_name}
+                            </p>
+                          </div>
+                          <Badge variant="secondary" className="bg-green-500/20 text-green-600 dark:text-green-400 text-xs flex-shrink-0">
+                            {Math.round(rec.matchScore)}% match
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <MapPin className="w-3 h-3" />
+                          <span className="truncate">{rec.job.location}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <Button 
+                      onClick={() => navigate('/aim')}
+                      variant="outline"
+                      className="w-full mt-2"
+                      size="sm"
+                    >
+                      View All Recommendations
+                      <ArrowRight className="w-3 h-3 ml-2" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
