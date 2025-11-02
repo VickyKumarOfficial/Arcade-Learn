@@ -12,6 +12,7 @@ import { emailService } from './services/emailService.js';
 import { resumeService } from './services/resumeService.js';
 import { jobRecommendationService } from './services/jobRecommendationService.js';
 import { userActivityService } from './services/userActivityService.js';
+import pdfService from './services/pdfService.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -285,6 +286,51 @@ app.get('/api/user/:userId/recommendations', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Download Roadmap as PDF
+app.get('/api/user/:userId/roadmap/download-pdf', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Get user's recommendations
+    const recommendationsResult = await surveyService.getUserRecommendations(userId);
+    
+    if (!recommendationsResult.success) {
+      return res.status(400).json({ error: 'No recommendations found. Please generate roadmap first.' });
+    }
+    
+    // Get user's survey data for personalization
+    const surveyResult = await surveyService.getUserSurvey(userId);
+    const surveyData = surveyResult.success ? surveyResult.data : {};
+    
+    // Prepare user data for PDF
+    const userData = {
+      name: surveyData.user_type || 'Learner',
+      skillLevel: surveyData.skill_level,
+      interests: surveyData.interests?.join(', ') || surveyData.interests,
+      timeCommitment: surveyData.time_commitment_hours
+    };
+    
+    // Generate PDF
+    const pdfBuffer = await pdfService.generateRoadmapPDF(
+      recommendationsResult.data,
+      userData
+    );
+    
+    // Set response headers for PDF download
+    const filename = `ArcadeLearn_Roadmap_${userId.substring(0, 8)}_${Date.now()}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    // Send PDF
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
   }
 });
 
