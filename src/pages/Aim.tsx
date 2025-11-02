@@ -57,46 +57,55 @@ const Aim = () => {
   // Check if user has uploaded resume
   useEffect(() => {
     const checkResumeStatus = async () => {
-      if (!user?.id) {
+      if (!user?.id || !isAuthenticated) {
+        console.log('⚠️ User not authenticated, skipping resume check');
+        setHasResume(false);
         setResumeLoading(false);
         return;
       }
 
       try {
+        console.log('📋 Checking resume status for user:', user.id);
         const response = await axios.get(
           `${BACKEND_URL}/api/user/${user.id}/resume/status`
         );
-        // console.log("Backend url =",import.meta.env.VITE_BACKEND_URL);
         setHasResume(response.data.hasResume);
         setResumeLoading(false);
       } catch (error) {
         console.error('Error checking resume status:', error);
+        setHasResume(false);
         setResumeLoading(false);
       }
     };
 
     checkResumeStatus();
-  }, [user?.id]);
+  }, [user?.id, isAuthenticated]);
 
   // Fetch job recommendations
   useEffect(() => {
     const fetchRecommendations = async () => {
-      if (!user?.id || !hasResume) return;
+      if (!user?.id || !isAuthenticated || !hasResume) {
+        console.log('⚠️ Skipping job recommendations:', { 
+          hasUser: !!user?.id, 
+          isAuthenticated, 
+          hasResume 
+        });
+        return;
+      }
 
       try {
         setLoadingRecs(true);
-        console.log('Fetching job recommendations (Aim)...', { userId: user.id, hasResume });
+        console.log('📊 Fetching job recommendations for user:', user.id);
         const response = await axios.get(
           `${BACKEND_URL}/api/user/${user.id}/jobs/recommendations?limit=5`
         );
-        // console.log("Backend url =", import.meta.env.VITE_BACKEND_URL);
-        console.log('Job recommendations response (Aim):', response.data.recommendations);
+        console.log('✅ Job recommendations received:', response.data.recommendations?.length || 0);
         const recs = response.data?.recommendations || [];
-        console.log('Setting recommendations:', recs, 'Length:', recs.length);
         setRecommendations(recs);
         setUserProfile(response.data?.userProfile || null);
       } catch (error) {
-        console.error('Error fetching job recommendations:', error);
+        console.error('❌ Error fetching job recommendations:', error);
+        setRecommendations([]);
       } finally {
         setLoadingRecs(false);
       }
@@ -105,7 +114,7 @@ const Aim = () => {
     if (hasResume === true) {
       fetchRecommendations();
     }
-  }, [user?.id, hasResume]); // Re-fetch when resume status changes
+  }, [user?.id, isAuthenticated, hasResume]); // Re-fetch when resume status changes
 
   // Handle file upload
   const handleFileChange = useCallback(async (file: File) => {
