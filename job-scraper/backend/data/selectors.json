@@ -1,0 +1,156 @@
+{
+  "https://www.riotgames.com/en/work-with-us": {
+    "company_name": "Riot Games, Inc.",
+    "wait_for": ".job-list__body.list--unstyled",
+    "job_elements": "li",
+    "title_xpath": "//a/div[@class='job-row__col job-row__col--primary']",
+    "department_xpath": "//a/div[@class='job-row__col job-row__col--secondary'][1]",
+    "location_xpath": "//a/div[@class='job-row__col job-row__col--secondary'][3]",
+    "url_xpath": "//li/a[contains(@class, 'job-row__inner js-job-url')]",
+    "description_xpath": "//div[contains(@class, 'job-description')]//p[1]",
+    "raw_url": "https://www.riotgames.com/en/work-with-us",
+    "scrape_type": "tab-page"
+  },
+  "https://careers.roblox.com/jobs": {
+    "company_name": "Roblox Corporation",
+    "wait_for": "//rbx-ui-list",
+    "job_elements": "//rbx-ui-search-item",
+    "title_xpath": "//h4",
+    "department_xpath": "//div[@class='caption-container']/caption[2]",
+    "location_xpath": "//div[@class='caption-container']/caption[1]",
+    "url_xpath": "//rbx-ui-search-item/rbx-ui-link/a",
+    "pagination_xpath": "//li[@class='pagination-next']",
+    "description_xpath": "//rbx-ui-section[contains(@class,'job-description')]//rbx-ui-text-block",
+    "raw_url": "https://careers.roblox.com",
+    "scrape_type": "in-page"
+  },
+
+  "https://www.google.com/about/careers/applications/jobs/results/?location=United%20States": {
+    "company_name": "Google",
+    "wait_for": "//main",
+    "job_elements": "//div[@class='sMn82b']",
+    "title_xpath": "//h3[@class='QJPWVe']",
+    "type_xpath": "null",
+    "location_xpath": "//div[@class='wVoYLb']//span[@class='r0wTof']",
+    "url_xpath": "//a[@class='WpHeLc VfPpkd-mRLv6 VfPpkd-RLmnJb']",
+    "pagination_xpath": "//a[contains(@aria-label, 'Go to next page')]",
+    "description_xpath": "//div[@class='aG5W3']",
+    "scrape_type": "in-page"
+  },
+
+  "https://www.jobbank.gc.ca/jobsearch/": {
+    "wait_for": ".results-jobs",
+    "filter_button": "//div/div/input[@value='2']",
+    "job_elements": "//article",
+    "company_xpath": "//a/ul/li[@class='business']",
+    "date_xpath": "//a/ul/li[@class='date']",
+    "title_xpath": "//a/h3/span[@class='noctitle']",
+    "salary_xpath": "//a/ul/li[@class='salary']",
+    "location_xpath": "//a/ul/li[@class='location']",
+    "url_xpath": "//a",
+    "pagination_xpath": "//div/button[@id='moreresultbutton']"
+  },
+  "https://www.usajobs.gov/search/results/?l=&rmi=false&p=1": {
+    "wait_for": ".usajobs-search-results.no-params",
+    "job_elements": "//div[@class='usajobs-search-result--core']",
+    "title_xpath": "//h2/a",
+    "department_xpath": "//div/div/div[@class='usajobs-search-result--core__department']",
+    "location_xpath": "//div/div/div[@class='usajobs-search-result--core__location']",
+    "salary_xpath": "//div/div/ul/li[@class='usajobs-search-result--core__item']",
+    "type_xpath": "//div/div/ul/li[@class='usajobs-search-result--core__item usajobs-search-result--core__appt-type']",
+    "url_xpath": "//h2/a",
+    "company_name": "US Government (usajobs.gov)",
+    "pagination_xpath": "//a[@class='usajobs-search-pagination__next-page']"
+  },
+
+  "https://www.google.com/about/careers/applications/jobs/results?location=India": {
+    "company_name": "Google",
+    "wait_for": "//main",
+    "job_elements": "//div[@class='sMn82b']",
+    "title_xpath": "//h3[@class='QJPWVe']",
+    "type_xpath": "null",
+    "location_xpath": "//div[@class='wVoYLb']//span[@class='r0wTof']",
+    "url_xpath": "//a[@class='WpHeLc VfPpkd-mRLv6 VfPpkd-RLmnJb']",
+    "pagination_xpath": "//a[contains(@aria-label, 'Go to next page')]",
+    "description_xpath": "//div[@class='aG5W3']",
+    "scrape_type": "in-page"
+  },
+
+  "https://internshala.com/jobs/net-development-jobs/": {
+    "company_name": "Various (Internshala)",
+    "wait_for": ".individual_internship",
+    "job_elements": ".individual_internship",
+    "title_xpath": ".//h3[@class='job-internship-name']/a",
+    "company_xpath": ".//a[@class='link_display_like_text']",
+    "location_xpath": ".//div[@id='location_names']",
+    "type_xpath": ".//div[@class='status-text']",
+    "salary_xpath": ".//span[@class='stipend']",
+    "date_xpath": ".//div[@class='status-text']",
+    "url_xpath": ".//h3[@class='job-internship-name']/a",
+    "description_xpath": "//div[@class='internship_details']//p",
+    "raw_url": "https://internshala.com",
+    "scrape_type": "tab-page"
+  },
+
+  "https://internshala.com/jobs/javascript-job/": {
+    "company_name": "Various (Internshala)",
+    "wait_for": ".individual_internship",
+    "job_elements": ".individual_internship",
+    "title_xpath": ".//h3[@class='job-internship-name']/a",
+    "company_xpath": ".//a[@class='link_display_like_text']",
+    "location_xpath": ".//div[@id='location_names']",
+    "type_xpath": ".//div[@class='status-text']",
+    "salary_xpath": ".//span[@class='stipend']",
+    "date_xpath": ".//div[@class='status-text']",
+    "url_xpath": ".//h3[@class='job-internship-name']/a",
+    "description_xpath": "//div[@class='internship_details']//p",
+    "raw_url": "https://internshala.com",
+    "scrape_type": "tab-page"
+  },
+
+  "https://internshala.com/jobs/frontend-development-job/": {
+    "company_name": "Various (Internshala)",
+    "wait_for": ".individual_internship",
+    "job_elements": ".individual_internship",
+    "title_xpath": ".//h3[@class='job-internship-name']/a",
+    "company_xpath": ".//a[@class='link_display_like_text']",
+    "location_xpath": ".//div[@id='location_names']",
+    "type_xpath": ".//div[@class='status-text']",
+    "salary_xpath": ".//span[@class='stipend']",
+    "date_xpath": ".//div[@class='status-text']",
+    "url_xpath": ".//h3[@class='job-internship-name']/a",
+    "description_xpath": "//div[@class='internship_details']//p",
+    "raw_url": "https://internshala.com",
+    "scrape_type": "tab-page"
+  },
+
+  "https://www.naukri.com/software-engineer-jobs?k=software%20engineer&experience=0": {
+    "company_name": "Various (Naukri.com)",
+    "wait_for": ".list",
+    "job_elements": "article.jobTuple",
+    "title_xpath": ".//a[@class='title fw500 ellipsis']",
+    "company_xpath": ".//a[@class='subTitle ellipsis fleft']",
+    "location_xpath": ".//li[@class='fleft grey-text br2 placeHolderLi location']",
+    "salary_xpath": ".//li[@class='fleft grey-text br2 placeHolderLi salary']",
+    "date_xpath": ".//span[@class='fleft grey-text']",
+    "url_xpath": ".//a[@class='title fw500 ellipsis']",
+    "description_xpath": "//div[@class='job-description']",
+    "raw_url": "https://www.naukri.com",
+    "scrape_type": "tab-page"
+  },
+
+  "https://in.indeed.com/jobs?q=web+developer&l=India&sort=date&fromage=7": {
+    "company_name": "Various (Indeed India)",
+    "wait_for": "#mosaic-provider-jobcards",
+    "job_elements": ".job_seen_beacon",
+    "title_xpath": ".//h2[@class='jobTitle']//span",
+    "company_xpath": ".//span[@data-testid='company-name']",
+    "location_xpath": ".//div[@data-testid='text-location']",
+    "salary_xpath": ".//div[@class='salary-snippet-container']",
+    "date_xpath": ".//span[@class='date']",
+    "url_xpath": ".//h2[@class='jobTitle']/a",
+    "description_xpath": "//div[@id='jobDescriptionText']",
+    "raw_url": "https://in.indeed.com",
+    "scrape_type": "tab-page"
+  }
+}

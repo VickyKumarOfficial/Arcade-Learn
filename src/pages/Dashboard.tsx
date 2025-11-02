@@ -91,7 +91,7 @@ const Dashboard = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/jobs/recommendations?limit=3`
         );
-        console.log("Backend url =", import.meta.env.VITE_BACKEND_URL);
+        // console.log("Backend url =", import.meta.env.VITE_BACKEND_URL);
         console.log('Job recommendations response (Dashboard):', response.data.recommendations);
         const recs = response.data?.recommendations || [];
         console.log('Setting recommendations:', recs, 'Length:', recs.length);
