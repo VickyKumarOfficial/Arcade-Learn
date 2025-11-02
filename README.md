@@ -13,6 +13,7 @@
   [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
   [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+  [![Render](https://img.shields.io/badge/Render-Deployed-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com/)
   
   <p><em>Your personalized journey from beginner to industry-ready professional</em></p>
   
@@ -227,7 +228,7 @@ graph LR
 - **Job APIs**: Adzuna, RemoteOK
 - **PDF Generation**: @react-pdf/renderer
 - **State Management**: React Context + TanStack Query
-- **Deployment**: Vercel (Frontend) + Render (Backend)
+- **Deployment**: Render (Full Stack - Frontend + Backend)
 
 ---
 
@@ -417,10 +418,6 @@ We love contributions! Here's how you can help:
 
 ---
 
-## 📄 **License**
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
 ---
 
 ## 📞 **Contact & Support**
@@ -460,7 +457,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **🚀 Ready to transform your learning journey?**
 
-[![Get Started](https://img.shields.io/badge/🎯_Get_Started-Visit_Now-success?style=for-the-badge)](https://arcade-learn.vercel.app/)
+[![Get Started](https://img.shields.io/badge/🎯_Get_Started-Visit_Now-success?style=for-the-badge)](https://arcade-learn-gqp0.onrender.com/)
 
 ---
 

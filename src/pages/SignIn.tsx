@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGoogleLogin } from '@react-oauth/google';
 
 interface SignInProps {
   initialMode?: "login" | "register";
@@ -123,6 +124,43 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     }
   };
 
+  // Google OAuth login using the new package
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setLoading(true);
+        setError("");
+        
+        // Get user info from Google
+        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        
+        if (!userInfoResponse.ok) {
+          throw new Error('Failed to fetch user info from Google');
+        }
+        
+        const userInfo = await userInfoResponse.json();
+        console.log('Google user info:', userInfo);
+        
+        // Use the existing loginWithProvider method from AuthContext
+        await loginWithProvider('google');
+        
+        navigate('/dashboard');
+      } catch (err: any) {
+        console.error('Google sign-in error:', err);
+        setError(err.message || 'Google sign-in failed');
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Google OAuth error:', error);
+      setError('Google sign-in failed. Please try again.');
+      setLoading(false);
+    },
+  });
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="bg-card text-foreground p-8 rounded-xl shadow-xl w-full max-w-md border border-border">
@@ -221,9 +259,11 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
           <div className="flex-1 h-px bg-border" />
         </div>
         <Button
+          type="button"
           variant="outline"
           className="w-full flex items-center justify-center"
-          onClick={() => handleOAuth("google")}
+          onClick={() => googleLogin()}
+          disabled={loading}
         >
           <div className="flex items-center justify-center">
             <img 
