@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const surveyService = {
   /**
@@ -243,9 +244,16 @@ export const surveyService = {
       // Build comprehensive AI prompt based on survey responses
       const prompt = this._buildAIRoadmapPrompt(surveyData);
       
-      // For now, we'll create a mock AI response since this is backend
-      // In production, you'd call an AI service here
-      const aiRecommendations = await this._generateMockAIRecommendations(surveyData);
+      // Generate recommendations using Gemini AI
+      console.log('🤖 Generating AI roadmap with Gemini...');
+      const aiRecommendations = await this._generateAIRecommendations(prompt, surveyData);
+      
+      if (!aiRecommendations) {
+        return {
+          success: false,
+          error: 'Failed to generate AI recommendations. Please try again.'
+        };
+      }
       
       // Save recommendation to database
       const { data: recommendation, error: saveError } = await supabase
@@ -255,8 +263,8 @@ export const surveyService = {
           recommended_roadmaps: aiRecommendations.roadmaps,
           recommendation_reason: aiRecommendations.reasoning,
           ai_confidence_score: aiRecommendations.confidence,
-          ai_model_version: 'v1.0',
-          generation_method: 'rule_based'
+          ai_model_version: 'gemini-1.5-flash',
+          generation_method: 'ai_generated'
         })
         .select()
         .single();
@@ -307,7 +315,7 @@ export const surveyService = {
   },
 
   /**
-   * Build AI prompt for roadmap generation
+   * Build AI prompt for roadmap generation with resources
    * @private
    */
   _buildAIRoadmapPrompt(surveyData) {
@@ -315,112 +323,255 @@ export const surveyService = {
     const goals = Array.isArray(surveyData.goal) ? surveyData.goal.join(', ') : surveyData.goal;
     const learningStyles = Array.isArray(surveyData.learningStyle) ? surveyData.learningStyle.join(', ') : surveyData.learningStyle;
 
-    return `Generate a personalized learning roadmap for a user with the following profile:
+    return `You are an expert career advisor and learning path curator. Generate a personalized learning roadmap with curated resources.
 
-User Type: ${surveyData.userType}
-Current Skill Level: ${surveyData.skillLevel}
-Tech Interests: ${interests}
-Goals: ${goals}
-Time Commitment: ${surveyData.timeCommitment}
-Learning Styles: ${learningStyles}
-Wants Recommendations: ${surveyData.wantsRecommendations}
+USER PROFILE:
+- User Type: ${surveyData.userType}
+- Current Skill Level: ${surveyData.skillLevel}
+- Tech Interests: ${interests}
+- Career Goals: ${goals}
+- Time Commitment: ${surveyData.timeCommitment}
+- Learning Styles: ${learningStyles}
+- Wants Recommendations: ${surveyData.wantsRecommendations}
 
-Based on this information, recommend:
-1. 3-5 specific learning roadmaps that match their interests and goals
-2. The recommended order of learning
-3. Time estimates for each roadmap component
-4. Specific resources and learning materials
-5. Reasoning for why these recommendations fit their profile
+TASK:
+Generate 3-4 personalized learning roadmaps with curated resources. For each roadmap, provide:
 
-Focus on practical, achievable paths that align with their available time and learning preferences.`;
+1. Roadmap ID (use kebab-case like: frontend-react, python-data-science, etc.)
+2. Priority (1 = highest, 2 = medium, 3 = lower)
+3. Match Score (0.0 to 1.0 - how well it fits the user's profile)
+4. Estimated Completion Weeks (realistic timeline)
+5. Weekly Hours Needed (based on their time commitment)
+6. Reasoning (why this roadmap is recommended for this user)
+7. 5-7 REAL Learning Resources with:
+   - id: unique identifier (kebab-case)
+   - title: Resource name
+   - type: One of [Video, Course, Documentation, Book, Practice, Interactive, Tutorial]
+   - url: Real, working URL (verify these are actual resources)
+   - duration: Time to complete (e.g., "12 hours", "3 weeks", "Self-paced")
+   - cost: "Free" or "Paid"
+   - description: Brief explanation of what makes this resource valuable
+
+IMPORTANT GUIDELINES:
+- Prioritize FREE resources over paid ones
+- Include diverse resource types (videos, courses, docs, practice platforms, books)
+- Match resources to their skill level (Beginner/Intermediate/Advanced)
+- Prioritize resource types based on their learning style preference
+- Only suggest REAL, VERIFIED resources that actually exist (e.g., official docs, popular courses, well-known platforms)
+- For videos, prefer YouTube channels like freeCodeCamp, Traversy Media, etc.
+- For courses, use Udemy, Coursera, edX, Scrimba, etc.
+- For practice, use platforms like Kaggle, Frontend Mentor, LeetCode, etc.
+- For docs, use official documentation sites
+
+RESPONSE FORMAT (JSON):
+{
+  "roadmaps": [
+    {
+      "roadmap_id": "frontend-react",
+      "priority": 1,
+      "score": 0.92,
+      "estimated_completion_weeks": 12,
+      "weekly_hours_needed": 7,
+      "reasoning": "Perfect match for Web Development interest at Beginner level with focus on building practical projects",
+      "resources": [
+        {
+          "id": "react-official-docs",
+          "title": "Official React Documentation",
+          "type": "Documentation",
+          "url": "https://react.dev",
+          "duration": "Self-paced",
+          "cost": "Free",
+          "description": "The official React documentation is the best starting point with interactive examples and comprehensive guides"
+        },
+        {
+          "id": "react-freecodecamp-video",
+          "title": "React Course - freeCodeCamp",
+          "type": "Video",
+          "url": "https://www.youtube.com/watch?v=bMknfKXIFA8",
+          "duration": "12 hours",
+          "cost": "Free",
+          "description": "Comprehensive React tutorial covering everything from basics to advanced concepts"
+        }
+      ]
+    }
+  ],
+  "reasoning": {
+    "summary": "Personalized recommendations for ${surveyData.userType} interested in ${interests}",
+    "details": [
+      "Primary recommendation based on your ${interests} interest",
+      "Adjusted for ${surveyData.skillLevel} skill level",
+      "Designed for ${surveyData.timeCommitment} weekly commitment"
+    ],
+    "learning_approach": [
+      "Start with video tutorials for visual learning",
+      "Build practical projects alongside theory"
+    ],
+    "next_steps": [
+      "Review the recommended roadmaps below",
+      "Start with the highest priority roadmap",
+      "Set up a consistent learning schedule"
+    ]
+  },
+  "confidence": 0.85
+}
+
+Generate the response as valid JSON only. No additional text or markdown.`;
   },
 
   /**
-   * Generate mock AI recommendations (replace with actual AI service call)
+   * Generate AI recommendations using Gemini
    * @private
    */
-  async _generateMockAIRecommendations(surveyData) {
-    // This is a sophisticated rule-based recommendation system
-    // In production, replace with actual AI service call
-    
-    const roadmapMappings = {
-      'Web Development': ['frontend-react', 'fullstack-mern', 'javascript-fundamentals'],
-      'Data Science': ['python-data-science', 'machine-learning-basics', 'data-analysis'],
-      'Mobile Apps': ['react-native', 'flutter-development', 'ios-swift'],
-      'DevOps': ['docker-kubernetes', 'aws-fundamentals', 'ci-cd-pipeline'],
-      'AI/ML': ['machine-learning-basics', 'deep-learning', 'python-ai'],
-      'Cybersecurity': ['security-fundamentals', 'ethical-hacking', 'network-security'],
-      'Game Development': ['unity-game-dev', 'unreal-engine', 'game-design'],
-      'Not sure yet': ['programming-fundamentals', 'web-development-intro', 'career-exploration']
-    };
+  async _generateAIRecommendations(prompt, surveyData) {
+    try {
+      // Check if API key is available
+      const apiKey = process.env.GEMINI_API_KEY;
+      
+      if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+        console.error('❌ GEMINI_API_KEY not configured properly');
+        console.error('❌ Current value:', apiKey ? apiKey.substring(0, 10) + '...' : 'undefined');
+        return this._generateFallbackRecommendations(surveyData);
+      }
 
-    const skillLevelAdjustments = {
-      'Beginner': { prefix: 'intro-to-', estimateMultiplier: 1.5 },
-      'Intermediate': { prefix: '', estimateMultiplier: 1.0 },
-      'Advanced': { prefix: 'advanced-', estimateMultiplier: 0.8 }
-    };
+      console.log('✅ GEMINI_API_KEY found:', apiKey.substring(0, 20) + '...');
 
-    const timeCommitmentFactors = {
-      '<5 hours': { weeklyHours: 3, totalWeeks: 16 },
-      '5–10 hours': { weeklyHours: 7, totalWeeks: 12 },
-      '10+ hours': { weeklyHours: 15, totalWeeks: 8 }
-    };
+      // Initialize Gemini AI (do it here to ensure env vars are loaded)
+      const genAI = new GoogleGenerativeAI(apiKey);
+      
+      // Initialize Gemini model
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.5-flash",
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.8,
+          topK: 40,
+          maxOutputTokens: 8192,  // Increased to prevent truncation
+        }
+      });
 
-    let recommendedRoadmaps = [];
-    let reasoning = [];
+      console.log('🤖 Calling Gemini AI API...');
+      console.log('📋 Prompt length:', prompt.length, 'characters');
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      
+      // Check if response was blocked or incomplete
+      if (!response.candidates || response.candidates.length === 0) {
+        console.error('❌ No candidates in Gemini response');
+        console.error('   Prompt feedback:', response.promptFeedback);
+        return this._generateFallbackRecommendations(surveyData);
+      }
+      
+      const candidate = response.candidates[0];
+      
+      // Check finish reason
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+        console.error('❌ Response not completed normally');
+        console.error('   Finish reason:', candidate.finishReason);
+        if (candidate.finishReason === 'MAX_TOKENS') {
+          console.error('   ⚠️ Token limit reached - response may be incomplete');
+        }
+        // Try to use the partial response anyway
+      }
+      
+      let text = response.text();
+      
+      console.log('✅ Gemini AI response received successfully');
+      console.log('📄 Response length:', text.length, 'characters');
+      console.log('📄 First 200 chars:', text.substring(0, 200));
+      
+      // Clean up the response (remove markdown code blocks if present)
+      text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      console.log('🧹 Cleaned response, first 200 chars:', text.substring(0, 200));
+      
+      // Parse JSON response
+      let aiRecommendations;
+      try {
+        aiRecommendations = JSON.parse(text);
+        console.log('✅ Successfully parsed JSON response');
+      } catch (parseError) {
+        console.error('❌ JSON Parse Error:', parseError.message);
+        console.error('❌ Failed to parse text (first 500 chars):', text.substring(0, 500));
+        return this._generateFallbackRecommendations(surveyData);
+      }
+      
+      // Validate response structure
+      if (!aiRecommendations.roadmaps || !Array.isArray(aiRecommendations.roadmaps)) {
+        console.error('❌ Invalid AI response structure - missing or invalid roadmaps array');
+        console.error('❌ Response has keys:', Object.keys(aiRecommendations));
+        return this._generateFallbackRecommendations(surveyData);
+      }
+      
+      if (aiRecommendations.roadmaps.length === 0) {
+        console.error('❌ AI returned empty roadmaps array');
+        return this._generateFallbackRecommendations(surveyData);
+      }
+      
+      console.log(`✅ Generated ${aiRecommendations.roadmaps.length} roadmaps with AI`);
+      
+      // Validate each roadmap has resources
+      aiRecommendations.roadmaps.forEach((roadmap, index) => {
+        const resourceCount = roadmap.resources ? roadmap.resources.length : 0;
+        console.log(`  ✓ Roadmap ${index + 1}: ${roadmap.roadmap_id} - ${resourceCount} resources`);
+        
+        if (resourceCount === 0) {
+          console.warn(`  ⚠️  Warning: Roadmap ${roadmap.roadmap_id} has no resources!`);
+        }
+      });
+      
+      return aiRecommendations;
+      
+    } catch (error) {
+      console.error('❌ ERROR in _generateAIRecommendations:');
+      console.error('❌ Error name:', error.name);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      
+      if (error.message && error.message.includes('API key')) {
+        console.error('❌ API Key issue detected');
+      }
+      
+      return this._generateFallbackRecommendations(surveyData);
+    }
+  },
 
-    // Primary recommendations based on tech interests
+  /**
+   * Generate fallback recommendations (minimal error response when AI fails)
+   * @private
+   */
+  _generateFallbackRecommendations(surveyData) {
     const interests = Array.isArray(surveyData.techInterest) ? surveyData.techInterest : [surveyData.techInterest];
     const primaryInterest = interests[0];
     
-    if (roadmapMappings[primaryInterest]) {
-      const mappedRoadmaps = roadmapMappings[primaryInterest];
-      const adjustment = skillLevelAdjustments[surveyData.skillLevel] || skillLevelAdjustments['Beginner'];
-      const timeFactors = timeCommitmentFactors[surveyData.timeCommitment] || timeCommitmentFactors['5–10 hours'];
-
-      mappedRoadmaps.slice(0, 3).forEach((roadmapId, index) => {
-        const estimatedWeeks = Math.ceil(timeFactors.totalWeeks * adjustment.estimateMultiplier);
-        recommendedRoadmaps.push({
-          roadmap_id: roadmapId,
-          score: 0.9 - (index * 0.1),
-          priority: index + 1,
-          estimated_completion_weeks: estimatedWeeks,
-          weekly_hours_needed: timeFactors.weeklyHours,
-          reasoning: `Perfect match for ${primaryInterest} interest at ${surveyData.skillLevel} level`
-        });
-      });
-
-      reasoning.push(`Primary recommendation based on your ${primaryInterest} interest`);
-      reasoning.push(`Adjusted for ${surveyData.skillLevel} skill level`);
-      reasoning.push(`Designed for ${surveyData.timeCommitment} weekly commitment`);
-    }
-
-    // Secondary recommendations based on goals
-    const goals = Array.isArray(surveyData.goal) ? surveyData.goal : [surveyData.goal];
-    if (goals.includes('Get a job') || goals.includes('Switch careers')) {
-      reasoning.push('Prioritized job-market relevant skills for career transition');
-    }
-
-    // Confidence calculation
-    let confidence = 0.7;
-    if (surveyData.wantsRecommendations === 'Yes') confidence += 0.1;
-    if (interests.length <= 2) confidence += 0.1; // More focused interests = higher confidence
-    if (surveyData.skillLevel !== 'Beginner') confidence += 0.1;
-
+    console.error('⚠️  Fallback triggered - AI generation failed');
+    
+    // Return minimal error response - NO dummy data
     return {
-      roadmaps: recommendedRoadmaps,
+      roadmaps: [],
       reasoning: {
-        summary: `Personalized recommendations for ${surveyData.userType} interested in ${interests.join(', ')}`,
-        details: reasoning,
-        learning_approach: this._getLearningApproach(surveyData),
-        next_steps: this._getNextSteps(surveyData)
+        summary: `Unable to generate AI recommendations at this time`,
+        details: [
+          'AI service is temporarily unavailable',
+          'Please check your GEMINI_API_KEY configuration',
+          'Try again in a few moments'
+        ],
+        learning_approach: [
+          'AI-powered personalized recommendations will be available once the service is restored'
+        ],
+        next_steps: [
+          'Click "Generate AI Roadmap" button again to retry',
+          'Ensure your internet connection is stable',
+          'Contact support if the issue persists'
+        ]
       },
-      confidence: Math.min(confidence, 1.0)
+      confidence: 0.0,
+      error: true
     };
   },
 
   /**
-   * Get learning approach recommendations
+   * Get learning approach recommendations (removed - AI generates this)
    * @private
    */
   _getLearningApproach(surveyData) {
@@ -444,7 +595,7 @@ Focus on practical, achievable paths that align with their available time and le
   },
 
   /**
-   * Get next steps recommendations
+   * Get next steps recommendations (removed - AI generates this)
    * @private
    */
   _getNextSteps(surveyData) {

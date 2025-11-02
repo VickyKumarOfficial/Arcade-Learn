@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "Backend API for ArcadeLearn platform",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.55.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
