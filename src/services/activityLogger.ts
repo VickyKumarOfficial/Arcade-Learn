@@ -6,7 +6,9 @@
 
 import axios from 'axios';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+// Use relative URL in production (Vercel), localhost in development
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
+                    (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
 
 export const ACTIVITY_TYPES = {
   TEST_COMPLETED: 'test_completed',

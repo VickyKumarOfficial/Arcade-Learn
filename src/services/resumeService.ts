@@ -71,7 +71,8 @@ class ResumeService {
 
       // 2. Also save to backend (stores JSON file for AI/recommendations)
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
+                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         await fetch(`${backendUrl}/api/user/${userId}/resume`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

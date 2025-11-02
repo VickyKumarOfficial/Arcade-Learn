@@ -29,8 +29,10 @@ const Careers = () => {
       }
 
       try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
+                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/resume/status`
+          `${backendUrl}/api/user/${user.id}/resume/status`
         );
         
         setHasResume(response.data.hasResume);

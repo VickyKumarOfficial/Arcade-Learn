@@ -62,8 +62,10 @@ const Aim = () => {
       }
 
       try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
+                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/resume/status`
+          `${backendUrl}/api/user/${user.id}/resume/status`
         );
         // console.log("Backend url =",import.meta.env.VITE_BACKEND_URL);
         setHasResume(response.data.hasResume);
@@ -85,8 +87,10 @@ const Aim = () => {
       try {
         setLoadingRecs(true);
         console.log('Fetching job recommendations (Aim)...', { userId: user.id, hasResume });
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
+                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081'}/api/user/${user.id}/jobs/recommendations?limit=5`
+          `${backendUrl}/api/user/${user.id}/jobs/recommendations?limit=5`
         );
         // console.log("Backend url =", import.meta.env.VITE_BACKEND_URL);
         console.log('Job recommendations response (Aim):', response.data.recommendations);

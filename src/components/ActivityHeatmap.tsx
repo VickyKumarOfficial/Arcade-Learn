@@ -110,7 +110,9 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
 
         console.log('🔍 Starting activity heatmap initialization...');
 
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+        // Use relative URL in production (Vercel), localhost in development
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
+                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const currentYear = year || new Date().getFullYear();
 
         // Load Heat.js first
