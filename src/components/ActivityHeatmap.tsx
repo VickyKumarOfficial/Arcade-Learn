@@ -333,90 +333,98 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Heatmap Container - Always render */}
-        <div 
-          ref={heatmapRef} 
-          id="activity-heatmap"
-          className="w-full overflow-x-auto overflow-y-visible min-h-[200px] lg:min-h-[220px] z-10"
-          data-heat-js="{}"
-        />
+        {/* Main Grid Layout: Heatmap on left, Stats on right */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Heatmap Container - Takes 2 columns on large screens */}
+          <div className="lg:col-span-2 relative">
+            {/* Always render heatmap div for Heat.js to find */}
+            <div 
+              ref={heatmapRef} 
+              id="activity-heatmap"
+              className="w-full overflow-x-auto overflow-y-visible min-h-[200px] lg:min-h-[220px] z-10"
+              data-heat-js="{}"
+            />
 
-        {/* Loading State Overlay */}
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <div className="flex flex-col items-center gap-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-sm text-muted-foreground">Loading heatmap...</p>
-            </div>
+            {/* Loading State Overlay */}
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <p className="text-sm text-muted-foreground">Loading heatmap...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Error State Overlay */}
+            {error && !loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                <div className="text-center text-destructive p-4 border border-destructive/50 rounded-lg bg-background">
+                  <p className="font-medium">{error}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Check console (F12) for details
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
 
-        {/* Error State */}
-        {error && !loading && (
-          <div className="text-center text-destructive p-4 border border-destructive/50 rounded-lg">
-            <p className="font-medium">{error}</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Check console (F12) for details
-            </p>
-          </div>
-        )}
-
-        {/* Statistics Grid */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Current Streak */}
-            <div className="flex flex-col items-center justify-center p-4 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
-              <div className="flex items-center gap-2 mb-2">
-                <Flame className="h-5 w-5 text-orange-500" />
-                <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                  {stats.currentStreak}
+          {/* Statistics Grid - 2x2 on right side */}
+          {stats && (
+            <div className="grid grid-cols-2 gap-4">
+              {/* Current Streak */}
+              <div className="flex flex-col items-center justify-center p-4 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Flame className="h-5 w-5 text-orange-500" />
+                  <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                    {stats.currentStreak}
+                  </span>
+                </div>
+                <span className="text-xs text-orange-700 dark:text-orange-300 font-medium">
+                  Day Streak
                 </span>
               </div>
-              <span className="text-xs text-orange-700 dark:text-orange-300 font-medium">
-                Day Streak
-              </span>
-            </div>
 
-            {/* Total Activities */}
-            <div className="flex flex-col items-center justify-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-blue-500" />
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {stats.totalActivities}
+              {/* Total Activities */}
+              <div className="flex flex-col items-center justify-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="h-5 w-5 text-blue-500" />
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {stats.totalActivities}
+                  </span>
+                </div>
+                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                  Total Activities
                 </span>
               </div>
-              <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
-                Total Activities
-              </span>
-            </div>
 
-            {/* Longest Streak */}
-            <div className="flex flex-col items-center justify-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="h-5 w-5 text-purple-500" />
-                <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {stats.longestStreak}
+              {/* Longest Streak */}
+              <div className="flex flex-col items-center justify-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Award className="h-5 w-5 text-purple-500" />
+                  <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {stats.longestStreak}
+                  </span>
+                </div>
+                <span className="text-xs text-purple-700 dark:text-purple-300 font-medium">
+                  Best Streak
                 </span>
               </div>
-              <span className="text-xs text-purple-700 dark:text-purple-300 font-medium">
-                Best Streak
-              </span>
-            </div>
 
-            {/* Most Active Month */}
-            <div className="flex flex-col items-center justify-center p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-5 w-5 text-green-500" />
-                <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                  {stats.mostActiveMonth}
+              {/* Most Active Month */}
+              <div className="flex flex-col items-center justify-center p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-5 w-5 text-green-500" />
+                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                    {stats.mostActiveMonth}
+                  </span>
+                </div>
+                <span className="text-xs text-green-700 dark:text-green-300 font-medium">
+                  Most Active ({stats.mostActiveCount})
                 </span>
               </div>
-              <span className="text-xs text-green-700 dark:text-green-300 font-medium">
-                Most Active ({stats.mostActiveCount})
-              </span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Info Badge */}
         <div className="flex items-center justify-center">
