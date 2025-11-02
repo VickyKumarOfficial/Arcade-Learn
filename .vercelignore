@@ -1,0 +1,26 @@
+# Ignore backend folder - deployed separately on Render
+backend/
+
+# Ignore API folder (not needed for frontend build)
+api/
+
+# Ignore backend-related files
+backend
+
+# Node modules (already handled by .gitignore but adding for safety)
+node_modules/
+
+# Ignore local env files
+.env.local
+.env.*.local
+
+# Ignore test and development files
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+__tests__/
+
+# Ignore documentation that's not needed for deployment
+*.md
+!README.md
