@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { BACKEND_URL } from '@/config/env';
 import { 
   Trophy, 
   Star, 
@@ -65,10 +66,8 @@ const Dashboard = () => {
       }
 
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
-                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const response = await axios.get(
-          `${backendUrl}/api/user/${user.id}/resume/status`
+          `${BACKEND_URL}/api/user/${user.id}/resume/status`
         );
         
         setHasResume(response.data.hasResume);
@@ -90,10 +89,8 @@ const Dashboard = () => {
       try {
         setLoadingRecs(true);
         console.log('Fetching job recommendations (Dashboard)...', { userId: user.id, hasResume });
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
-                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const response = await axios.get(
-          `${backendUrl}/api/user/${user.id}/jobs/recommendations?limit=3`
+          `${BACKEND_URL}/api/user/${user.id}/jobs/recommendations?limit=3`
         );
         // console.log("Backend url =", import.meta.env.VITE_BACKEND_URL);
         console.log('Job recommendations response (Dashboard):', response.data.recommendations);

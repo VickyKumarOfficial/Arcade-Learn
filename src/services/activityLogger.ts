@@ -5,10 +5,7 @@
  */
 
 import axios from 'axios';
-
-// Use relative URL in production (Vercel), localhost in development
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
-                    (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
+import { BACKEND_URL } from '@/config/env';
 
 export const ACTIVITY_TYPES = {
   TEST_COMPLETED: 'test_completed',
