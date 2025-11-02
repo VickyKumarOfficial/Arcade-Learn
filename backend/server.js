@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { userProgressService } from './services/userProgressService.js';
 import { subscriptionService } from './services/subscriptionService.js';
 import { certificateService } from './services/certificateService.js';
@@ -10,6 +12,10 @@ import { emailService } from './services/emailService.js';
 import { resumeService } from './services/resumeService.js';
 import { jobRecommendationService } from './services/jobRecommendationService.js';
 import { userActivityService } from './services/userActivityService.js';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -24,45 +30,12 @@ testConnection().catch(err => {
 });
 
 // Middleware
-const allowedOrigins = [
-  'http://localhost:8080',
-  'http://localhost:5173',
-  'https://arcade-learn.vercel.app',
-  'https://arcade-learn.vercel.app/',
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
-// Enhanced CORS configuration
+// Simplified CORS - allow all since frontend and backend are served from same domain
 app.use(cors({
-  origin: function(origin, callback) {
-    console.log('🔍 CORS Request from origin:', origin);
-    
-    // Allow requests with no origin (like mobile apps, curl, Postman)
-    if (!origin) {
-      console.log('✅ Allowing request with no origin');
-      return callback(null, true);
-    }
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      console.log('❌ Origin not allowed:', origin);
-      console.log('📋 Allowed origins:', allowedOrigins);
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    
-    console.log('✅ Origin allowed:', origin);
-    return callback(null, true);
-  },
+  origin: true,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
-
-// Add request logging middleware
-app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path} from ${req.get('origin') || 'no-origin'}`);
-  next();
-});
 
 app.use(express.json());
 
@@ -753,16 +726,30 @@ app.post('/api/user/:userId/activity/bulk', async (req, res) => {
 });
 
 // ============================================================================
+// SERVE STATIC FRONTEND FILES
+// ============================================================================
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+// Serve static files from the Vite build directory
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Handle client-side routing - send all non-API requests to index.html
+app.get('*', (req, res) => {
+  // Only serve index.html for non-API routes
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  } else {
+    // 404 for API routes that don't exist
+    res.status(404).json({ error: 'Endpoint not found' });
+  }
 });
 
+// ============================================================================
+
 app.listen(PORT, () => {
-  console.log(`🚀 ArcadeLearn Backend Server running on port ${PORT}`);
+  console.log(`🚀 ArcadeLearn Server running on port ${PORT}`);
   console.log(`📊 Health check available at http://localhost:${PORT}/health`);
   console.log(`🔗 API endpoints available at http://localhost:${PORT}/api`);
+  console.log(`🌐 Frontend available at http://localhost:${PORT}`);
 });
 
 export default app;

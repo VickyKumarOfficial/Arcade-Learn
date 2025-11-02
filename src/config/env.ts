@@ -1,26 +1,22 @@
 // Environment configuration helper
-// This ensures the backend URL is always correctly set
+// Since frontend and backend are served from the same domain on Render,
+// we use relative paths (no need to specify full backend URL)
 
 export const getBackendUrl = (): string => {
-  // 1. First priority: Environment variable (set during build in Vercel)
-  if (import.meta.env.VITE_BACKEND_URL) {
-    console.log('✅ Using VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
-    return import.meta.env.VITE_BACKEND_URL;
-  }
-
-  // 2. Second priority: Check if we're on localhost
+  // For local development, use the dev server
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     console.log('🏠 Using localhost backend');
     return 'http://localhost:8081';
   }
 
-  // 3. Fallback for production: Use the known Render URL
-  // This ensures it works even if env var is not set during build
-  console.log('🌐 Using production backend fallback');
-  return 'https://arcade-learn-backend.onrender.com';
+  // For production on Render, use relative path (same domain)
+  // This means: if site is at https://arcade-learn.onrender.com
+  // API will be at https://arcade-learn.onrender.com/api
+  console.log('🌐 Using same-domain backend (relative path)');
+  return ''; // Empty string = same domain
 };
 
 export const BACKEND_URL = getBackendUrl();
 
 // Log the final backend URL being used
-console.log('🔗 Final BACKEND_URL:', BACKEND_URL);
+console.log('🔗 Final BACKEND_URL:', BACKEND_URL || '(same domain)');
