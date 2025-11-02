@@ -3,13 +3,23 @@ import Navigation from '@/components/Navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Bot, Route, Target, Zap, BookOpen, TrendingUp, Clock, Star, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Bot, Route, Target, Zap, BookOpen, TrendingUp, Clock, Star, AlertCircle, CheckCircle, Loader2, ExternalLink, Video, FileText, Code, Award, Bookmark, Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { aiRoadmapService } from '@/services/aiRoadmapService';
 import { aiService } from '@/services/aiService';
 import { supabase } from '@/lib/supabase';
 import FormattedText from '@/components/FormattedText';
+
+interface LearningResource {
+  id: string;
+  title: string;
+  type: 'Video' | 'Course' | 'Documentation' | 'Book' | 'Practice' | 'Interactive' | 'Tutorial';
+  url: string;
+  duration: string;
+  cost: 'Free' | 'Paid';
+  description: string;
+}
 
 interface RoadmapRecommendation {
   id: string;
@@ -18,6 +28,7 @@ interface RoadmapRecommendation {
   estimatedWeeks: number;
   weeklyHours: number;
   reasoning: string;
+  resources?: LearningResource[];
 }
 
 interface RecommendationData {
@@ -154,6 +165,85 @@ const AIRoadmapGeneration = () => {
     return 'Low Confidence';
   };
 
+  const downloadRoadmapPDF = async () => {
+    if (!user?.id) {
+      setError('Please sign in to download your roadmap');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const response = await fetch(`http://localhost:8081/api/user/${user.id}/roadmap/download-pdf`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/pdf',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ArcadeLearn_Roadmap_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+    } catch (error) {
+      console.error('PDF download error:', error);
+      setError('Failed to download PDF. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getResourceIcon = (type: string) => {
+    switch (type) {
+      case 'Video':
+        return <Video className="h-4 w-4" />;
+      case 'Course':
+        return <Award className="h-4 w-4" />;
+      case 'Documentation':
+        return <FileText className="h-4 w-4" />;
+      case 'Book':
+        return <BookOpen className="h-4 w-4" />;
+      case 'Practice':
+      case 'Interactive':
+        return <Code className="h-4 w-4" />;
+      default:
+        return <Bookmark className="h-4 w-4" />;
+    }
+  };
+
+  const getResourceIconColor = (type: string) => {
+    switch (type) {
+      case 'Video':
+        return 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300';
+      case 'Course':
+        return 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300';
+      case 'Documentation':
+        return 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300';
+      case 'Book':
+        return 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300';
+      case 'Practice':
+      case 'Interactive':
+        return 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300';
+      default:
+        return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -257,6 +347,27 @@ const AIRoadmapGeneration = () => {
           {/* Generated Recommendations */}
           {recommendations && (
             <div className="space-y-8">
+              {/* Download PDF Button */}
+              <div className="flex justify-end">
+                <Button
+                  onClick={downloadRoadmapPDF}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download as PDF
+                    </>
+                  )}
+                </Button>
+              </div>
+
               {/* Summary Card */}
               <Card className="border-0 shadow-lg">
                 <CardHeader>
@@ -287,36 +398,97 @@ const AIRoadmapGeneration = () => {
 
               {/* Roadmap Cards */}
               {recommendations.roadmaps.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-8">
                   {recommendations.roadmaps.map((roadmap, index) => (
                     <Card key={roadmap.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
                       <CardHeader>
                         <CardTitle className="flex items-center justify-between">
-                          <span className="text-lg">Priority {roadmap.priority}</span>
+                          <div className="flex items-center space-x-3">
+                            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">
+                              {roadmap.priority}
+                            </div>
+                            <span className="text-xl">
+                              {roadmap.id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          </div>
                           <div className="flex items-center space-x-1">
-                            <Star className="h-4 w-4 text-yellow-500" />
-                            <span className="text-sm">{Math.round(roadmap.score * 100)}%</span>
+                            <Star className="h-5 w-5 text-yellow-500" />
+                            <span className="text-sm font-semibold">{Math.round(roadmap.score * 100)}% Match</span>
                           </div>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-green-600 dark:text-green-400">
-                            {roadmap.id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                        <div className="space-y-6">
+                          {/* Roadmap Description */}
+                          <p className="text-gray-600 dark:text-gray-300">
                             {roadmap.reasoning}
                           </p>
-                          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                            <div className="flex items-center space-x-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{roadmap.estimatedWeeks} weeks</span>
+
+                          {/* Time Estimates */}
+                          <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-5 w-5 text-blue-500" />
+                              <span className="font-medium">{roadmap.estimatedWeeks} weeks</span>
                             </div>
-                            <div className="flex items-center space-x-1">
-                              <BookOpen className="h-4 w-4" />
-                              <span>{roadmap.weeklyHours}h/week</span>
+                            <div className="flex items-center space-x-2">
+                              <BookOpen className="h-5 w-5 text-green-500" />
+                              <span className="font-medium">{roadmap.weeklyHours}h/week</span>
                             </div>
                           </div>
+
+                          {/* Learning Resources */}
+                          {roadmap.resources && roadmap.resources.length > 0 && (
+                            <div className="space-y-4">
+                              <h4 className="font-semibold text-lg flex items-center space-x-2">
+                                <Bookmark className="h-5 w-5 text-purple-600" />
+                                <span>Curated Learning Resources</span>
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {roadmap.resources.map((resource) => (
+                                  <a
+                                    key={resource.id}
+                                    href={resource.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md transition-all duration-200"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-start space-x-3 flex-1">
+                                        <div className={`p-2 rounded-lg ${getResourceIconColor(resource.type)}`}>
+                                          {getResourceIcon(resource.type)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <h5 className="font-semibold text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                                            {resource.title}
+                                          </h5>
+                                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                            {resource.description}
+                                          </p>
+                                          <div className="flex items-center space-x-3 mt-2 text-xs">
+                                            <span className="flex items-center space-x-1 text-gray-500 dark:text-gray-400">
+                                              <Clock className="h-3 w-3" />
+                                              <span>{resource.duration}</span>
+                                            </span>
+                                            <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                              resource.cost === 'Free' 
+                                                ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' 
+                                                : 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300'
+                                            }`}>
+                                              {resource.cost}
+                                            </span>
+                                            <span className="text-gray-400 dark:text-gray-500">
+                                              {resource.type}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-shrink-0 ml-2" />
+                                    </div>
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
