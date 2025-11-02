@@ -28,22 +28,42 @@ const allowedOrigins = [
   'http://localhost:8080',
   'http://localhost:5173',
   'https://arcade-learn.vercel.app',
+  'https://arcade-learn.vercel.app/',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
+// Enhanced CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
+    console.log('🔍 CORS Request from origin:', origin);
+    
     // Allow requests with no origin (like mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('✅ Allowing request with no origin');
+      return callback(null, true);
+    }
     
     if (allowedOrigins.indexOf(origin) === -1) {
+      console.log('❌ Origin not allowed:', origin);
+      console.log('📋 Allowed origins:', allowedOrigins);
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
     }
+    
+    console.log('✅ Origin allowed:', origin);
     return callback(null, true);
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.path} from ${req.get('origin') || 'no-origin'}`);
+  next();
+});
+
 app.use(express.json());
 
 // Health check endpoint
