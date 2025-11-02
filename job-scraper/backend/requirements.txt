@@ -1,0 +1,6 @@
+playwright
+requests
+pandas
+sqlalchemy
+python-dotenv
+supabase

@@ -1,0 +1,27 @@
+# ========================================
+# INDIAN JOB BOARDS (Recommended for Entry-Level)
+# ========================================
+
+# Internshala - Best for freshers, students, internships
+https://internshala.com/jobs/net-development-jobs/
+https://internshala.com/jobs/javascript-job/
+https://internshala.com/jobs/frontend-development-job/
+
+# Naukri.com - India's largest job portal (Freshers only)
+https://www.naukri.com/software-engineer-jobs?k=software%20engineer&experience=0
+
+# Indeed India - Large database, good for entry-level
+https://in.indeed.com/jobs?q=web+developer&l=India&sort=date&fromage=7
+
+# ========================================
+# GLOBAL JOB BOARDS (Mostly Senior-Level)
+# ========================================
+
+# Google Careers India - May require advanced experience
+https://www.google.com/about/careers/applications/jobs/results?location=India
+
+# Riot Games - Mostly senior-level positions (commented out for now)
+# https://www.riotgames.com/en/work-with-us
+
+# Roblox - Mostly senior-level positions (commented out for now)
+# https://careers.roblox.com/jobs

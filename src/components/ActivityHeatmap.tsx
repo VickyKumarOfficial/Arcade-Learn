@@ -335,7 +335,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
         <div 
           ref={heatmapRef} 
           id="activity-heatmap"
-          className="w-full overflow-x-auto overflow-y-visible min-h-[200px] lg:min-h-[220px]"
+          className="w-full overflow-x-auto overflow-y-visible min-h-[200px] lg:min-h-[220px] z-10"
           data-heat-js="{}"
         />
 
