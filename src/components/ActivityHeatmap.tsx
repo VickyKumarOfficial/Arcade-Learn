@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Flame, TrendingUp, Calendar, Award } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+import { BACKEND_URL } from '@/config/env';
 import './ActivityHeatmap.css';
 
 interface ActivityStats {
@@ -109,10 +110,8 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
         setError(null);
 
         console.log('🔍 Starting activity heatmap initialization...');
+        console.log('🔗 Backend URL:', BACKEND_URL);
 
-        // Use relative URL in production (Vercel), localhost in development
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
-                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const currentYear = year || new Date().getFullYear();
 
         // Load Heat.js first
@@ -131,7 +130,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
         // Fetch heatmap data
         console.log('📊 Fetching activity data for user:', userId);
         const heatmapResponse = await axios.get(
-          `${backendUrl}/api/user/${userId}/activity/heatmap`,
+          `${BACKEND_URL}/api/user/${userId}/activity/heatmap`,
           {
             params: {
               startDate: `${currentYear}-01-01`,
@@ -142,7 +141,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
 
         // Fetch statistics
         const statsResponse = await axios.get(
-          `${backendUrl}/api/user/${userId}/activity/stats`,
+          `${BACKEND_URL}/api/user/${userId}/activity/stats`,
           {
             params: { year: currentYear }
           }

@@ -6,6 +6,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BACKEND_URL } from '@/config/env';
 import { 
   FileText,
   Upload,
@@ -62,10 +63,8 @@ const Aim = () => {
       }
 
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
-                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const response = await axios.get(
-          `${backendUrl}/api/user/${user.id}/resume/status`
+          `${BACKEND_URL}/api/user/${user.id}/resume/status`
         );
         // console.log("Backend url =",import.meta.env.VITE_BACKEND_URL);
         setHasResume(response.data.hasResume);
@@ -87,10 +86,8 @@ const Aim = () => {
       try {
         setLoadingRecs(true);
         console.log('Fetching job recommendations (Aim)...', { userId: user.id, hasResume });
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 
-                          (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
         const response = await axios.get(
-          `${backendUrl}/api/user/${user.id}/jobs/recommendations?limit=5`
+          `${BACKEND_URL}/api/user/${user.id}/jobs/recommendations?limit=5`
         );
         // console.log("Backend url =", import.meta.env.VITE_BACKEND_URL);
         console.log('Job recommendations response (Aim):', response.data.recommendations);
