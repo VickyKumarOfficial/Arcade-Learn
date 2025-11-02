@@ -1,7 +1,7 @@
 services:
   - type: web
     name: arcade-learn
-    env: node
+    runtime: node
     region: oregon
     plan: free
     buildCommand: npm install && npm run build && cd backend && npm install
