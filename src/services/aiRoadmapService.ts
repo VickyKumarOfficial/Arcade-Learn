@@ -25,7 +25,8 @@ export interface UserRecommendation {
 }
 
 class AIRoadmapService {
-  private backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+  private backendUrl = import.meta.env.VITE_BACKEND_URL || 
+                      (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
 
   /**
    * Generate AI roadmap recommendations for a user

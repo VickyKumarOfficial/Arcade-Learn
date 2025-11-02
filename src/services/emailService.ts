@@ -103,7 +103,8 @@ export const sendContactEmail = async (formData: ContactFormData): Promise<boole
 // Alternative: Simple fetch-based email service (using a backend endpoint)
 export const sendContactEmailViaBackend = async (formData: ContactFormData): Promise<boolean> => {
   try {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 
+                    (window.location.hostname === 'localhost' ? 'http://localhost:8081/api' : '/api');
     console.log('🔍 Sending email via backend:', baseUrl);
     console.log('📧 Form data:', formData);
     

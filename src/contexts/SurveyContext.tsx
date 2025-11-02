@@ -236,7 +236,8 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
       const surveyShownThisSession = sessionStorage.getItem(`arcadelearn_survey_shown_${user.id}`);
       
       // Check backend for survey completion status
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 
+                        (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
       let backendResponse;
       try {
         const response = await fetch(`${backendUrl}/api/user/${user.id}/survey/status`);
@@ -423,7 +424,8 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
   const saveSurveyToBackend = async (answers: SurveyAnswers) => {
     if (!user) throw new Error('User not authenticated');
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 
+                      (window.location.hostname === 'localhost' ? 'http://localhost:8081' : '');
     const response = await fetch(`${backendUrl}/api/user/${user.id}/survey`, {
       method: 'POST',
       headers: {
