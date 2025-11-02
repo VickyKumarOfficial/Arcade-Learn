@@ -165,6 +165,33 @@
   background: hsl(var(--accent)) !important;
 }
 
+/* Month navigation arrows - Make thicker and darker */
+#activity-heatmap .heat-js-year-selector-arrow,
+#activity-heatmap .heat-js-year-selector button {
+  background: hsl(var(--foreground) / 0.15) !important;
+  border: 2px solid hsl(var(--foreground) / 0.3) !important;
+  border-radius: var(--radius) !important;
+  color: hsl(var(--foreground)) !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  padding: 0.5rem 0.75rem !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  transition: all 0.2s ease !important;
+}
+
+#activity-heatmap .heat-js-year-selector-arrow:hover,
+#activity-heatmap .heat-js-year-selector button:hover {
+  background: hsl(var(--foreground) / 0.25) !important;
+  border-color: hsl(var(--foreground) / 0.5) !important;
+  transform: scale(1.05) !important;
+}
+
+#activity-heatmap .heat-js-year-selector-arrow:active,
+#activity-heatmap .heat-js-year-selector button:active {
+  transform: scale(0.95) !important;
+}
+
 /* Tooltip styling */
 .heat-js-tooltip {
   background: hsl(var(--popover)) !important;
