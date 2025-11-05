@@ -8,7 +8,7 @@ import { GameTestProvider } from "@/contexts/GameTestContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SurveyProvider } from "@/contexts/SurveyContext";
 import { SurveyModal } from "@/components/SurveyModal";
-import DevelopmentBanner from "@/components/DevelopmentBanner";
+// import DevelopmentBanner from "@/components/DevelopmentBanner"; // Commented out - can be enabled in future
 import Index from "./pages/Index";
 import Roadmaps from "./pages/Roadmaps";
 import RoadmapDetailTest from "./pages/RoadmapDetailTest";
@@ -36,7 +36,7 @@ const App = () => (
         <SurveyProvider>
           <GameTestProvider>
               <TooltipProvider>
-                <DevelopmentBanner />
+                {/* <DevelopmentBanner /> - Removed to utilize space, uncomment if needed in future */}
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>

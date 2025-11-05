@@ -184,7 +184,7 @@ const ContactUs = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900">
       <Navigation />
       
-      <div className="pt-[92px] sm:pt-[108px] pb-12">
+      <div className="pt-16 sm:pt-20 pb-12">
         <div className="container mx-auto px-4">
           {/* Header Section */}
           <motion.div

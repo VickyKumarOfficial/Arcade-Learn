@@ -228,7 +228,7 @@ const RoadmapDetail = () => {
         />
       )}
       
-      <div className="pt-[92px] sm:pt-[108px] pb-12">
+      <div className="pt-16 sm:pt-20 pb-12">
         <div className="container mx-auto px-4">
           <Button 
             variant="ghost" 
