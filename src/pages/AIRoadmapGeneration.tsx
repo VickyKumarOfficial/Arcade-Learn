@@ -248,7 +248,7 @@ const AIRoadmapGeneration = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="pt-[92px] sm:pt-[108px] pb-12">
+      <div className="pt-16 sm:pt-20 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-12">

@@ -349,10 +349,10 @@ const AIChatPage = () => {
   }
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden pt-[36px] sm:pt-[40px] border-t border-border">
+    <div className="h-screen bg-background flex overflow-hidden">
       {/* Sidebar */}
       <div 
-        className={`fixed top-[36px] sm:top-[40px] bottom-0 left-0 z-50 transform transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 bottom-0 left-0 z-50 transform transition-all duration-300 ease-in-out ${
           sidebarOpen || sidebarHovered ? 'w-80' : 'w-16'
         } bg-card border-r border-border shadow-lg`}
         onMouseEnter={() => setSidebarHovered(true)}
@@ -603,7 +603,7 @@ const AIChatPage = () => {
         </div>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 h-[calc(100vh-220px)] sm:h-[calc(100vh-220px)]">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 h-[calc(100vh-160px)]">
           {!currentChat ? (
             // Welcome Screen
             <div className="flex items-center justify-center h-full">
@@ -703,7 +703,7 @@ const AIChatPage = () => {
         </div>
 
         {/* Input Area */}
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-4 pt-2">
           <div className="flex items-center space-x-3 max-w-4xl mx-auto mb-3">
             <div className="flex-1 relative">
               <Input

@@ -25,7 +25,7 @@ const Roadmaps = () => {
     <>
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="w-full px-6 py-8 pt-[92px] sm:pt-[108px] relative">
+        <div className="w-full px-6 py-8 pt-16 sm:pt-20 relative">
           {/* Main Content - Blurred for non-authenticated users */}
           <div className={`${!user ? 'blur-sm pointer-events-none' : ''}`}>
             {/* Header */}

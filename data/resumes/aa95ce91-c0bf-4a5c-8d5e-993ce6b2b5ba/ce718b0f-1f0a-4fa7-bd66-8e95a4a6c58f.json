@@ -1,0 +1,35 @@
+{
+  "resumeId": "ce718b0f-1f0a-4fa7-bd66-8e95a4a6c58f",
+  "userId": "aa95ce91-c0bf-4a5c-8d5e-993ce6b2b5ba",
+  "savedAt": "2025-11-05T17:50:44.395Z",
+  "parserVersion": "v1.0",
+  "accuracyScore": 30,
+  "data": {
+    "profile": {
+      "name": "Lalit Kumar",
+      "email": "lalitkumaroriginalcoder@gmail.com",
+      "phone": "+91 9912652280",
+      "location": "Secunderabad",
+      "url": "",
+      "summary": ""
+    },
+    "educations": [],
+    "workExperiences": [],
+    "projects": [],
+    "skills": {
+      "featuredSkills": [],
+      "descriptions": []
+    },
+    "custom": {
+      "descriptions": []
+    }
+  },
+  "metadata": {
+    "totalYearsExperience": 0,
+    "totalProjects": 0,
+    "totalSkills": 0,
+    "educationLevel": "None",
+    "industries": [],
+    "technologies": []
+  }
+}

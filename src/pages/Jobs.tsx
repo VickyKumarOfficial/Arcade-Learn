@@ -161,9 +161,9 @@ const Jobs = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8 pt-24">
+      <div className="container mx-auto px-4 py-8 pt-20 sm:pt-24">
         {/* Header */}
-        <div className="text-center mb-8 pt-8">
+        <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Briefcase className="h-10 w-10 text-primary" />
             <h1 className="text-4xl font-bold">Job Board</h1>

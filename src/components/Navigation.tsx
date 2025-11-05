@@ -49,7 +49,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-[36px] sm:top-[44px] left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-lg">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
           <div 
