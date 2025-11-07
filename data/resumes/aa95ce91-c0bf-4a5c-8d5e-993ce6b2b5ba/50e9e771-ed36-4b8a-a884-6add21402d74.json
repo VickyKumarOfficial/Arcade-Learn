@@ -1,0 +1,106 @@
+{
+  "resumeId": "50e9e771-ed36-4b8a-a884-6add21402d74",
+  "userId": "aa95ce91-c0bf-4a5c-8d5e-993ce6b2b5ba",
+  "savedAt": "2025-11-07T16:09:46.025Z",
+  "parserVersion": "v1.0",
+  "accuracyScore": 50,
+  "data": {
+    "profile": {
+      "name": "",
+      "summary": "",
+      "email": "",
+      "phone": "",
+      "location": "",
+      "url": ""
+    },
+    "workExperiences": [
+      {
+        "company": "",
+        "jobTitle": "",
+        "date": "",
+        "descriptions": []
+      }
+    ],
+    "educations": [
+      {
+        "school": "",
+        "degree": "",
+        "gpa": "",
+        "date": "",
+        "descriptions": []
+      }
+    ],
+    "projects": [
+      {
+        "project": "",
+        "date": "",
+        "descriptions": []
+      }
+    ],
+    "skills": {
+      "featuredSkills": [
+        {
+          "skill": "",
+          "rating": 4
+        },
+        {
+          "skill": "",
+          "rating": 4
+        },
+        {
+          "skill": "",
+          "rating": 4
+        },
+        {
+          "skill": "",
+          "rating": 4
+        },
+        {
+          "skill": "",
+          "rating": 4
+        },
+        {
+          "skill": "",
+          "rating": 4
+        }
+      ],
+      "descriptions": []
+    },
+    "custom": {
+      "descriptions": []
+    }
+  },
+  "metadata": {
+    "totalYearsExperience": 0,
+    "totalProjects": 1,
+    "totalSkills": 6,
+    "educationLevel": "Other",
+    "industries": [],
+    "technologies": [
+      {
+        "skill": "",
+        "rating": 4
+      },
+      {
+        "skill": "",
+        "rating": 4
+      },
+      {
+        "skill": "",
+        "rating": 4
+      },
+      {
+        "skill": "",
+        "rating": 4
+      },
+      {
+        "skill": "",
+        "rating": 4
+      },
+      {
+        "skill": "",
+        "rating": 4
+      }
+    ]
+  }
+}

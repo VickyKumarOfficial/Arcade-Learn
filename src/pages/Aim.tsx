@@ -439,10 +439,7 @@ const Aim = () => {
                     <div className="text-center py-12 bg-muted/50 rounded-lg">
                       <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                       <p className="font-semibold text-foreground mb-2">Upload Resume to See Matches</p>
-                      <p className="text-sm text-muted-foreground mb-4">Get AI-powered job recommendations tailored to your skills</p>
-                      <Button onClick={() => navigate('/resume')} size="sm">
-                        Upload Now
-                      </Button>
+                      <p className="text-sm text-muted-foreground">Get AI-powered job recommendations tailored to your skills</p>
                     </div>
                   ) : recommendations.length === 0 ? (
                     <div className="text-center py-12 bg-yellow-50 dark:bg-yellow-950 rounded-lg">

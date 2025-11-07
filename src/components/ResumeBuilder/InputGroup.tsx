@@ -22,13 +22,13 @@ export const Input = ({
 }: InputProps) => {
   return (
     <div className={labelClassName}>
-      <Label className="text-sm font-medium text-gray-700 mb-1.5 block">{label}</Label>
+      <Label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">{label}</Label>
       <ShadcnInput
         name={name}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(name, e.target.value)}
-        className="mt-1"
+        className="mt-1 bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400"
       />
     </div>
   );
@@ -55,13 +55,13 @@ export const Textarea = ({
 }: TextareaProps) => {
   return (
     <div className={labelClassName}>
-      <Label className="text-sm font-medium text-gray-700 mb-1.5 block">{label}</Label>
+      <Label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">{label}</Label>
       <ShadcnTextarea
         name={name}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(name, e.target.value)}
-        className="mt-1 resize-none"
+        className="mt-1 resize-none bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400"
         rows={rows}
       />
     </div>
@@ -102,17 +102,17 @@ export const BulletListTextarea = ({
 
   return (
     <div className={labelClassName}>
-      <Label className="text-sm font-medium text-gray-700 mb-1.5 block">{label}</Label>
+      <Label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">{label}</Label>
       <ShadcnTextarea
         ref={textareaRef}
         name={name}
         value={value.join('\n')}
         placeholder={placeholder}
         onChange={handleChange}
-        className="mt-1 min-h-[100px] resize-none font-normal"
+        className="mt-1 min-h-[100px] resize-none font-normal bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400"
         rows={5}
       />
-      <p className="text-xs text-gray-500 mt-1">One bullet point per line</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">One bullet point per line</p>
     </div>
   );
 };
