@@ -336,17 +336,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('OAuth login not available. Please configure Supabase credentials.');
       }
 
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      console.log('🔐 Starting OAuth flow...');
+      console.log('Provider:', provider);
+      console.log('Redirect URL:', redirectUrl);
+      console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: false,
         }
       });
 
-      if (error) throw error;
+      console.log('OAuth response:', { data, error });
+
+      if (error) {
+        console.error('❌ OAuth Error:', error);
+        throw error;
+      }
       
-      // OAuth will redirect, so state will be updated on return
+      console.log('✅ OAuth redirect initiated');
+      // OAuth will redirect to provider, state will be updated on callback
+      // Don't set loading to false here as the page will redirect
     } catch (error: any) {
+      console.error('❌ OAuth failed:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
       throw new Error(error.message || `${provider} login failed`);
     }

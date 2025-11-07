@@ -120,13 +120,16 @@ class JobRecommendationService {
     const skills = [];
 
     // Featured skills
-    if (resumeData.skills?.featuredSkills) {
-      skills.push(...resumeData.skills.featuredSkills);
+    if (resumeData.skills?.featuredSkills && Array.isArray(resumeData.skills.featuredSkills)) {
+      const validSkills = resumeData.skills.featuredSkills.filter(s => typeof s === 'string');
+      skills.push(...validSkills);
     }
 
     // Skills from descriptions
-    if (resumeData.skills?.descriptions) {
+    if (resumeData.skills?.descriptions && Array.isArray(resumeData.skills.descriptions)) {
       resumeData.skills.descriptions.forEach((desc) => {
+        if (typeof desc !== 'string') return; // Skip non-string descriptions
+        
         // Remove leading/trailing dashes, bullets, and whitespace
         const cleanedDesc = desc.replace(/^[-•*]+\s*/, '').trim();
         
@@ -139,13 +142,17 @@ class JobRecommendationService {
     }
 
     // Extract skills from work experience descriptions
-    if (resumeData.workExperiences) {
+    if (resumeData.workExperiences && Array.isArray(resumeData.workExperiences)) {
       resumeData.workExperiences.forEach((exp) => {
-        exp.descriptions?.forEach((desc) => {
-          // Extract using skill normalizer (handles synonyms)
-          const techSkills = extractSkillsFromText(desc);
-          skills.push(...techSkills);
-        });
+        if (exp.descriptions && Array.isArray(exp.descriptions)) {
+          exp.descriptions.forEach((desc) => {
+            if (typeof desc !== 'string') return; // Skip non-string descriptions
+            
+            // Extract using skill normalizer (handles synonyms)
+            const techSkills = extractSkillsFromText(desc);
+            skills.push(...techSkills);
+          });
+        }
       });
     }
 

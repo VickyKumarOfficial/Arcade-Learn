@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGoogleLogin } from '@react-oauth/google';
 
 interface SignInProps {
   initialMode?: "login" | "register";
@@ -11,6 +10,7 @@ interface SignInProps {
 const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   const [isRegister, setIsRegister] = useState(initialMode === "register");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, register, loginWithProvider, resendVerificationEmail } = useAuth();
   const [form, setForm] = useState({
     firstName: "",
@@ -23,6 +23,20 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   const [loading, setLoading] = useState(false);
   const [showResendButton, setShowResendButton] = useState(false);
   const [resendEmailSuccess, setResendEmailSuccess] = useState(false);
+
+  // Check for OAuth errors in URL parameters
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      const errorMessages: Record<string, string> = {
+        'auth_failed': 'Google sign-in failed. Please try again.',
+        'no_session': 'Unable to establish session. Please try signing in again.',
+        'callback_failed': 'Authentication callback failed. Please try again.',
+        'no_token': 'Authentication token not received. Please try again.',
+      };
+      setError(errorMessages[errorParam] || 'An error occurred during sign-in. Please try again.');
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -101,65 +115,21 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     setLoading(true);
     setError("");
     
-    // Add timeout protection for OAuth
-    const oauthTimeout = setTimeout(() => {
-      setLoading(false);
-      setError(`${provider} authentication is taking too long. Please try again.`);
-    }, 60000); // 60 seconds timeout
-    
     try {
       await loginWithProvider(provider);
-      
-      // Clear timeout since auth was successful
-      clearTimeout(oauthTimeout);
-      
-      navigate('/dashboard');
+      // The redirect will happen automatically, navigation will occur after OAuth callback
     } catch (err: any) {
-      // Clear timeout since we got a response (even if error)
-      clearTimeout(oauthTimeout);
       console.error(`${provider} auth error:`, err);
-      setError(err.message || `Failed to sign in with ${provider}`);
-    } finally {
+      
+      // Provide helpful error message
+      if (err.message?.includes('provider is not enabled') || err.message?.includes('Unsupported provider')) {
+        setError('Google sign-in is not configured yet. Please enable Google OAuth provider in Supabase Dashboard → Authentication → Providers → Google.');
+      } else {
+        setError(err.message || `Failed to sign in with ${provider}`);
+      }
       setLoading(false);
     }
   };
-
-  // Google OAuth login using the new package
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        setLoading(true);
-        setError("");
-        
-        // Get user info from Google
-        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
-        
-        if (!userInfoResponse.ok) {
-          throw new Error('Failed to fetch user info from Google');
-        }
-        
-        const userInfo = await userInfoResponse.json();
-        console.log('Google user info:', userInfo);
-        
-        // Use the existing loginWithProvider method from AuthContext
-        await loginWithProvider('google');
-        
-        navigate('/dashboard');
-      } catch (err: any) {
-        console.error('Google sign-in error:', err);
-        setError(err.message || 'Google sign-in failed');
-      } finally {
-        setLoading(false);
-      }
-    },
-    onError: (error) => {
-      console.error('Google OAuth error:', error);
-      setError('Google sign-in failed. Please try again.');
-      setLoading(false);
-    },
-  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -262,7 +232,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
           type="button"
           variant="outline"
           className="w-full flex items-center justify-center"
-          onClick={() => googleLogin()}
+          onClick={() => handleOAuth('google')}
           disabled={loading}
         >
           <div className="flex items-center justify-center">

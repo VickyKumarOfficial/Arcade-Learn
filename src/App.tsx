@@ -20,6 +20,7 @@ import ResumeBuilder from "./pages/ResumeBuilder";
 import Jobs from "./pages/Jobs";
 import NotFound from "./pages/NotFound";
 import SignIn from "@/pages/SignIn";
+import AuthCallback from "@/pages/AuthCallback";
 import FAQs from "@/pages/FAQs";
 import ContactUs from "@/pages/ContactUs";
 import AIDoubtSolving from "@/pages/AIDoubtSolving";
@@ -57,6 +58,7 @@ const App = () => (
                     <Route path="/ai/roadmap-generation" element={<AIRoadmapGeneration />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignIn initialMode="register" />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                   <SurveyModal />
