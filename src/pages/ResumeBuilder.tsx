@@ -24,37 +24,37 @@ const ResumeBuilderContent = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pt-20 sm:pt-24">
         {/* Header */}
         <div className="mb-8">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/resume')}
-            className="mb-4"
+            className="mb-4 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Resume Parser
           </Button>
           
           <div className="flex items-center gap-3 mb-2">
-            <Sparkles className="h-8 w-8 text-blue-600" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <Sparkles className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
               Resume Builder
             </h1>
           </div>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
             Create your professional resume with real-time preview
           </p>
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Left Side - Forms */}
-          <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-200px)] pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-240px)] lg:max-h-[calc(100vh-200px)] pr-2 lg:pr-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
             <ProfileForm />
             <WorkExperiencesForm />
             <EducationsForm />
@@ -65,7 +65,7 @@ const ResumeBuilderContent = () => {
           </div>
 
           {/* Right Side - Preview */}
-          <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="lg:sticky lg:top-24 lg:self-start h-fit">
             <ResumePreview />
           </div>
         </div>

@@ -65,21 +65,23 @@ export const ResumePreview = () => {
   return (
     <div className="sticky top-4 flex flex-col gap-4">
       {/* Control Bar */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between gap-4">
+      <Card className="p-4 bg-card dark:bg-gray-800 border-border">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setScale(Math.max(0.5, scale - 0.1))}
+              className="dark:border-gray-600 dark:hover:bg-gray-700"
             >
               -
             </Button>
-            <span className="text-sm font-medium w-12 text-center">{Math.round(scale * 100)}%</span>
+            <span className="text-sm font-medium w-12 text-center text-foreground">{Math.round(scale * 100)}%</span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setScale(Math.min(1.2, scale + 0.1))}
+              className="dark:border-gray-600 dark:hover:bg-gray-700"
             >
               +
             </Button>
@@ -90,6 +92,7 @@ export const ResumePreview = () => {
               variant="outline"
               size="sm"
               onClick={handleDownload}
+              className="dark:border-gray-600 dark:hover:bg-gray-700"
             >
               <Download className="h-4 w-4 mr-2" />
               Export JSON
@@ -112,14 +115,14 @@ export const ResumePreview = () => {
       </Card>
 
       {/* Resume Preview */}
-      <Card className="p-8 bg-white overflow-hidden">
+      <Card className="p-4 sm:p-6 lg:p-8 bg-card dark:bg-gray-800 border-border overflow-x-auto">
         <div
           style={{
             transform: `scale(${scale})`,
             transformOrigin: 'top center',
             transition: 'transform 0.2s ease',
           }}
-          className="w-[8.5in] min-h-[11in] mx-auto bg-white shadow-lg p-12"
+          className="w-full max-w-[8.5in] min-h-[11in] mx-auto bg-white shadow-lg p-8 sm:p-10 lg:p-12"
         >
           {/* Header */}
           <div className="text-center mb-6 pb-4 border-b-4" style={{ borderColor: settings.themeColor }}>

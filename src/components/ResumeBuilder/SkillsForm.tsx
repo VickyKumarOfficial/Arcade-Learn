@@ -11,9 +11,9 @@ export const SkillsForm = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Skills</h3>
 
-      <div className="grid grid-cols-6 gap-3 p-4 rounded-lg border border-gray-200 bg-white">
+      <div className="grid grid-cols-6 gap-3 p-4 rounded-lg border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-700/50">
         <BulletListTextarea
           label="Skills & Technologies"
           labelClassName="col-span-full"
@@ -22,7 +22,7 @@ export const SkillsForm = () => {
           value={descriptions}
           onChange={handleChange}
         />
-        <p className="col-span-full text-sm text-gray-600">
+        <p className="col-span-full text-sm text-gray-600 dark:text-gray-400">
           Tip: Group skills by category (e.g., "Frontend: React, Vue, Angular" or "Languages: Python, Java, C++")
         </p>
       </div>

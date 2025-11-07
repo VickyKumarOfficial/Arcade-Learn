@@ -383,7 +383,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <p className="font-medium">Phone</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">+1 (555) 123-4567</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">+91 8890009999</p>
                     </div>
                   </div>
 
