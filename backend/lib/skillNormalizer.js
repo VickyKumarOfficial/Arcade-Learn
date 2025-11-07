@@ -112,7 +112,8 @@ const SKILL_SYNONYMS = {
  * @returns {string} Normalized skill name
  */
 export function normalizeSkill(skill) {
-  if (!skill) return '';
+  // Handle non-string values
+  if (!skill || typeof skill !== 'string') return '';
   
   const lowerSkill = skill.toLowerCase().trim();
   
@@ -136,6 +137,7 @@ export function normalizeSkills(skills) {
   if (!Array.isArray(skills)) return [];
   
   const normalized = skills
+    .filter(skill => skill && typeof skill === 'string') // Filter out non-strings
     .map(skill => normalizeSkill(skill))
     .filter(skill => skill.length > 0);
   
