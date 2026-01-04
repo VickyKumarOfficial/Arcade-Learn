@@ -8,13 +8,14 @@ import FAQSection from "@/components/FAQSection";
 import Footer from "@/components/Footer";
 import BackToTopButton from "@/components/BackToTopButton";
 import SignIn from "./SignIn";
+import dashboardPreview from "@/assets/dashboard-preview.png";
 
 const Index = () => {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <Navigation />
       <Hero />
-      <ShowcaseCard />
+      <ShowcaseCard imageSrc={dashboardPreview} />
       <RoadmapsSection />
       <HowItWorksSection />
       <TestimonialsSection />

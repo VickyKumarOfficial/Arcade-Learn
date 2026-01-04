@@ -180,11 +180,11 @@ const Hero = () => {
 
       {/* Floating geometric shapes*/}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[15%] left-[10%] w-20 h-20 border border-blue-500/30 rounded-full animate-float-slow opacity-30" />
-        <div className="absolute top-[20%] right-[15%] w-16 h-16 border border-blue-400/25 rotate-45 animate-float-medium opacity-40" />
-        <div className="absolute bottom-[25%] left-[15%] w-12 h-12 border border-blue-600/20 rounded-lg rotate-12 animate-float-fast opacity-60" />
-        <div className="absolute bottom-[5%] right-[5%] w-24 h-24 border border-blue-500/20 rounded-full animate-float-slow opacity-100" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-[10%] left-[45%] w-8 h-8 border border-blue-400/30 rotate-45 animate-float-medium opacity-60" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute top-[15%] left-[10%] w-20 h-20 border border-blue-500/30 rounded-full animate-float-slow opacity-20" />
+        <div className="absolute top-[20%] right-[15%] w-16 h-16 border border-blue-400/25 rotate-45 animate-float-medium opacity-30" />
+        <div className="absolute bottom-[25%] left-[15%] w-12 h-12 border border-blue-600/20 rounded-lg rotate-12 animate-float-fast opacity-40" />
+        <div className="absolute bottom-[5%] right-[5%] w-24 h-24 border border-blue-500/20 rounded-full animate-float-slow" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[10%] left-[45%] w-8 h-8 border border-blue-400/30 rotate-45 animate-float-medium opacity-40" style={{ animationDelay: '0.5s' }} />
       </div>
       
 
@@ -205,12 +205,12 @@ const Hero = () => {
           {/* Badge/Tag with Typewriter Effect */}
           <motion.div variants={itemVariants}>
             <div className="inline-flex items-center gap-2 rounded-full p-1 pr-4 mb-6 bg-blue-500/15 border border-blue-500/30 backdrop-blur-sm">
-              <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium shrink-0">
+              <span className="bg-blue-600 text-slate-200 text-xs px-3 py-1 rounded-full font-medium shrink-0">
                 NEW
               </span>
-              <span className="text-sm text-blue-100 min-w-[200px] sm:min-w-[280px]">
+              <span className="font-mono text-sm text-blue-100 min-w-[200px] sm:min-w-[280px]">
                 {displayText}
-                <span className="inline-block w-0.5 h-4 bg-blue-400 ml-0.5 animate-pulse" style={{ animationDuration: '0.8s' }} />
+                <span className="inline-block w-0.5 h-4 bg-blue-400 ml-0.5 animate-pulse" style={{ animationDuration: '1s' }} />
               </span>
             </div>
           </motion.div>
@@ -343,6 +343,36 @@ const Hero = () => {
           </div>
         </div>
       )}
+
+      {/* Curved Arc Divider */}
+      <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden z-20 pointer-events-none">
+        <svg
+          className="relative block w-full h-[80px] sm:h-[100px] md:h-[120px]"
+          viewBox="0 0 1440 120"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(59, 130, 246, 0.1)" />
+              <stop offset="50%" stopColor="rgba(59, 130, 246, 0.8)" />
+              <stop offset="100%" stopColor="rgba(59, 130, 246, 0.1)" />
+            </linearGradient>
+          </defs>
+          {/* Fill below the arc */}
+          <path
+            d="M0,120 L0,60 Q720,0 1440,60 L1440,120 Z"
+            fill="black"
+          />
+          {/* The arc line */}
+          <path
+            d="M0,60 Q720,0 1440,60"
+            fill="none"
+            stroke="url(#arcGradient)"
+            strokeWidth="5"
+          />
+        </svg>
+      </div>
     </section>
   );
 };
