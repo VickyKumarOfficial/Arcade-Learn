@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Trophy } from "lucide-react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Leaderboard } from "./Leaderboard";
 import { AuthGuard } from "./AuthGuard";
 import { motion } from "framer-motion";
+import HeroGlobe from "./HeroGlobe";
 
 // Mouse position type for interactive particles
 interface MousePosition {
@@ -30,6 +31,58 @@ const Hero = () => {
     const y = (e.clientY - rect.top) / rect.height - 0.5;
     setMousePos({ x, y });
   }, []);
+
+  // Typewriter effect for badge text
+  const badgeTexts = [
+    "Start learning with structured roadmaps",
+    "Get career opportunities based on your skills",
+    "Get certified by completing modules & exams",
+    "Track progress with interactive dashboards",
+    "Join a community of passionate learners",
+  ];
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false);
+
+  useEffect(() => {
+    const currentFullText = badgeTexts[currentTextIndex];
+    
+    // If waiting after typing complete, wait 3 seconds then start deleting
+    if (isWaiting) {
+      const waitTimer = setTimeout(() => {
+        setIsWaiting(false);
+        setIsDeleting(true);
+      }, 2000);
+      return () => clearTimeout(waitTimer);
+    }
+
+    // Typing speed
+    const typeSpeed = isDeleting ? 20 : 50;
+
+    const timer = setTimeout(() => {
+      if (!isDeleting) {
+        // Typing
+        if (displayText.length < currentFullText.length) {
+          setDisplayText(currentFullText.slice(0, displayText.length + 1));
+        } else {
+          // Finished typing, wait before deleting
+          setIsWaiting(true);
+        }
+      } else {
+        // Deleting
+        if (displayText.length > 0) {
+          setDisplayText(displayText.slice(0, -1));
+        } else {
+          // Finished deleting, move to next text
+          setIsDeleting(false);
+          setCurrentTextIndex((prev) => (prev + 1) % badgeTexts.length);
+        }
+      }
+    }, typeSpeed);
+
+    return () => clearTimeout(timer);
+  }, [displayText, isDeleting, isWaiting, currentTextIndex, badgeTexts]);
 
   const handleLeaderboardClick = () => {
     if (isAuthenticated) {
@@ -125,58 +178,64 @@ const Hero = () => {
         <div className="absolute top-[50%] left-[82%] rounded-full animate-float-slow bg-blue-500/40" style={{ width: '2px', height: '2px', animationDelay: '0.8s' }} />
       </motion.div>
 
-      {/* Floating geometric shapes - CSS only for performance */}
+      {/* Floating geometric shapes*/}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* Shape 1 - Top left */}
-        <div className="absolute top-[15%] left-[10%] w-20 h-20 border border-blue-500/30 rounded-full animate-float-slow" />
-        {/* Shape 2 - Top right */}
-        <div className="absolute top-[20%] right-[15%] w-16 h-16 border border-blue-400/25 rotate-45 animate-float-medium" />
-        {/* Shape 3 - Bottom left */}
-        <div className="absolute bottom-[25%] left-[15%] w-12 h-12 border border-blue-600/20 rounded-lg rotate-12 animate-float-fast" />
-        {/* Shape 4 - Bottom right */}
-        <div className="absolute bottom-[30%] right-[10%] w-24 h-24 border border-blue-500/20 rounded-full animate-float-slow" style={{ animationDelay: '1s' }} />
-        {/* Shape 5 - Center top */}
-        <div className="absolute top-[10%] left-[45%] w-8 h-8 border border-blue-400/30 rotate-45 animate-float-medium" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute top-[15%] left-[10%] w-20 h-20 border border-blue-500/30 rounded-full animate-float-slow opacity-30" />
+        <div className="absolute top-[20%] right-[15%] w-16 h-16 border border-blue-400/25 rotate-45 animate-float-medium opacity-40" />
+        <div className="absolute bottom-[25%] left-[15%] w-12 h-12 border border-blue-600/20 rounded-lg rotate-12 animate-float-fast opacity-60" />
+        <div className="absolute bottom-[5%] right-[5%] w-24 h-24 border border-blue-500/20 rounded-full animate-float-slow opacity-100" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[10%] left-[45%] w-8 h-8 border border-blue-400/30 rotate-45 animate-float-medium opacity-60" style={{ animationDelay: '0.5s' }} />
       </div>
+      
 
       {/* Dot Pattern Background */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5QzkyQUMiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20 z-[1]"></div>
 
-      <motion.div
-        className="container mx-auto px-2 sm:px-4 text-center relative z-10 max-w-7xl"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <div className="max-w-4xl mx-auto">
-          {/* Badge/Tag */}
+      {/* Main Content - Split Layout */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[calc(100vh-5rem)]">
+          
+          {/* Left Side - Text Content */}
+          <motion.div
+            className="text-center lg:text-left order-2 lg:order-1"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+          {/* Badge/Tag with Typewriter Effect */}
           <motion.div variants={itemVariants}>
-            <div className="inline-flex items-center gap-2 rounded-full p-1 pr-3 mb-6 bg-blue-500/15 border border-blue-500/30 backdrop-blur-sm">
-              <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+            <div className="inline-flex items-center gap-2 rounded-full p-1 pr-4 mb-6 bg-blue-500/15 border border-blue-500/30 backdrop-blur-sm">
+              <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium shrink-0">
                 NEW
               </span>
-              <span className="text-sm text-blue-100">Start learning with structured roadmaps</span>
+              <span className="text-sm text-blue-100 min-w-[200px] sm:min-w-[280px]">
+                {displayText}
+                <span className="inline-block w-0.5 h-4 bg-blue-400 ml-0.5 animate-pulse" style={{ animationDuration: '0.8s' }} />
+              </span>
             </div>
           </motion.div>
 
           {/* Main heading */}
           <motion.div variants={itemVariants}>
-            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
-              Your Journey to
-              <motion.span
-                className="inline-block mt-2 sm:mt-3 px-4 py-1 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 text-white"
-                whileHover={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              >
-                Tech Mastery
-              </motion.span>
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-slate-300 mb-4 sm:mb-6 leading-tight">
+              <span className="block">Your Journey</span>
+              <span className="block mt-1 sm:mt-2 whitespace-nowrap">
+                to{" "}
+                <motion.span
+                  className="inline-block px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-700 to-blue-500"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  Tech Mastery
+                </motion.span>
+              </span>
             </h1>
           </motion.div>
 
           {/* Description */}
           <motion.p
             variants={itemVariants}
-            className="text-base sm:text-lg md:text-xl text-slate-300 mb-8 sm:mb-10 leading-relaxed px-2 sm:px-4 max-w-2xl mx-auto"
+            className="text-base sm:text-lg md:text-xl text-slate-400 mb-8 sm:mb-10 leading-relaxed px-2 sm:px-4 max-w-2xl mx-auto"
           >
             Follow curated learning roadmaps from foundational to mastery levels.
             Track your progress and unlock career opportunities as you grow.
@@ -185,12 +244,12 @@ const Hero = () => {
           {/* CTA Buttons */}
           <motion.div
             variants={buttonVariants}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-10 sm:mb-12 px-2 sm:px-4"
+            className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center mb-10 sm:mb-12"
           >
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
               <Button
                 size="lg"
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-base lg:text-lg font-semibold rounded-full shadow-lg shadow-blue-600/25 transition-all duration-300"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-slate-200 px-8 py-3 text-base lg:text-lg font-semibold rounded-full shadow-lg shadow-blue-600/25 transition-all duration-300"
                 onClick={scrollToRoadmaps}
               >
                 Start Your Journey
@@ -200,7 +259,7 @@ const Hero = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto border-2 border-blue-900 hover:border-blue-600 hover:bg-blue-950/50 px-8 py-3 text-base lg:text-lg font-semibold rounded-full backdrop-blur-sm text-white transition-all duration-300"
+                className="w-full sm:w-auto border-2 border-blue-900 hover:border-blue-600 hover:bg-blue-950/50 px-8 py-3 text-base lg:text-lg font-semibold rounded-full backdrop-blur-sm text-slate-200 transition-all duration-300"
                 onClick={handleLeaderboardClick}
               >
                 <Trophy className="w-5 h-5 mr-2" />
@@ -212,41 +271,41 @@ const Hero = () => {
           {/* Stats */}
           <motion.div
             variants={itemVariants}
-            className="flex flex-wrap justify-center items-center gap-6 sm:gap-10 lg:gap-14 max-w-3xl mx-auto mb-12 sm:mb-16 px-2"
+            className="flex flex-nowrap justify-center lg:justify-start items-center gap-3 sm:gap-5 lg:gap-6 overflow-x-auto"
           >
             {[
-              { label: "50+ Learning Components" },
-              { label: "5+ Career Roadmaps" },
-              { label: "100% Free Resources" },
+              { label: "50+ Components" },
+              { label: "5+ Roadmaps" },
+              { label: "100% Free" },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1.5 whitespace-nowrap shrink-0"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 + index * 0.1, duration: 0.4 }}
                 whileHover={{ scale: 1.05, x: 3 }}
               >
                 <span className="text-blue-500">✓</span>
-                <span className="text-slate-400">{stat.label}</span>
+                <span className="text-slate-400 text-xs sm:text-sm">{stat.label}</span>
               </motion.div>
             ))}
           </motion.div>
-        </div>
+          </motion.div>
 
-        {/* Animated bounce arrow */}
-        {/* <motion.div
-          className="animate-bounce"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.5 }}
-        >
-          <ArrowDown
-            className="mx-auto text-white/60 w-8 h-8 cursor-pointer hover:text-blue-500 transition-colors duration-300"
-            onClick={scrollToRoadmaps}
-          />
-        </motion.div> */}
-      </motion.div>
+          {/* Right Side - 3D Globe */}
+          <motion.div 
+            className="order-1 lg:order-2 flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+          >
+            <div className="w-full max-w-lg lg:max-w-xl xl:max-w-2xl aspect-square">
+              <HeroGlobe />
+            </div>
+          </motion.div>
+        </div>
+      </div>
 
       {/* Leaderboard Modal */}
       {showLeaderboard && isAuthenticated && (
