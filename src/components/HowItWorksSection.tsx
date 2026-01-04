@@ -150,10 +150,10 @@ const HowItWorksSection = () => {
         </motion.div>
 
         {/* Interactive Journey Map */}
-        <div className="mb-12 sm:mb-16">
-          <div className="relative w-full overflow-hidden">
+        {/* <div className="mb-12 sm:mb-16">
+          <div className="relative w-full overflow-hidden"> */}
             {/* Steps */}
-            <motion.div
+            {/* <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
@@ -167,8 +167,8 @@ const HowItWorksSection = () => {
                 }
               }}
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6 sm:gap-8 lg:gap-6 xl:gap-8 relative z-20 px-2 sm:px-4 mb-8"
-            >
-              {steps.map((step, index) => {
+            > */}
+              {/* {steps.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = index === activeStep;
                 const isCompleted = index < activeStep;
@@ -182,9 +182,9 @@ const HowItWorksSection = () => {
                     }}
                     className="flex flex-col items-center cursor-pointer transition-all duration-300 px-1 sm:px-2 py-2 sm:py-4"
                     onClick={() => setActiveStep(index)}
-                  >
+                  > */}
                     {/* Step Icon */}
-                    <motion.div
+                    {/* <motion.div
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
                       className={`
@@ -208,10 +208,10 @@ const HowItWorksSection = () => {
                       <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-background rounded-full flex items-center justify-center border-2 border-border">
                         <span className="text-xs sm:text-sm lg:text-base font-bold text-foreground">{step.id}</span>
                       </div>
-                    </motion.div>
+                    </motion.div> */}
 
                     {/* Step Title */}
-                    <h3 className={`text-sm sm:text-base lg:text-lg font-semibold text-center transition-colors px-1 ${isActive
+                    {/* <h3 className={`text-sm sm:text-base lg:text-lg font-semibold text-center transition-colors px-1 ${isActive
                       ? 'text-primary'
                       : 'text-foreground'
                       }`}>
@@ -220,19 +220,19 @@ const HowItWorksSection = () => {
                   </motion.div>
                 );
               })}
-            </motion.div>
+            </motion.div> */}
 
             {/* Progress Line */}
-            <div className="relative px-4 sm:px-8 mt-6 sm:mt-8 mb-4 sm:mb-6">
+            {/* <div className="relative px-4 sm:px-8 mt-6 sm:mt-8 mb-4 sm:mb-6">
               <div className="hidden md:block h-2 bg-muted rounded-full"></div>
               <motion.div
                 className="hidden md:block absolute top-0 left-4 sm:left-0 h-2 bg-primary rounded-full"
                 animate={{ width: `calc(${((activeStep + 1) / steps.length) * 100}% - 32px)` }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
-              ></motion.div>
+              ></motion.div> */}
 
               {/* Progress indicators */}
-              <div className="hidden md:flex justify-between items-center absolute top-1/2 left-4 right-4 sm:left-8 sm:right-8 transform -translate-y-1/2">
+              {/* <div className="hidden md:flex justify-between items-center absolute top-1/2 left-4 right-4 sm:left-8 sm:right-8 transform -translate-y-1/2">
                 {steps.map((_, index) => (
                   <motion.div
                     key={index}
@@ -250,7 +250,7 @@ const HowItWorksSection = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Active Step Details */}
         <div className="mb-12 sm:mb-16">
