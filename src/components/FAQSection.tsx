@@ -3,17 +3,18 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { faqs } from "@/data/faqs";
+import { motion, AnimatePresence } from "framer-motion";
 
 const FAQSection = () => {
   const [openItems, setOpenItems] = useState<string[]>([]);
   const navigate = useNavigate();
-  
+
   // Show only first 6 FAQs on home page
   const homeFaqs = faqs.slice(0, 6);
 
   const toggleItem = (id: string) => {
-    setOpenItems(prev => 
-      prev.includes(id) 
+    setOpenItems(prev =>
+      prev.includes(id)
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
@@ -35,7 +36,13 @@ const FAQSection = () => {
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="text-center mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-16"
+        >
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-normal">
             Frequently Asked
             <span className="text-primary"> Questions</span>
@@ -43,12 +50,16 @@ const FAQSection = () => {
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Get answers to common questions about ArcadeLearn and start your learning journey today.
           </p>
-        </div>
+        </motion.div>
 
         <div className="space-y-4">
-          {homeFaqs.map((faq) => (
-            <div
+          {homeFaqs.map((faq, index) => (
+            <motion.div
               key={faq.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
               className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
             >
               <button
@@ -64,39 +75,49 @@ const FAQSection = () => {
                   <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0 ml-4" />
                 )}
               </button>
-              
-              {openItems.includes(faq.id) && (
-                <div className="px-6 pb-4">
-                  <div className="relative">
-                    {needsReadMore(faq.answer) ? (
+
+              <AnimatePresence>
+                {openItems.includes(faq.id) && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-6 pb-4">
                       <div className="relative">
-                        <div className="relative overflow-hidden">
-                          <p className="text-muted-foreground leading-relaxed">
-                            {truncateText(faq.answer)}
+                        {needsReadMore(faq.answer) ? (
+                          <div className="relative">
+                            <div className="relative overflow-hidden">
+                              <p className="text-muted-foreground leading-relaxed">
+                                {truncateText(faq.answer)}
+                              </p>
+                              {/* Blur overlay covering only the last 2-3 lines */}
+                              <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background via-background/70 to-transparent pointer-events-none"></div>
+                            </div>
+                            {/* Read More button positioned just below the blur area */}
+                            <div className="mt-2 flex justify-start">
+                              <Button
+                                variant="link"
+                                className="p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                                onClick={() => handleReadMore(faq.id)}
+                              >
+                                Read More →
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            {faq.answer}
                           </p>
-                          {/* Blur overlay covering only the last 2-3 lines */}
-                          <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background via-background/70 to-transparent pointer-events-none"></div>
-                        </div>
-                        {/* Read More button positioned just below the blur area */}
-                        <div className="mt-2 flex justify-start">
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-                            onClick={() => handleReadMore(faq.id)}
-                          >
-                            Read More →
-                          </Button>
-                        </div>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                        {faq.answer}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           ))}
         </div>
 

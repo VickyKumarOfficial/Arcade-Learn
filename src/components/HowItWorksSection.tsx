@@ -3,15 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Navigation from "@/components/Navigation";
-import { 
-  BookOpen, 
-  PlayCircle, 
-  CheckCircle2, 
-  Users, 
-  Bot, 
-  Award, 
-  Briefcase, 
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  BookOpen,
+  PlayCircle,
+  CheckCircle2,
+  Users,
+  Bot,
+  Award,
+  Briefcase,
   TrendingUp,
   ArrowRight,
   Star,
@@ -32,7 +32,7 @@ const HowItWorksSection = () => {
       color: "from-blue-500 to-cyan-500",
       details: [
         "Browse expert-curated roadmaps",
-        "Select based on your career goals", 
+        "Select based on your career goals",
         "View estimated duration and difficulty"
       ]
     },
@@ -132,48 +132,74 @@ const HowItWorksSection = () => {
     <section className="py-16 sm:py-20 bg-background overflow-x-hidden">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Section Header */}
-        <div className="text-center mb-12 sm:mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12 sm:mb-16"
+        >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-6 leading-normal px-2">
             How It
             <span className="text-primary"> Works</span>
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-2">
-            Your complete learning journey from beginner to industry-ready professional. 
+            Your complete learning journey from beginner to industry-ready professional.
             Follow our proven 7-step process to master new skills and advance your career.
           </p>
-        </div>
+        </motion.div>
 
         {/* Interactive Journey Map */}
         <div className="mb-12 sm:mb-16">
           <div className="relative w-full overflow-hidden">
             {/* Steps */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6 sm:gap-8 lg:gap-6 xl:gap-8 relative z-20 px-2 sm:px-4 mb-8">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1
+                  }
+                }
+              }}
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6 sm:gap-8 lg:gap-6 xl:gap-8 relative z-20 px-2 sm:px-4 mb-8"
+            >
               {steps.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = index === activeStep;
                 const isCompleted = index < activeStep;
-                
+
                 return (
-                  <div
+                  <motion.div
                     key={step.id}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 }
+                    }}
                     className="flex flex-col items-center cursor-pointer transition-all duration-300 px-1 sm:px-2 py-2 sm:py-4"
                     onClick={() => setActiveStep(index)}
                   >
                     {/* Step Icon */}
-                    <div className={`
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`
                       relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-4 sm:mb-6 transition-all duration-300 transform hover:scale-110
-                      ${isActive 
-                        ? `bg-primary shadow-lg scale-110` 
-                        : isCompleted 
-                          ? 'bg-primary/80 shadow-md'
-                          : 'bg-card border-2 border-border'
-                      }
+                      ${isActive
+                          ? `bg-primary shadow-lg scale-110`
+                          : isCompleted
+                            ? 'bg-primary/80 shadow-md'
+                            : 'bg-card border-2 border-border'
+                        }
                     `}>
-                      <Icon className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 ${
-                        isActive || isCompleted 
-                          ? 'text-primary-foreground' 
-                          : 'text-muted-foreground'
-                      }`} />
+                      <Icon className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 ${isActive || isCompleted
+                        ? 'text-primary-foreground'
+                        : 'text-muted-foreground'
+                        }`} />
                       {isCompleted && !isActive && (
                         <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 bg-primary rounded-full flex items-center justify-center">
                           <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-primary-foreground" />
@@ -182,39 +208,43 @@ const HowItWorksSection = () => {
                       <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-background rounded-full flex items-center justify-center border-2 border-border">
                         <span className="text-xs sm:text-sm lg:text-base font-bold text-foreground">{step.id}</span>
                       </div>
-                    </div>
+                    </motion.div>
 
                     {/* Step Title */}
-                    <h3 className={`text-sm sm:text-base lg:text-lg font-semibold text-center transition-colors px-1 ${
-                      isActive 
-                        ? 'text-primary' 
-                        : 'text-foreground'
-                    }`}>
+                    <h3 className={`text-sm sm:text-base lg:text-lg font-semibold text-center transition-colors px-1 ${isActive
+                      ? 'text-primary'
+                      : 'text-foreground'
+                      }`}>
                       {step.title}
                     </h3>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
 
-            {/* Progress Line - Now below the steps with added spacing */}
+            {/* Progress Line */}
             <div className="relative px-4 sm:px-8 mt-6 sm:mt-8 mb-4 sm:mb-6">
               <div className="hidden md:block h-2 bg-muted rounded-full"></div>
-              <div 
-                className="hidden md:block absolute top-0 left-4 sm:left-0 h-2 bg-primary rounded-full transition-all duration-1000"
-                style={{ width: `calc(${((activeStep + 1) / steps.length) * 100}% - 32px)` }}
-              ></div>
-              
-              {/* Progress indicators for each step */}
+              <motion.div
+                className="hidden md:block absolute top-0 left-4 sm:left-0 h-2 bg-primary rounded-full"
+                animate={{ width: `calc(${((activeStep + 1) / steps.length) * 100}% - 32px)` }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              ></motion.div>
+
+              {/* Progress indicators */}
               <div className="hidden md:flex justify-between items-center absolute top-1/2 left-4 right-4 sm:left-8 sm:right-8 transform -translate-y-1/2">
                 {steps.map((_, index) => (
-                  <div
+                  <motion.div
                     key={index}
-                    className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-300 ${
-                      index <= activeStep
-                        ? 'bg-primary border-primary'
-                        : 'bg-card border-border'
-                    }`}
+                    animate={{
+                      scale: index <= activeStep ? [1, 1.2, 1] : 1,
+                      backgroundColor: index <= activeStep ? "var(--primary)" : "var(--card)",
+                      borderColor: index <= activeStep ? "var(--primary)" : "var(--border)"
+                    }}
+                    className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-300 ${index <= activeStep
+                      ? 'bg-primary border-primary'
+                      : 'bg-card border-border'
+                      }`}
                   />
                 ))}
               </div>
@@ -224,41 +254,62 @@ const HowItWorksSection = () => {
 
         {/* Active Step Details */}
         <div className="mb-12 sm:mb-16">
-          <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-xl mx-2 sm:mx-0">
-            <CardContent className="p-4 sm:p-6 lg:p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
-                <div>
-                  <div className="flex items-center mb-4 sm:mb-6">
-                    <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary flex items-center justify-center mr-3 sm:mr-4`}>
-                      {React.createElement(steps[activeStep].icon, { className: "w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" })}
-                    </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeStep}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-xl mx-2 sm:mx-0">
+                <CardContent className="p-4 sm:p-6 lg:p-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
                     <div>
-                      <Badge className="mb-2 text-xs sm:text-sm">Step {steps[activeStep].id}</Badge>
-                      <h3 className="text-xl sm:text-2xl font-bold text-foreground">
-                        {steps[activeStep].title}
-                      </h3>
+                      <div className="flex items-center mb-4 sm:mb-6">
+                        <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary flex items-center justify-center mr-3 sm:mr-4`}>
+                          {React.createElement(steps[activeStep].icon, { className: "w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" })}
+                        </div>
+                        <div>
+                          <Badge className="mb-2 text-xs sm:text-sm">Step {steps[activeStep].id}</Badge>
+                          <h3 className="text-xl sm:text-2xl font-bold text-foreground">
+                            {steps[activeStep].title}
+                          </h3>
+                        </div>
+                      </div>
+                      <p className="text-base sm:text-lg text-muted-foreground mb-4 sm:mb-6 leading-relaxed">
+                        {steps[activeStep].description}
+                      </p>
+                      <ul className="space-y-2 sm:space-y-3">
+                        {steps[activeStep].details.map((detail, index) => (
+                          <motion.li
+                            key={index}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="flex items-start sm:items-center"
+                          >
+                            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
+                            <span className="text-sm sm:text-base text-foreground">{detail}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex justify-center mt-6 lg:mt-0">
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.2, type: "spring" }}
+                        className={`w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 rounded-2xl bg-primary flex items-center justify-center shadow-2xl`}
+                      >
+                        {React.createElement(steps[activeStep].icon, { className: "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 text-primary-foreground opacity-80" })}
+                      </motion.div>
                     </div>
                   </div>
-                  <p className="text-base sm:text-lg text-muted-foreground mb-4 sm:mb-6 leading-relaxed">
-                    {steps[activeStep].description}
-                  </p>
-                  <ul className="space-y-2 sm:space-y-3">
-                    {steps[activeStep].details.map((detail, index) => (
-                      <li key={index} className="flex items-start sm:items-center">
-                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
-                        <span className="text-sm sm:text-base text-foreground">{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="flex justify-center mt-6 lg:mt-0">
-                  <div className={`w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 rounded-2xl bg-primary flex items-center justify-center shadow-2xl`}>
-                    {React.createElement(steps[activeStep].icon, { className: "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 text-primary-foreground opacity-80" })}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Navigation */}
@@ -278,11 +329,10 @@ const HowItWorksSection = () => {
                 <button
                   key={index}
                   onClick={() => setActiveStep(index)}
-                  className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all ${
-                    index === activeStep 
-                      ? 'bg-primary scale-125' 
-                      : 'bg-muted hover:bg-border'
-                  }`}
+                  className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all ${index === activeStep
+                    ? 'bg-primary scale-125'
+                    : 'bg-muted hover:bg-border'
+                    }`}
                 />
               ))}
             </div>
@@ -326,8 +376,8 @@ const HowItWorksSection = () => {
             <p className="text-lg sm:text-xl mb-4 sm:mb-6 opacity-90">
               Join thousands of learners who have successfully transformed their careers with our roadmaps.
             </p>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-background text-foreground hover:bg-muted font-semibold px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base"
               onClick={() => navigate("/roadmaps")}
             >
