@@ -4,6 +4,7 @@ import { roadmaps } from "@/data/roadmaps";
 import RoadmapCard from "./RoadmapCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 interface RoadmapsSectionProps {
   onInteraction?: () => void;
@@ -15,10 +16,10 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('View All Courses');
-  
+
   // Define the specific categories we want to show
   const specificCategories = ['View All Courses', 'Full Stack', 'Data Science', 'AI/ML', 'Cloud', 'Blockchain'];
-  
+
   // Enhanced search keywords for each roadmap
   const roadmapKeywords: { [key: string]: string[] } = {
     'frontend-react': ['html', 'css', 'javascript', 'react', 'jsx', 'typescript', 'hooks', 'state', 'props', 'components', 'frontend', 'ui', 'responsive', 'bootstrap', 'tailwind', 'sass'],
@@ -35,35 +36,35 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
     'ux-ui-design': ['ux', 'ui', 'user experience', 'user interface', 'design', 'figma', 'adobe xd', 'sketch', 'prototyping', 'wireframes', 'user research', 'usability', 'typography', 'color theory'],
     'iot-embedded': ['iot', 'internet of things', 'arduino', 'raspberry pi', 'embedded systems', 'sensors', 'electronics', 'microcontroller', 'gpio', 'mqtt', 'wifi', 'bluetooth', 'hardware']
   };
-  
+
   // Define popular roadmaps to show by default (limit to 6 most popular)
   const popularRoadmapIds = [
     'frontend-react',
-    'backend-nodejs', 
+    'backend-nodejs',
     'fullstack-mern',
     'ai-ml-engineering',
     'cybersecurity',
     'blockchain-web3'
   ];
-  
+
   // Filter roadmaps based on search term and selected category
   const filteredRoadmaps = roadmaps.filter(roadmap => {
     const searchLower = searchTerm.toLowerCase();
     const keywords = roadmapKeywords[roadmap.id] || [];
-    
+
     // Special case: show all courses when '*' is used as search term
     if (searchTerm === '*') {
       return true;
     }
-    
-    const matchesSearch = searchTerm === '' || 
+
+    const matchesSearch = searchTerm === '' ||
       roadmap.title.toLowerCase().includes(searchLower) ||
       roadmap.description.toLowerCase().includes(searchLower) ||
       roadmap.category.toLowerCase().includes(searchLower) ||
       keywords.some(keyword => keyword.includes(searchLower) || searchLower.includes(keyword));
-    
+
     const matchesCategory = selectedCategory === 'View All Courses' || roadmap.category === selectedCategory;
-    
+
     // If "View All Courses" is selected and there's a search term, show all matching results
     if (selectedCategory === 'View All Courses') {
       if (searchTerm === '') {
@@ -73,14 +74,20 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
         return matchesSearch; // Show all matching search results
       }
     }
-    
+
     return matchesSearch && matchesCategory;
   });
 
   return (
     <section id="roadmaps" className="py-16 sm:py-20 bg-background overflow-x-hidden">
       <div className="w-full px-2 sm:px-4 max-w-none">
-        <div className="text-center mb-2 sm:mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-2 sm:mb-4"
+        >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 sm:mb-3 mt-2 sm:mt-3 leading-normal md:leading-normal px-2">
             {searchTerm === '*' ? 'All Available' : 'Some Popular'}
             <span className="text-primary"> Courses</span>
@@ -95,10 +102,16 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
               Showing all {filteredRoadmaps.length} available courses
             </p>
           )}
-        </div>
+        </motion.div>
 
         <div className="mb-8 sm:mb-12">
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 sm:mb-8 px-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 sm:mb-8 px-2"
+          >
             {/* Category Buttons */}
             {specificCategories.map((category) => (
               <button
@@ -108,25 +121,23 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
                     onInteraction();
                     return;
                   }
-                  setSelectedCategory(category); 
+                  setSelectedCategory(category);
                   setSearchTerm('');
                 }}
-                className={`px-6 py-3 rounded-full shadow-md border transition-all duration-200 cursor-pointer ${
-                  selectedCategory === category
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card border-border hover:border-primary'
-                }`}
+                className={`px-6 py-3 rounded-full shadow-md border transition-all duration-200 cursor-pointer ${selectedCategory === category
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card border-border hover:border-primary'
+                  }`}
               >
-                <span className={`font-medium ${
-                  selectedCategory === category
-                    ? 'text-primary-foreground'
-                    : 'text-foreground text-sm sm:text-base'
-                }`}>
+                <span className={`font-medium ${selectedCategory === category
+                  ? 'text-primary-foreground'
+                  : 'text-foreground text-sm sm:text-base'
+                  }`}>
                   {category}
                 </span>
               </button>
             ))}
-            
+
             {/* Search Bar - Only show on full Roadmaps page */}
             {isFullPage && (
               <div className="relative">
@@ -158,15 +169,37 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
                 </svg>
               </div>
             )}
-          </div>
+          </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 px-2 sm:px-4">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1
+              }
+            }
+          }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 px-2 sm:px-4"
+        >
           {filteredRoadmaps.map((roadmap) => (
-            <RoadmapCard key={roadmap.id} roadmap={roadmap} />
+            <motion.div
+              key={roadmap.id}
+              variants={{
+                hidden: { opacity: 0, y: 50 },
+                visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+              }}
+            >
+              <RoadmapCard roadmap={roadmap} />
+            </motion.div>
           ))}
-        </div>
-        
+        </motion.div>
+
         {/* Show "View All Roadmaps" button when displaying limited popular courses */}
         {searchTerm === '' && selectedCategory === 'View All Courses' && filteredRoadmaps.length === popularRoadmapIds.length && (
           <div className="text-center mt-8 sm:mt-12">
@@ -189,7 +222,7 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
             </button>
           </div>
         )}
-        
+
         {/* Show "Show Popular Courses" button when displaying all courses */}
         {searchTerm === '*' && selectedCategory === 'View All Courses' && (
           <div className="text-center mt-8 sm:mt-12">

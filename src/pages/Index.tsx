@@ -1,4 +1,5 @@
 import Hero from "@/components/Hero";
+import ShowcaseCard from "@/components/ShowcaseCard";
 import Navigation from "@/components/Navigation";
 import RoadmapsSection from "@/components/RoadmapsSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
@@ -13,6 +14,7 @@ const Index = () => {
     <div className="min-h-screen overflow-x-hidden">
       <Navigation />
       <Hero />
+      <ShowcaseCard />
       <RoadmapsSection />
       <HowItWorksSection />
       <TestimonialsSection />
