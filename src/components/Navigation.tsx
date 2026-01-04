@@ -22,7 +22,7 @@ const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { state } = useGameTest();
   const { isAuthenticated, user, logout } = useAuth();
-  
+
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Roadmaps', path: '/roadmaps' },
@@ -30,14 +30,14 @@ const Navigation = () => {
   ];
 
   const aiMenuItems = [
-    { 
-      label: 'Doubt Solving with AI ✨', 
+    {
+      label: 'Doubt Solving with AI ✨',
       path: '/ai/chat',
       icon: Brain,
       description: 'Get instant help with your coding questions'
     },
-    { 
-      label: 'Roadmap Generation ✨', 
+    {
+      label: 'Roadmap Generation ✨',
       path: '/ai/roadmap-generation',
       icon: Bot,
       description: 'Create personalized learning roadmaps'
@@ -49,66 +49,64 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-lg">
+    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/20">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          <div 
-            className="flex items-center space-x-2 cursor-pointer" 
+          <div
+            className="flex items-center space-x-2 cursor-pointer"
             onClick={() => navigate('/')}
           >
-              <img src="/logo-bgfree.png" alt="Arcade Learn Logo" className="h-7 w-12" />
+            <img src="/logo-bgfree.png" alt="Arcade Learn Logo" className="h-7 w-12" />
             <span className="text-lg sm:text-xl font-bold">
-              <span className="text-primary">
-              Arcade
+              <span className="text-blue-500">
+                Arcade
               </span>
-              <span className="text-foreground ml-1">
-              Learn
+              <span className="text-white ml-1">
+                Learn
               </span>
             </span>
           </div>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === item.path
-                    ? 'text-primary border-b-2 border-primary pb-1'
-                    : 'text-foreground'
-                }`}
+                className={`text-sm font-medium transition-colors hover:text-blue-500 ${location.pathname === item.path
+                  ? 'text-blue-500'
+                  : 'text-white'
+                  }`}
               >
                 {item.label}
               </button>
             ))}
-            
+
             {/* AI Dropdown Menu */}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary ${
-                    location.pathname.startsWith('/ai')
-                      ? 'text-primary border-b-2 border-primary pb-1'
-                      : 'text-foreground'
-                  }`}
+                  className={`flex items-center space-x-1 text-sm font-medium transition-colors hover:text-blue-500 ${location.pathname.startsWith('/ai')
+                    ? 'text-blue-500'
+                    : 'text-white'
+                    }`}
                 >
                   <Sparkles className="h-4 w-4" />
                   <span>AI</span>
                   <ChevronDown className="h-3 w-3" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="w-64 bg-card border border-border shadow-xl" 
-                align="center" 
-                side="bottom" 
+              <DropdownMenuContent
+                className="w-64 bg-card border border-border shadow-xl"
+                align="center"
+                side="bottom"
                 sideOffset={8}
                 avoidCollisions={true}
               >
                 {aiMenuItems.map((item) => (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     key={item.path}
-                    onClick={() => navigate(item.path)} 
+                    onClick={() => navigate(item.path)}
                     className="cursor-pointer p-4 hover:bg-muted focus:bg-muted"
                   >
                     <div className="flex items-start space-x-3">
@@ -129,7 +127,7 @@ const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          
+
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* User Stats - Desktop (only show if authenticated) */}
             {isAuthenticated && (
@@ -145,7 +143,7 @@ const Navigation = () => {
               </div>
             )}
             {/* Dark Mode Toggle Switch */}
-            <div 
+            <div
               onClick={toggleDarkMode}
               className={`relative inline-flex items-center w-12 sm:w-14 h-6 sm:h-7 rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 
                 bg-muted border border-border shadow-md hover:shadow-lg
@@ -154,9 +152,8 @@ const Navigation = () => {
             >
               {/* Slider Circle */}
               <div
-                className={`absolute w-4 sm:w-5 h-4 sm:h-5 bg-primary rounded-full shadow-lg transform transition-all duration-300 ease-in-out flex items-center justify-center hover:scale-110 ${
-                  isDarkMode ? 'translate-x-6 sm:translate-x-8' : 'translate-x-1'
-                }`}
+                className={`absolute w-4 sm:w-5 h-4 sm:h-5 bg-primary rounded-full shadow-lg transform transition-all duration-300 ease-in-out flex items-center justify-center hover:scale-110 ${isDarkMode ? 'translate-x-6 sm:translate-x-8' : 'translate-x-1'
+                  }`}
               >
                 {/* Icon inside the slider */}
                 {isDarkMode ? (
@@ -165,18 +162,16 @@ const Navigation = () => {
                   <Sun className="h-2 sm:h-3 w-2 sm:w-3 text-primary-foreground" />
                 )}
               </div>
-              
+
               {/* Background Icons */}
               <div className="absolute inset-0 flex items-center justify-between px-1 sm:px-2">
-                <Sun className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${
-                  isDarkMode ? 'opacity-40 text-foreground scale-90' : 'opacity-0 scale-75'
-                }`} />
-                <Moon className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${
-                  isDarkMode ? 'opacity-0 scale-75' : 'opacity-40 text-foreground scale-90'
-                }`} />
+                <Sun className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${isDarkMode ? 'opacity-40 text-foreground scale-90' : 'opacity-0 scale-75'
+                  }`} />
+                <Moon className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${isDarkMode ? 'opacity-0 scale-75' : 'opacity-40 text-foreground scale-90'
+                  }`} />
               </div>
             </div>
-            
+
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
@@ -191,7 +186,7 @@ const Navigation = () => {
                 <Menu className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               )}
             </Button>
-            
+
             {/* Desktop Buttons */}
             {isAuthenticated ? (
               <div className="hidden sm:flex items-center space-x-3">
@@ -209,10 +204,10 @@ const Navigation = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    className="w-56" 
-                    align="end" 
-                    side="bottom" 
+                  <DropdownMenuContent
+                    className="w-56"
+                    align="end"
+                    side="bottom"
                     sideOffset={5}
                     avoidCollisions={true}
                   >
@@ -233,17 +228,17 @@ const Navigation = () => {
               </div>
             ) : (
               <div className="hidden sm:flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
-                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  className="border-blue-900 text-white hover:bg-blue-950/50 hover:border-blue-600 rounded-full"
                   onClick={() => navigate('/signin')}
                 >
                   Log In
                 </Button>
-                <Button 
+                <Button
                   size="sm"
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full"
                   onClick={() => navigate('/signup')}
                 >
                   Sign up
@@ -252,10 +247,10 @@ const Navigation = () => {
             )}
           </div>
         </div>
-        
+
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+          <div className="md:hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center text-lg gap-6">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => (
                 <button
@@ -264,16 +259,15 @@ const Navigation = () => {
                     navigate(item.path);
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    location.pathname === item.path
-                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
+                  className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${location.pathname === item.path
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
                 >
                   {item.label}
                 </button>
               ))}
-              
+
               {/* AI Menu Items for Mobile */}
               <div className="space-y-1 pt-2">
                 <div className="px-3 py-2">
@@ -289,11 +283,10 @@ const Navigation = () => {
                       navigate(item.path);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`block w-full text-left px-6 py-3 rounded-md transition-colors ${
-                      location.pathname === item.path
-                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                        : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
+                    className={`block w-full text-left px-6 py-3 rounded-md transition-colors ${location.pathname === item.path
+                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
                   >
                     <div className="flex items-start space-x-3">
                       <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
@@ -307,7 +300,7 @@ const Navigation = () => {
                   </button>
                 ))}
               </div>
-              
+
               {/* Add Dashboard and Profile for authenticated users in mobile */}
               {isAuthenticated && (
                 <>
@@ -316,11 +309,10 @@ const Navigation = () => {
                       navigate('/dashboard');
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                      location.pathname === '/dashboard'
-                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                        : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
+                    className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${location.pathname === '/dashboard'
+                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
                   >
                     Dashboard
                   </button>
@@ -329,17 +321,16 @@ const Navigation = () => {
                       navigate('/profile');
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                      location.pathname === '/profile'
-                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                        : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
+                    className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${location.pathname === '/profile'
+                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
                   >
                     Profile
                   </button>
                 </>
               )}
-              
+
               {/* Mobile Buttons */}
               <div className="pt-4 space-y-2">
                 {isAuthenticated ? (
@@ -358,8 +349,8 @@ const Navigation = () => {
                     <div className="text-center text-sm text-gray-600 dark:text-gray-300 py-2">
                       Welcome, {user?.firstName}!
                     </div>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => {
                         logout();
@@ -372,8 +363,8 @@ const Navigation = () => {
                   </>
                 ) : (
                   <>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => {
                         navigate('/signin');
@@ -382,7 +373,7 @@ const Navigation = () => {
                     >
                       Log In
                     </Button>
-                    <Button 
+                    <Button
                       className="w-full bg-primary hover:bg-primary/90"
                       onClick={() => {
                         navigate('/signup');

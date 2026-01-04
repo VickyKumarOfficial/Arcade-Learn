@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowUp, Github, Twitter, Linkedin, Mail, Heart, Code, BookOpen, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -37,14 +38,20 @@ const Footer = () => {
     <footer className="bg-card border-t border-border text-foreground relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5QzkyQUMiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
-      
+
       <div className="container mx-auto px-4 py-12 sm:py-16 lg:py-5 relative z-10">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-6">
           {/* Brand Section */}
-          <div className="lg:col-span-1">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="lg:col-span-1"
+          >
             <div className="flex items-center space-x-2 mb-4">
-                <img src="/logo-bgfree.png" alt="Arcade Learn Logo" className="h-7 w-12" />
+              <img src="/logo-bgfree.png" alt="Arcade Learn Logo" className="h-7 w-12" />
               <span className="text-xl font-bold">
                 <span className="text-primary">
                   Arcade
@@ -53,13 +60,19 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-muted-foreground mb-6 leading-relaxed">
-              Empowering developers through curated learning roadmaps and hands-on projects. 
+              Empowering developers through curated learning roadmaps and hands-on projects.
               Transform your career with structured, gamified learning experiences.
             </p>
-          </div>
+          </motion.div>
 
           {/* Product Links */}
-          <div className="lg:col-span-1">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-1"
+          >
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <BookOpen className="h-5 w-5 mr-2 text-primary" />
               Product
@@ -76,10 +89,16 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Resources Links */}
-          <div className="lg:col-span-1">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="lg:col-span-1"
+          >
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Code className="h-5 w-5 mr-2 text-primary" />
               Resources
@@ -96,10 +115,16 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Company Links */}
-          <div className="lg:col-span-1">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="lg:col-span-1"
+          >
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Users className="h-5 w-5 mr-2 text-primary" />
               Company
@@ -116,47 +141,53 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
         </div>
 
         {/* Social Media & Back to Top Section */}
-        <div className="flex justify-between items-center mb-6 border-border">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="flex justify-between items-center mb-6 border-border"
+        >
           {/* Social Media Buttons - Left Side */}
           <div className="flex space-x-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
               onClick={() => window.open('#', '_blank')}
             >
               <Github className="h-4 w-4 text-foreground" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
               onClick={() => window.open('#', '_blank')}
             >
               <Twitter className="h-4 w-4 text-foreground" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
               onClick={() => window.open('#', '_blank')}
             >
               <Linkedin className="h-4 w-4 text-foreground" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="w-10 h-10 p-0 bg-primary/10 hover:bg-primary/20 border border-border hover:border-primary transition-all duration-200"
               onClick={() => window.open('mailto:contact@arcadelearn.com', '_blank')}
             >
               <Mail className="h-4 w-4 text-foreground" />
             </Button>
           </div>
-          
+
           {/* Back to Top Button - Right Side */}
           <Button
             variant="ghost"
@@ -167,40 +198,46 @@ const Footer = () => {
             <ArrowUp className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" />
             Back to Top
           </Button>
-        </div>
+        </motion.div>
       </div>
 
-        {/* Newsletter Section */}
-        <div className="bg-muted/30 backdrop-blur-sm border border-border rounded-2xl p-6 lg:p-8 mb-8">
-          <div className="text-center lg:text-left lg:flex lg:items-center lg:justify-between">
-            <div className="mb-4 lg:mb-0">
-              <h3 className="text-xl font-semibold mb-2">Stay Updated</h3>
-              <p className="text-muted-foreground">
-                Get the latest updates on new roadmaps, features, and learning resources.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 lg:ml-8">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="px-4 py-2 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-64"
-              />
-              <Button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium transition-all duration-200">
-                Subscribe
-              </Button>
-            </div>
-          </div>
-        </div>
-        {/* Bottom Section */}
-        <div className="border-t border-border pt-1">
-          <div className="flex justify-center text-muted-foreground text-sm text-center">
-            <p className="flex items-center justify-center py-2">
-              © {currentYear} ArcadeLearn. Made with 
-              <Heart className="h-4 w-4 mx-1 text-red-500 fill-current" />
-              for Everyone worldwide.
+      {/* Newsletter Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="bg-muted/30 backdrop-blur-sm border border-border rounded-2xl p-6 lg:p-8 mb-8"
+      >
+        <div className="text-center lg:text-left lg:flex lg:items-center lg:justify-between">
+          <div className="mb-4 lg:mb-0">
+            <h3 className="text-xl font-semibold mb-2">Stay Updated</h3>
+            <p className="text-muted-foreground">
+              Get the latest updates on new roadmaps, features, and learning resources.
             </p>
           </div>
+          <div className="flex flex-col sm:flex-row gap-3 lg:ml-8">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className="px-4 py-2 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-64"
+            />
+            <Button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium transition-all duration-200">
+              Subscribe
+            </Button>
+          </div>
         </div>
+      </motion.div>
+      {/* Bottom Section */}
+      <div className="border-t border-border pt-1">
+        <div className="flex justify-center text-muted-foreground text-sm text-center">
+          <p className="flex items-center justify-center py-2">
+            © {currentYear} ArcadeLearn. Made with
+            <Heart className="h-4 w-4 mx-1 text-red-500 fill-current" />
+            for Everyone worldwide.
+          </p>
+        </div>
+      </div>
 
 
     </footer>

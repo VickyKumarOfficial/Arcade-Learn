@@ -16,8 +16,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 14% 15%;
 
-    --primary: 180 80% 35%;           /* Teal color for interactive elements */
-    --primary-foreground: 0 0% 100%;  /* White text on teal */
+    --primary: 221 83% 53%;           /* Blue for interactive elements */
+    --primary-foreground: 0 0% 100%;  /* White text on blue */
 
     --secondary: 0 0% 95%;            /* Light gray for secondary elements */
     --secondary-foreground: 220 14% 15%;
@@ -25,7 +25,7 @@
     --muted: 0 0% 92%;                /* Light muted background */
     --muted-foreground: 220 14% 45%;  /* Muted text */
 
-    --accent: 180 70% 30%;            /* Subtle accent color */
+    --accent: 221 70% 50%;            /* Blue accent color */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
@@ -33,58 +33,58 @@
 
     --border: 220 14% 85%;            /* Light border */
     --input: 220 14% 85%;             /* Light input border */
-    --ring: 180 80% 35%;
+    --ring: 221 83% 53%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 96%;   /* Light sidebar background */
     --sidebar-foreground: 220 14% 15%; /* Dark text for sidebar */
-    --sidebar-primary: 180 80% 35%;    /* Teal for sidebar primary elements */
+    --sidebar-primary: 221 83% 53%;    /* Blue for sidebar primary elements */
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 92%;        /* Light accent for sidebar */
     --sidebar-accent-foreground: 220 14% 15%;
     --sidebar-border: 220 14% 85%;
-    --sidebar-ring: 180 80% 35%;
+    --sidebar-ring: 221 83% 53%;
   }
 
-  /* Dark mode theme - keeping the existing dark theme */
+  /* Dark mode theme - Pure black premium aesthetic like pixels template */
   .dark {
-    --background: 220 10% 10%;        /* Soft black background */
-    --foreground: 220 14% 90%;        /* Smoky white text */
+    --background: 0 0% 4%;            /* Pure black background */
+    --foreground: 0 0% 95%;           /* Bright white text */
 
-    --card: 220 10% 12%;              /* Slightly lighter black for cards */
-    --card-foreground: 220 14% 90%;   /* Smoky white text for cards */
+    --card: 0 0% 7%;                  /* Slightly lighter black for cards */
+    --card-foreground: 0 0% 95%;      /* Bright white text for cards */
 
-    --popover: 220 10% 10%;
-    --popover-foreground: 220 14% 90%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 180 80% 35%;           /* Teal color for interactive elements */
-    --primary-foreground: 220 14% 95%;
+    --primary: 221 83% 53%;           /* Blue for interactive elements */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 10% 15%;         /* Slightly lighter black for secondary elements */
-    --secondary-foreground: 220 14% 90%;
+    --secondary: 0 0% 10%;            /* Dark gray for secondary elements */
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 220 10% 20%;
-    --muted-foreground: 220 14% 70%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 180 70% 30%;            /* Subtle accent color */
-    --accent-foreground: 220 14% 95%;
+    --accent: 221 70% 50%;            /* Blue accent color */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
-    --destructive-foreground: 220 14% 95%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 220 14% 20%;
-    --input: 220 14% 20%;
-    --ring: 180 80% 35%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 221 83% 53%;
 
-    --sidebar-background: 220 10% 8%;  /* Darker black for sidebar */
-    --sidebar-foreground: 220 14% 90%; /* Smoky white for sidebar text */
-    --sidebar-primary: 180 80% 35%;    /* Teal for sidebar primary elements */
-    --sidebar-primary-foreground: 220 14% 95%;
-    --sidebar-accent: 220 10% 15%;     /* Slightly lighter black for sidebar accent */
-    --sidebar-accent-foreground: 220 14% 90%;
-    --sidebar-border: 220 10% 20%;
-    --sidebar-ring: 180 80% 35%;
+    --sidebar-background: 0 0% 3%;     /* Even darker black for sidebar */
+    --sidebar-foreground: 0 0% 95%;    /* Bright white for sidebar text */
+    --sidebar-primary: 221 83% 53%;    /* Blue for sidebar primary elements */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 10%;        /* Dark gray for sidebar accent */
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 221 83% 53%;
   }
 }
 
@@ -104,6 +104,37 @@
 @layer utilities {
   .animate-slow-pulse {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Moving gradient animation for highlighted text */
+  .move-gradient {
+    background-image: linear-gradient(to right, hsl(330, 80%, 55%), hsl(340, 90%, 70%), hsl(330, 80%, 55%));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: movegradient 3s ease-in-out infinite;
+  }
+  
+  /* Gradient blur orb effect */
+  .glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+@keyframes movegradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
