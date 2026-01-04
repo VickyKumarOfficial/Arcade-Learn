@@ -238,3 +238,13 @@
 .animate-float-fast {
   animation: float-fast 3s ease-in-out infinite;
 }
+
+/* Globe world map scrolling animation */
+@keyframes scrollMap {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
