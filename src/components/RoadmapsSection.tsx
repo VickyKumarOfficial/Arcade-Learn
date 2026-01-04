@@ -79,7 +79,7 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
   });
 
   return (
-    <section id="roadmaps" className="py-16 sm:py-20 bg-background overflow-x-hidden">
+    <section id="roadmaps" className="pt-8 sm:pt-12 pb-16 sm:pb-20 bg-black overflow-x-hidden relative -mt-20">
       <div className="w-full px-2 sm:px-4 max-w-none">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
