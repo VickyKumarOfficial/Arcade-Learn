@@ -172,7 +172,6 @@ const Roadmaps = () => {
             </div>
           )}
 
-          <BackToTopButton />
         </div>
       </div>
     </>
