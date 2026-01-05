@@ -49,6 +49,7 @@
 - ✅ **Career Matching** - Skills → Job recommendations
 - ✅ **Active Community** - Peer learning & collaboration
 - ✅ **Expert Mentors** - Live sessions & doubt clearing
+- ✅ **Levels** - Novice | Learner | Intermediate | Advanced | Expert | Professional | Master/Legendary
 
 </td>
 </tr>

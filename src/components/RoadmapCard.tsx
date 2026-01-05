@@ -52,8 +52,8 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
 
   return (
     <>
-      <div className="group cursor-pointer transition-all duration-300 hover:scale-105" onClick={handleStartRoadmap}>
-        <div className="bg-card border border-border rounded-xl p-6 h-full flex flex-col hover:shadow-lg hover:border-primary/50 transition-all duration-300">
+      <div className="group cursor-pointer transition-all duration-300 hover:scale-105 h-full" onClick={handleStartRoadmap}>
+        <div className="bg-card border border-border rounded-xl p-6 min-h-full flex flex-col hover:shadow-lg hover:border-primary/50 transition-all duration-300">
           <div className="flex items-start justify-between mb-4">
             <div className={`w-16 h-16 rounded-2xl bg-primary flex items-center justify-center text-2xl shadow-lg flex-shrink-0`}>
               {roadmap.icon}
@@ -63,8 +63,8 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
             </Badge>
           </div>
           
-          <h3 className="text-xl font-bold text-foreground leading-tight mb-3">{roadmap.title}</h3>
-          <p className="text-base text-muted-foreground leading-relaxed mb-6 flex-1">
+          <h3 className="text-xl font-bold text-foreground leading-tight mb-3 line-clamp-2">{roadmap.title}</h3>
+          <p className="text-base text-muted-foreground leading-relaxed mb-6 flex-1 line-clamp-3">
             {roadmap.description}
           </p>
           

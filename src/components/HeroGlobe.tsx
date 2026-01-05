@@ -222,8 +222,8 @@ const Globe: React.FC<GlobeProps> = ({
         className
       )}
       style={{
-        width: "auto",
-        height: "auto",
+        width: "100%",
+        height: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -231,9 +231,8 @@ const Globe: React.FC<GlobeProps> = ({
     >
       <canvas
         ref={canvasRef}
+        className="w-[20rem] sm:w-[24rem] md:w-[28rem] lg:w-[32rem] xl:w-[36rem] 2xl:w-[40rem] h-[20rem] sm:h-[24rem] md:h-[28rem] lg:h-[32rem] xl:h-[36rem] 2xl:h-[40rem]"
         style={{
-          width: "36rem",
-          height: "36rem",
           maxWidth: "100%",
           maxHeight: "100%",
           aspectRatio: "1",
@@ -248,14 +247,14 @@ const Globe: React.FC<GlobeProps> = ({
 // Wrapper component with glow effects and floating badges
 export default function HeroGlobe() {
   return (
-    <div className="relative w-full h-full min-h-[400px] lg:min-h-[500px] flex items-center justify-center">
+    <div className="relative w-full h-full min-h-[320px] sm:min-h-[380px] md:min-h-[420px] lg:min-h-[480px] xl:min-h-[540px] 2xl:min-h-[600px] flex items-center justify-center">
       {/* Outer glow effects */}
-      <div className="absolute w-80 h-80 lg:w-100 lg:h-100 bg-blue-600/20 rounded-full blur-[80px]" />
-      <div className="absolute w-64 h-64 lg:w-80 lg:h-80 bg-blue-500/15 rounded-full blur-[60px]" />
+      <div className="absolute w-64 h-64 sm:w-72 sm:h-72 lg:w-80 lg:h-80 xl:w-96 xl:h-96 bg-blue-600/20 rounded-full blur-[80px]" />
+      <div className="absolute w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 xl:w-80 xl:h-80 bg-blue-500/15 rounded-full blur-[60px]" />
       
       {/* Outermost orbit ring */}
       <div  
-        className="absolute w-[33rem] h-[33rem] rounded-full border border-blue-400/20"
+        className="absolute w-[20rem] sm:w-[24rem] md:w-[28rem] lg:w-[32rem] xl:w-[36rem] 2xl:w-[40rem] h-[20rem] sm:h-[24rem] md:h-[28rem] lg:h-[32rem] xl:h-[36rem] 2xl:h-[40rem] rounded-full border border-blue-400/20"
         style={{ animation: 'spin 30s linear infinite reverse' }}
       >
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-blue-400 rounded-full shadow-lg shadow-blue-400/50" />
@@ -263,7 +262,7 @@ export default function HeroGlobe() {
       
       {/* Second orbit ring */}
       <div 
-        className="absolute w-[31rem] h-[31rem] rounded-full border border-blue-500/25"
+        className="absolute w-[18rem] sm:w-[22rem] md:w-[26rem] lg:w-[30rem] xl:w-[34rem] 2xl:w-[38rem] h-[18rem] sm:h-[22rem] md:h-[26rem] lg:h-[30rem] xl:h-[34rem] 2xl:h-[38rem] rounded-full border border-blue-500/25"
         style={{ animation: 'spin 20s linear infinite' }}
       >
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 bg-blue-300 rounded-full shadow-lg shadow-blue-300/50" />
@@ -282,34 +281,34 @@ export default function HeroGlobe() {
       
       {/* Floating data badges */}
       <div 
-        className="absolute top-[5%] right-[5%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-3 py-2 shadow-lg animate-float-slow"
+        className="absolute top-[5%] right-[5%] sm:top-[8%] sm:right-[8%] lg:top-[5%] lg:right-[5%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
       >
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-xs text-slate-300">Active Learners</span>
-          <span className="text-sm font-semibold text-white">2.4k+</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
+          <span className="text-[10px] sm:text-xs text-slate-300">Active Learners</span>
+          <span className="text-xs sm:text-sm font-semibold text-white">2.4k+</span>
         </div>
       </div>
       
       <div 
-        className="absolute bottom-[20%] left-[-7%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-3 py-2 shadow-lg animate-float-slow"
+        className="absolute bottom-[25%] left-[-3%] sm:bottom-[22%] sm:left-[-5%] lg:bottom-[20%] lg:left-[-7%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
         style={{ animationDelay: '1s' }}
       >
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-          <span className="text-xs text-slate-300">Roadmaps</span>
-          <span className="text-sm font-semibold text-white">5+</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full animate-pulse" />
+          <span className="text-[10px] sm:text-xs text-slate-300">Roadmaps</span>
+          <span className="text-xs sm:text-sm font-semibold text-white">5+</span>
         </div>
       </div>
       
       <div 
-        className="absolute bottom-[5%] right-[0%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-3 py-2 shadow-lg animate-float-slow"
+        className="absolute bottom-[8%] right-[2%] sm:bottom-[6%] sm:right-[0%] lg:bottom-[5%] lg:right-[0%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
         style={{ animationDelay: '2s' }}
       >
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
-          <span className="text-xs text-slate-300">Job Opportunities</span>
-          <span className="text-sm font-semibold text-white">150+</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-pulse" />
+          <span className="text-[10px] sm:text-xs text-slate-300">Job Opportunities</span>
+          <span className="text-xs sm:text-sm font-semibold text-white">150+</span>
         </div>
       </div>
     </div>

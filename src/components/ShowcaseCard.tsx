@@ -47,7 +47,7 @@ const ShowcaseCard = ({ imageSrc, fallbackContent = true }: ShowcaseCardProps) =
     };
 
     return (
-        <div className="w-full flex justify-center perspective-[1000px] pt-12 sm:pt-24 pb-0 bg-black overflow-hidden relative">
+        <div className="w-full flex justify-center perspective-[1000px] pt-12 sm:pt-24 xl:pt-32 pb-0 bg-black overflow-hidden relative px-4 sm:px-6 lg:px-8">
             {/* Background Glow Effect - subtle blue underneath */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/5 h-3/5 bg-blue-500/10 blur-[100px] rounded-full z-0 pointer-events-none" />
 
@@ -59,7 +59,7 @@ const ShowcaseCard = ({ imageSrc, fallbackContent = true }: ShowcaseCardProps) =
                     transformStyle: "preserve-3d",
                     transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
                 }}
-                className="relative z-10 w-full max-w-5xl aspect-[16/9] rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl cursor-pointer group transition-transform duration-100 ease-out"
+                className="relative z-10 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl aspect-[16/9] rounded-xl xl:rounded-2xl bg-black/40 backdrop-blur-md shadow-2xl cursor-pointer group transition-transform duration-100 ease-out"
             >
                 {/* Spotlight effect overlay - follows cursor */}
                 <div
@@ -119,11 +119,11 @@ const ShowcaseCard = ({ imageSrc, fallbackContent = true }: ShowcaseCardProps) =
                     <div className="absolute inset-0 rounded-xl border border-blue-500/20 pointer-events-none" />
                 )}
 
-                {/* Bottom gradient fade on the card - linear fade starting from lower half */}
+                {/* Bottom gradient fade - darker linear fade from lower half */}
                 <div 
-                    className="absolute bottom-0 left-0 right-0 h-[50%] z-30 pointer-events-none rounded-b-xl"
+                    className="absolute bottom-0 left-0 right-0 h-[55%] z-30 pointer-events-none rounded-b-xl"
                     style={{
-                        background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.85) 70%, rgba(0,0,0,1) 100%)'
+                        background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 20%, rgba(0,0,0,0.75) 40%, rgba(0,0,0,0.92) 60%, rgba(0,0,0,0.98) 80%, rgba(0,0,0,1) 100%)'
                     }}
                 />
             </div>

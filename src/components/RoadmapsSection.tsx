@@ -57,6 +57,12 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
       return true;
     }
 
+    // If no search term and viewing all courses, show only popular ones
+    if (searchTerm === '' && selectedCategory === 'View All Courses') {
+      return popularRoadmapIds.includes(roadmap.id);
+    }
+
+    // Standard filtering logic
     const matchesSearch = searchTerm === '' ||
       roadmap.title.toLowerCase().includes(searchLower) ||
       roadmap.description.toLowerCase().includes(searchLower) ||
@@ -65,44 +71,37 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
 
     const matchesCategory = selectedCategory === 'View All Courses' || roadmap.category === selectedCategory;
 
-    // If "View All Courses" is selected and there's a search term, show all matching results
-    if (selectedCategory === 'View All Courses') {
-      if (searchTerm === '') {
-        const isPopular = popularRoadmapIds.includes(roadmap.id);
-        return isPopular; // Show only popular courses when no search
-      } else {
-        return matchesSearch; // Show all matching search results
-      }
-    }
-
     return matchesSearch && matchesCategory;
   });
 
   return (
-    <section id="roadmaps" className="pt-8 sm:pt-12 pb-16 sm:pb-20 bg-black overflow-x-hidden relative -mt-20">
+    <section id="roadmaps" className="pt-18 sm:pt-22 pb-16 sm:pb-20 overflow-x-hidden relative" style={{ background: 'linear-gradient(to bottom, #000000 0%, hsl(0, 0%, 4%) 100%)' }}>
       <div className="w-full px-2 sm:px-4 max-w-none">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-2 sm:mb-4"
-        >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 sm:mb-3 mt-2 sm:mt-3 leading-normal md:leading-normal px-2">
-            {searchTerm === '*' ? 'All Available' : 'Some Popular'}
-            <span className="text-primary"> Courses</span>
-          </h2>
-          {searchTerm === '' && selectedCategory === 'View All Courses' && (
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Showing {filteredRoadmaps.length} most popular courses
-            </p>
-          )}
-          {searchTerm === '*' && (
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Showing all {filteredRoadmaps.length} available courses
-            </p>
-          )}
-        </motion.div>
+        {/* Only show heading when not on full Roadmaps page (i.e., on home page) */}
+        {!isFullPage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-2 sm:mb-4"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 sm:mb-3 mt-2 sm:mt-3 leading-normal md:leading-normal px-2">
+              {searchTerm === '*' ? 'All Available' : 'Some Popular'}
+              <span className="text-primary"> Courses</span>
+            </h2>
+            {searchTerm === '' && selectedCategory === 'View All Courses' && (
+              <p className="text-muted-foreground text-sm sm:text-base">
+                Showing {filteredRoadmaps.length} most popular courses
+              </p>
+            )}
+            {searchTerm === '*' && (
+              <p className="text-muted-foreground text-sm sm:text-base">
+                Showing all {filteredRoadmaps.length} available courses
+              </p>
+            )}
+          </motion.div>
+        )}
 
         <div className="mb-8 sm:mb-12">
           <motion.div
@@ -173,19 +172,10 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
         </div>
 
         <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.1
-              }
-            }
-          }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 px-2 sm:px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 px-2 sm:px-4 auto-rows-fr"
         >
           {filteredRoadmaps.map((roadmap) => (
             <motion.div
@@ -194,6 +184,7 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
                 hidden: { opacity: 0, y: 50 },
                 visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
               }}
+              className="h-full"
             >
               <RoadmapCard roadmap={roadmap} />
             </motion.div>
