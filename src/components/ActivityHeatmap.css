@@ -142,13 +142,21 @@
   }
 }
 
-/* Dark mode specific overrides */
-.dark #activity-heatmap .heat-js-day {
+/* Dark mode overrides - applied globally since we're always in dark mode */
+#activity-heatmap .heat-js-day {
   border-color: hsl(var(--border)) !important;
+  background-color: hsl(var(--muted)) !important;
 }
 
-.dark #activity-heatmap .heat-js-day:hover {
+#activity-heatmap .heat-js-day:hover {
   border-color: hsl(var(--primary)) !important;
+}
+
+/* Make sure Heat.js container uses our theme colors */
+#activity-heatmap .heat-js-map-contents,
+#activity-heatmap .heat-js-container,
+#activity-heatmap .heat-js-map {
+  background: transparent !important;
 }
 
 /* Year selector styling */
@@ -201,4 +209,22 @@
   padding: 0.5rem 0.75rem !important;
   font-size: 0.875rem !important;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  z-index: 9999 !important;
+}
+
+/* Heat.js default text colors for dark mode */
+#activity-heatmap,
+#activity-heatmap .heat-js {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Legend/key styling */
+#activity-heatmap .heat-js-key,
+#activity-heatmap .heat-js-legend {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Empty day cells */
+#activity-heatmap .heat-js-day:not(.activity-level-1):not(.activity-level-2):not(.activity-level-3):not(.activity-level-4):not(.activity-level-5) {
+  background-color: hsl(var(--muted) / 0.3) !important;
 }

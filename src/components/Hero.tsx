@@ -192,12 +192,12 @@ const Hero = () => {
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5QzkyQUMiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20 z-[1]"></div>
 
       {/* Main Content - Split Layout */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[calc(100vh-5rem)]">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 relative z-10 max-w-7xl xl:max-w-[1400px] 2xl:max-w-[1600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 2xl:gap-20 items-center min-h-[calc(100vh-5rem)]">
           
           {/* Left Side - Text Content */}
           <motion.div
-            className="text-center lg:text-left order-2 lg:order-1"
+            className="text-center lg:text-left order-2 lg:order-1 lg:pl-4 xl:pl-8 2xl:pl-12"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -208,21 +208,21 @@ const Hero = () => {
               <span className="bg-blue-600 text-slate-200 text-xs px-3 py-1 rounded-full font-medium shrink-0">
                 NEW
               </span>
-              <span className="font-mono text-sm text-blue-100 min-w-[200px] sm:min-w-[280px]">
+                <span className="font-poppins text-sm text-blue-100 min-w-[200px] sm:min-w-[280px]">
                 {displayText}
                 <span className="inline-block w-0.5 h-4 bg-blue-400 ml-0.5 animate-pulse" style={{ animationDuration: '1s' }} />
-              </span>
+                </span>
             </div>
           </motion.div>
 
           {/* Main heading */}
           <motion.div variants={itemVariants}>
-            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-slate-300 mb-4 sm:mb-6 leading-tight">
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold text-slate-300 mb-4 sm:mb-6 leading-tight">
               <span className="block">Your Journey</span>
               <span className="block mt-1 sm:mt-2 whitespace-nowrap">
                 to{" "}
                 <motion.span
-                  className="inline-block px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-700 to-blue-500"
+                  className="inline-block px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-700 to-blue-500"
                   whileHover={{ scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
@@ -235,7 +235,7 @@ const Hero = () => {
           {/* Description */}
           <motion.p
             variants={itemVariants}
-            className="text-base sm:text-lg md:text-xl text-slate-400 mb-8 sm:mb-10 leading-relaxed px-2 sm:px-4 max-w-2xl mx-auto"
+            className="text-base sm:text-lg md:text-xl xl:text-xl 2xl:text-2xl text-slate-400 mb-8 sm:mb-10 leading-relaxed px-2 sm:px-4 lg:px-0 max-w-2xl mx-auto lg:mx-0"
           >
             Follow curated learning roadmaps from foundational to mastery levels.
             Track your progress and unlock career opportunities as you grow.
@@ -295,12 +295,12 @@ const Hero = () => {
 
           {/* Right Side - 3D Globe */}
           <motion.div 
-            className="order-1 lg:order-2 flex items-center justify-center"
+            className="order-1 lg:order-2 flex items-center justify-center lg:justify-end"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
           >
-            <div className="w-full max-w-lg lg:max-w-xl xl:max-w-2xl aspect-square">
+            <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl aspect-square">
               <HeroGlobe />
             </div>
           </motion.div>
@@ -347,7 +347,7 @@ const Hero = () => {
       {/* Curved Arc Divider */}
       <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden z-20 pointer-events-none">
         <svg
-          className="relative block w-full h-[80px] sm:h-[100px] md:h-[120px]"
+          className="relative block w-full h-[35px] sm:h-[45px] md:h-[55px]"
           viewBox="0 0 1440 120"
           preserveAspectRatio="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -361,15 +361,15 @@ const Hero = () => {
           </defs>
           {/* Fill below the arc */}
           <path
-            d="M0,120 L0,60 Q720,0 1440,60 L1440,120 Z"
+            d="M0,120 L0,100 Q720,-20 1440,100 L1440,120 Z"
             fill="black"
           />
           {/* The arc line */}
           <path
-            d="M0,60 Q720,0 1440,60"
+            d="M0,100 Q720,-20 1440,100"
             fill="none"
             stroke="url(#arcGradient)"
-            strokeWidth="5"
+            strokeWidth="2"
           />
         </svg>
       </div>

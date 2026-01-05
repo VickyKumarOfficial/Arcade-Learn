@@ -232,7 +232,7 @@ const RoadmapDetail = () => {
         <div className="container mx-auto px-4">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/roadmaps')}
             className="mb-6 hover:bg-white/50 dark:hover:bg-gray-800/50"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

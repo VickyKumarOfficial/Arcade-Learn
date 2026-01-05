@@ -6,49 +6,7 @@
 
 @layer base {
   :root {
-    /* Light mode theme - solid white with reduced contrast */
-    --background: 0 0% 98%;           /* Slightly off-white to reduce contrast */
-    --foreground: 220 14% 15%;        /* Dark text for readability */
-
-    --card: 0 0% 100%;                /* Pure white for cards */
-    --card-foreground: 220 14% 15%;   /* Dark text for cards */
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 14% 15%;
-
-    --primary: 221 83% 53%;           /* Blue for interactive elements */
-    --primary-foreground: 0 0% 100%;  /* White text on blue */
-
-    --secondary: 0 0% 95%;            /* Light gray for secondary elements */
-    --secondary-foreground: 220 14% 15%;
-
-    --muted: 0 0% 92%;                /* Light muted background */
-    --muted-foreground: 220 14% 45%;  /* Muted text */
-
-    --accent: 221 70% 50%;            /* Blue accent color */
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 220 14% 85%;            /* Light border */
-    --input: 220 14% 85%;             /* Light input border */
-    --ring: 221 83% 53%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 96%;   /* Light sidebar background */
-    --sidebar-foreground: 220 14% 15%; /* Dark text for sidebar */
-    --sidebar-primary: 221 83% 53%;    /* Blue for sidebar primary elements */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 92%;        /* Light accent for sidebar */
-    --sidebar-accent-foreground: 220 14% 15%;
-    --sidebar-border: 220 14% 85%;
-    --sidebar-ring: 221 83% 53%;
-  }
-
-  /* Dark mode theme - Pure black premium aesthetic like pixels template */
-  .dark {
+    /* Dark mode theme - Pure black premium aesthetic (dark mode only) */
     --background: 0 0% 4%;            /* Pure black background */
     --foreground: 0 0% 95%;           /* Bright white text */
 
@@ -76,6 +34,8 @@
     --border: 0 0% 15%;
     --input: 0 0% 15%;
     --ring: 221 83% 53%;
+
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 3%;     /* Even darker black for sidebar */
     --sidebar-foreground: 0 0% 95%;    /* Bright white for sidebar text */
