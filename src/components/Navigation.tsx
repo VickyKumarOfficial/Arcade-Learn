@@ -143,34 +143,34 @@ const Navigation = () => {
               </div>
             )}
             {/* Dark Mode Toggle Switch */}
-            <div
+            {/* <div
               onClick={toggleDarkMode}
               className={`relative inline-flex items-center w-12 sm:w-14 h-6 sm:h-7 rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 
                 bg-muted border border-border shadow-md hover:shadow-lg
               `}
               aria-label="Toggle dark mode"
-            >
+            > */}
               {/* Slider Circle */}
-              <div
+              {/* <div
                 className={`absolute w-4 sm:w-5 h-4 sm:h-5 bg-primary rounded-full shadow-lg transform transition-all duration-300 ease-in-out flex items-center justify-center hover:scale-110 ${isDarkMode ? 'translate-x-6 sm:translate-x-8' : 'translate-x-1'
                   }`}
-              >
+              > */}
                 {/* Icon inside the slider */}
-                {isDarkMode ? (
+                {/* {isDarkMode ? (
                   <Moon className="h-2 sm:h-3 w-2 sm:w-3 text-primary-foreground" />
                 ) : (
                   <Sun className="h-2 sm:h-3 w-2 sm:w-3 text-primary-foreground" />
                 )}
-              </div>
+              </div> */}
 
               {/* Background Icons */}
-              <div className="absolute inset-0 flex items-center justify-between px-1 sm:px-2">
+              {/* <div className="absolute inset-0 flex items-center justify-between px-1 sm:px-2">
                 <Sun className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${isDarkMode ? 'opacity-40 text-foreground scale-90' : 'opacity-0 scale-75'
                   }`} />
                 <Moon className={`h-2 sm:h-3 w-2 sm:w-3 transition-all duration-300 ${isDarkMode ? 'opacity-0 scale-75' : 'opacity-40 text-foreground scale-90'
                   }`} />
-              </div>
-            </div>
+              </div> */}
+            {/* </div> */}
 
             {/* Mobile Menu Button */}
             <Button
