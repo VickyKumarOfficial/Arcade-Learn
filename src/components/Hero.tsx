@@ -180,11 +180,11 @@ const Hero = () => {
 
       {/* Floating geometric shapes*/}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[15%] left-[10%] w-20 h-20 border border-blue-500/30 rounded-full animate-float-slow opacity-20" />
-        <div className="absolute top-[20%] right-[15%] w-16 h-16 border border-blue-400/25 rotate-45 animate-float-medium opacity-30" />
-        <div className="absolute bottom-[25%] left-[15%] w-12 h-12 border border-blue-600/20 rounded-lg rotate-12 animate-float-fast opacity-40" />
-        <div className="absolute bottom-[5%] right-[5%] w-24 h-24 border border-blue-500/20 rounded-full animate-float-slow" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-[10%] left-[45%] w-8 h-8 border border-blue-400/30 rotate-45 animate-float-medium opacity-40" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute top-[15%] left-[10%] w-20 h-20 border border-blue-500/30 rounded-full animate-float-slow opacity-20" /> {/*Top left circke*/}
+        <div className="absolute top-[20%] right-[15%] w-16 h-16 border border-blue-400/25 rotate-45 animate-float-medium opacity-30" /> {/*Top right square*/}
+        <div className="absolute bottom-[25%] left-[15%] w-12 h-12 border border-blue-600/20 rounded-lg rotate-12 animate-float-fast opacity-40" /> {/*Bottom left square*/}
+        <div className="absolute bottom-[5%] right-[5%] w-24 h-24 border border-blue-500/20 rounded-full animate-float-slow opacity-30" style={{ animationDelay: '1s' }} /> {/*Bottom left circle*/}
+        <div className="absolute top-[10%] left-[45%] w-8 h-8 border border-blue-400/30 rotate-45 rounded-lg animate-float-medium opacity-30" style={{ animationDelay: '0.5s' }} /> {/*Top square*/}
       </div>
       
 
@@ -223,7 +223,7 @@ const Hero = () => {
                 to{" "}
                 <motion.span
                   className="inline-block px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-700 to-blue-500"
-                  whileHover={{ scale: 1.02 }}
+                  // whileHover={{ scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
                   Tech Mastery

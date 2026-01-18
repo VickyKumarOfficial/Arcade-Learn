@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Sun, Moon, Menu, X, Trophy, Star, LogOut, User, Settings, ChevronDown, Sparkles, Brain, Bot, Target } from "lucide-react";
+import { Menu, X, LogOut, User, Settings, ChevronDown, Brain, Bot, Code2, Calendar, Users, FolderKanban } from "lucide-react";
 import { useDarkMode } from "@/hooks/use-dark-mode";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +20,32 @@ const Navigation = () => {
   const location = useLocation();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const { state } = useGameTest();
   const { isAuthenticated, user, logout } = useAuth();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < 10) {
+        // Always show at top
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY) {
+        // Scrolling down
+        setIsVisible(false);
+      } else {
+        // Scrolling up
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const navItems = [
     { label: 'Home', path: '/' },
@@ -29,18 +53,50 @@ const Navigation = () => {
     { label: 'Jobs', path: '/jobs' }
   ];
 
-  const aiMenuItems = [
+  const moreMenuItems = [
     {
-      label: 'Doubt Solving with AI ✨',
-      path: '/ai/chat',
-      icon: Brain,
-      description: 'Get instant help with your coding questions'
+      label: 'Coding Challenges',
+      path: '/practice/coding',
+      icon: Code2,
+      description: 'Solve problems in multiple languages',
+      badge: 'New',
+      stats: '0 solved'
     },
     {
-      label: 'Roadmap Generation ✨',
+      label: 'Daily Challenges',
+      path: '/practice/daily',
+      icon: Calendar,
+      description: '5-15 min daily tasks to build habits',
+      badge: 'Popular',
+      stats: '0 day streak'
+    },
+    {
+      label: 'Study Rooms',
+      path: '/practice/study-rooms',
+      icon: Users,
+      description: 'Co-learn with peers in real-time',
+      stats: '2 active now'
+    },
+    {
+      label: 'Project Portfolio',
+      path: '/practice/portfolio',
+      icon: FolderKanban,
+      description: 'Showcase your projects to employers',
+      stats: '0 projects'
+    },
+    {
+      label: 'AI Doubt Solving',
+      path: '/ai/chat',
+      icon: Brain,
+      description: 'Get instant help with coding questions',
+      badge: '✨'
+    },
+    {
+      label: 'AI Roadmap',
       path: '/ai/roadmap-generation',
       icon: Bot,
-      description: 'Create personalized learning roadmaps'
+      description: 'Generate personalized learning paths',
+      badge: '✨'
     }
   ];
 
@@ -49,86 +105,112 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/20">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-14 sm:h-16">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
+      isVisible ? 'translate-y-0' : '-translate-y-full'
+    }`}>
+      <div className="container mx-auto px-4 pt-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo - Left */}
           <div
-            className="flex items-center space-x-2 cursor-pointer"
+            className="flex items-center space-x-2 cursor-pointer flex-shrink-0"
             onClick={() => navigate('/')}
           >
             <img src="/logo-bgfree.png" alt="Arcade Learn Logo" className="h-7 w-12" />
-            <span className="text-lg sm:text-xl font-bold">
-              <span className="text-blue-500">
-                Arcade
-              </span>
-              <span className="text-white ml-1">
-                Learn
-              </span>
+            <span className="text-lg sm:text-xl font-bold hidden sm:block">
+              <span className="text-blue-500">Arcade</span>
+              <span className="text-white ml-1">Learn</span>
             </span>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Center Navigation - Desktop */}
+          <div className="hidden md:flex items-center justify-center flex-1">
+            <div className="flex items-center space-x-1 bg-white/5 backdrop-blur-sm rounded-full px-2 py-2 border border-white/10">
             {navItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`text-sm font-medium transition-colors hover:text-blue-500 ${location.pathname === item.path
-                  ? 'text-blue-500'
-                  : 'text-white'
-                  }`}
+                className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+                  location.pathname === item.path
+                    ? 'bg-white/10 text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                }`}
               >
                 {item.label}
               </button>
             ))}
 
-            {/* AI Dropdown Menu */}
+            {/* More Mega Menu */}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`flex items-center space-x-1 text-sm font-medium transition-colors hover:text-blue-500 ${location.pathname.startsWith('/ai')
-                    ? 'text-blue-500'
-                    : 'text-white'
-                    }`}
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 flex items-center gap-1 ${
+                    location.pathname.startsWith('/practice') || location.pathname.startsWith('/ai')
+                      ? 'bg-white/10 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-white/5'
+                  }`}
                 >
-                  <Sparkles className="h-4 w-4" />
-                  <span>AI</span>
-                  <ChevronDown className="h-3 w-3" />
+                  <span>More</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-64 bg-card border border-border shadow-xl"
+                className="w-[720px] bg-card/95 backdrop-blur-xl border border-border shadow-2xl rounded-xl p-0"
                 align="center"
                 side="bottom"
-                sideOffset={8}
+                sideOffset={12}
                 avoidCollisions={true}
               >
-                {aiMenuItems.map((item) => (
-                  <DropdownMenuItem
-                    key={item.path}
-                    onClick={() => navigate(item.path)}
-                    className="cursor-pointer p-4 hover:bg-muted focus:bg-muted"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 mt-1">
-                        <item.icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-foreground">
-                          {item.label}
+                <div className="p-3">
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pb-2 border-b border-border/50">
+                    Practice & Learn with AI
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mt-3">
+                    {moreMenuItems.map((item) => (
+                      <div
+                        key={item.path}
+                        onClick={() => {
+                          navigate(item.path);
+                        }}
+                        className="cursor-pointer p-3 rounded-lg border border-transparent"
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className="flex-shrink-0">
+                            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <item.icon className="h-4 w-4 text-primary" />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="text-sm font-semibold text-foreground">
+                                {item.label}
+                              </div>
+                              {item.badge && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                                  {item.badge}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                              {item.description}
+                            </div>
+                            {item.stats && (
+                              <div className="text-xs font-medium text-primary/70">
+                                {item.stats}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {item.description}
-                        </div>
                       </div>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+                    ))}
+                  </div>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          {/* Right Side - Auth/User */}
+          <div className="flex items-center space-x-3 flex-shrink-0">
             {/* User Stats - Desktop (only show if authenticated) */}
             {isAuthenticated && (
               <div className="hidden lg:flex items-center space-x-2 mr-2">
@@ -227,18 +309,18 @@ const Navigation = () => {
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="hidden sm:flex items-center space-x-2">
+              <div className="hidden md:flex items-center space-x-2 bg-white/5 backdrop-blur-sm rounded-full px-2 py-2 border border-white/10">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="border-blue-900 text-white hover:bg-blue-950/50 hover:border-blue-600 rounded-full"
+                  className="text-white hover:bg-white/10 rounded-full px-4 py-2"
                   onClick={() => navigate('/signin')}
                 >
                   Log In
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 py-2"
                   onClick={() => navigate('/signup')}
                 >
                   Sign up
@@ -268,15 +350,14 @@ const Navigation = () => {
                 </button>
               ))}
 
-              {/* AI Menu Items for Mobile */}
+              {/* More Features Section */}
               <div className="space-y-1 pt-2">
                 <div className="px-3 py-2">
                   <div className="flex items-center space-x-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <span>AI Features</span>
+                    <span>More Features</span>
                   </div>
                 </div>
-                {aiMenuItems.map((item) => (
+                {moreMenuItems.map((item) => (
                   <button
                     key={item.path}
                     onClick={() => {
@@ -289,12 +370,24 @@ const Navigation = () => {
                       }`}
                   >
                     <div className="flex items-start space-x-3">
-                      <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="text-sm font-medium">{item.label}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {item.description}
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <item.icon className="h-4 w-4 text-primary" />
                         </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium">{item.label}</span>
+                          {item.badge && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                              {item.badge}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
+                        {item.stats && (
+                          <p className="text-xs text-primary/70 mt-1">{item.stats}</p>
+                        )}
                       </div>
                     </div>
                   </button>
