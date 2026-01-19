@@ -192,12 +192,12 @@ const Hero = () => {
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5QzkyQUMiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20 z-[1]"></div>
 
       {/* Main Content - Split Layout */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 relative z-10 max-w-7xl xl:max-w-[1400px] 2xl:max-w-[1600px]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 2xl:gap-20 items-center min-h-[calc(100vh-5rem)]">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 relative z-10 max-w-7xl xl:max-w-[1280px] 2xl:max-w-[1440px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 xl:gap-10 2xl:gap-12 items-center min-h-[calc(100vh-5rem)] py-8 lg:py-4">
           
           {/* Left Side - Text Content */}
           <motion.div
-            className="text-center lg:text-left order-2 lg:order-1 lg:pl-4 xl:pl-8 2xl:pl-12"
+            className="text-center lg:text-left order-2 lg:order-1 lg:pl-2 xl:pl-4 2xl:pl-6"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -217,12 +217,12 @@ const Hero = () => {
 
           {/* Main heading */}
           <motion.div variants={itemVariants}>
-            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold text-slate-300 mb-4 sm:mb-6 leading-tight">
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-[2.75rem] lg:text-[2.5rem] xl:text-5xl 2xl:text-6xl font-bold text-slate-300 mb-4 sm:mb-6 leading-tight">
               <span className="block">Your Journey</span>
-              <span className="block mt-1 sm:mt-2 whitespace-nowrap">
+              <span className="block mt-1 sm:mt-2">
                 to{" "}
                 <motion.span
-                  className="inline-block px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-700 to-blue-500"
+                  className="inline-block px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-700 to-blue-500"
                   // whileHover={{ scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
@@ -235,7 +235,7 @@ const Hero = () => {
           {/* Description */}
           <motion.p
             variants={itemVariants}
-            className="text-base sm:text-lg md:text-xl xl:text-xl 2xl:text-2xl text-slate-400 mb-8 sm:mb-10 leading-relaxed px-2 sm:px-4 lg:px-0 max-w-2xl mx-auto lg:mx-0"
+            className="text-base sm:text-lg md:text-lg lg:text-base xl:text-lg 2xl:text-xl text-slate-400 mb-6 sm:mb-8 lg:mb-6 xl:mb-8 leading-relaxed px-2 sm:px-4 lg:px-0 max-w-xl lg:max-w-md xl:max-w-lg 2xl:max-w-xl mx-auto lg:mx-0"
           >
             Follow curated learning roadmaps from foundational to mastery levels.
             Track your progress and unlock career opportunities as you grow.
@@ -244,12 +244,12 @@ const Hero = () => {
           {/* CTA Buttons */}
           <motion.div
             variants={buttonVariants}
-            className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center mb-10 sm:mb-12"
+            className="flex flex-col sm:flex-row gap-3 lg:gap-3 xl:gap-4 justify-center lg:justify-start items-center mb-8 sm:mb-10 lg:mb-6 xl:mb-8"
           >
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
               <Button
                 size="lg"
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-slate-200 px-8 py-3 text-base lg:text-lg font-semibold rounded-full shadow-lg shadow-blue-600/25 transition-all duration-300"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-slate-200 px-6 lg:px-6 xl:px-8 py-2.5 lg:py-2.5 xl:py-3 text-sm lg:text-base xl:text-lg font-semibold rounded-full shadow-lg shadow-blue-600/25 transition-all duration-300"
                 onClick={scrollToRoadmaps}
               >
                 Start Your Journey
@@ -259,10 +259,10 @@ const Hero = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto border-2 border-blue-900 hover:border-blue-600 hover:bg-blue-950/50 px-8 py-3 text-base lg:text-lg font-semibold rounded-full backdrop-blur-sm text-slate-200 transition-all duration-300"
+                className="w-full sm:w-auto border-2 border-blue-900 hover:border-blue-600 hover:bg-blue-950/50 px-6 lg:px-6 xl:px-8 py-2.5 lg:py-2.5 xl:py-3 text-sm lg:text-base xl:text-lg font-semibold rounded-full backdrop-blur-sm text-slate-200 transition-all duration-300"
                 onClick={handleLeaderboardClick}
               >
-                <Trophy className="w-5 h-5 mr-2" />
+                <Trophy className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
                 Leaderboard
               </Button>
             </motion.div>
@@ -295,12 +295,12 @@ const Hero = () => {
 
           {/* Right Side - 3D Globe */}
           <motion.div 
-            className="order-1 lg:order-2 flex items-center justify-center lg:justify-end"
+            className="order-1 lg:order-2 flex items-center justify-center lg:justify-center relative"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
           >
-            <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl aspect-square">
+            <div className="w-[310px] sm:w-[352px] md:w-[410px] lg:w-[440px] xl:w-[485px] 2xl:w-[540px] aspect-square">
               <HeroGlobe />
             </div>
           </motion.div>
@@ -347,7 +347,7 @@ const Hero = () => {
       {/* Curved Arc Divider */}
       <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden z-20 pointer-events-none">
         <svg
-          className="relative block w-full h-[35px] sm:h-[45px] md:h-[55px]"
+          className="relative block w-full h-[30px] sm:h-[40px] md:h-[50px] lg:h-[45px] xl:h-[55px] 2xl:h-[60px]"
           viewBox="0 0 1440 120"
           preserveAspectRatio="none"
           xmlns="http://www.w3.org/2000/svg"

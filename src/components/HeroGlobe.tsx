@@ -95,12 +95,12 @@ const Globe: React.FC<GlobeProps> = ({
         globeRef.current = null;
       }
 
-      // Use larger canvas to accommodate glow effect (36rem = 576px)
-      // The globe sphere will be scaled down to fit nicely within this canvas
-      const fixedSize = 576; // 36rem in pixels - larger to prevent glow cutoff
+      // Get the actual display size of the canvas element
+      const rect = canvas.getBoundingClientRect();
+      const displaySize = Math.max(rect.width, rect.height) || 400;
       const devicePixelRatio = window.devicePixelRatio || 1;
-      const internalWidth = fixedSize * devicePixelRatio;
-      const internalHeight = fixedSize * devicePixelRatio;
+      const internalWidth = displaySize * devicePixelRatio;
+      const internalHeight = displaySize * devicePixelRatio;
 
       canvas.width = internalWidth;
       canvas.height = internalHeight;
@@ -231,10 +231,8 @@ const Globe: React.FC<GlobeProps> = ({
     >
       <canvas
         ref={canvasRef}
-        className="w-[20rem] sm:w-[24rem] md:w-[28rem] lg:w-[32rem] xl:w-[36rem] 2xl:w-[40rem] h-[20rem] sm:h-[24rem] md:h-[28rem] lg:h-[32rem] xl:h-[36rem] 2xl:h-[40rem]"
+        className="w-[242px] sm:w-[290px] md:w-[330px] lg:w-[362px] xl:w-[410px] 2xl:w-[462px] h-[242px] sm:h-[290px] md:h-[330px] lg:h-[362px] xl:h-[410px] 2xl:h-[462px]"
         style={{
-          maxWidth: "100%",
-          maxHeight: "100%",
           aspectRatio: "1",
           display: "block",
           cursor: "grab",
@@ -247,25 +245,25 @@ const Globe: React.FC<GlobeProps> = ({
 // Wrapper component with glow effects and floating badges
 export default function HeroGlobe() {
   return (
-    <div className="relative w-full h-full min-h-[320px] sm:min-h-[380px] md:min-h-[420px] lg:min-h-[480px] xl:min-h-[540px] 2xl:min-h-[600px] flex items-center justify-center">
+    <div className="relative w-full h-full min-h-[290px] sm:min-h-[330px] md:min-h-[385px] lg:min-h-[420px] xl:min-h-[462px] 2xl:min-h-[520px] flex items-center justify-center overflow-visible">
       {/* Outer glow effects */}
-      <div className="absolute w-64 h-64 sm:w-72 sm:h-72 lg:w-80 lg:h-80 xl:w-96 xl:h-96 bg-blue-600/20 rounded-full blur-[80px]" />
-      <div className="absolute w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 xl:w-80 xl:h-80 bg-blue-500/15 rounded-full blur-[60px]" />
+      <div className="absolute w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 lg:w-64 lg:h-64 xl:w-72 xl:h-72 2xl:w-88 2xl:h-88 bg-blue-600/20 rounded-full blur-[50px] sm:blur-[60px] lg:blur-[70px]" />
+      <div className="absolute w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 lg:w-56 lg:h-56 xl:w-64 xl:h-64 2xl:w-76 2xl:h-76 bg-blue-500/15 rounded-full blur-[40px] sm:blur-[50px] lg:blur-[55px]" />
       
       {/* Outermost orbit ring */}
       <div  
-        className="absolute w-[20rem] sm:w-[24rem] md:w-[28rem] lg:w-[32rem] xl:w-[36rem] 2xl:w-[40rem] h-[20rem] sm:h-[24rem] md:h-[28rem] lg:h-[32rem] xl:h-[36rem] 2xl:h-[40rem] rounded-full border border-blue-400/20"
+        className="absolute w-[262px] sm:w-[315px] md:w-[362px] lg:w-[400px] xl:w-[440px] 2xl:w-[494px] h-[262px] sm:h-[315px] md:h-[362px] lg:h-[400px] xl:h-[440px] 2xl:h-[494px] rounded-full border border-blue-400/20"
         style={{ animation: 'spin 30s linear infinite reverse' }}
       >
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-blue-400 rounded-full shadow-lg shadow-blue-400/50" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full shadow-lg shadow-blue-400/50" />
       </div>
       
       {/* Second orbit ring */}
       <div 
-        className="absolute w-[18rem] sm:w-[22rem] md:w-[26rem] lg:w-[30rem] xl:w-[34rem] 2xl:w-[38rem] h-[18rem] sm:h-[22rem] md:h-[26rem] lg:h-[30rem] xl:h-[34rem] 2xl:h-[38rem] rounded-full border border-blue-500/25"
+        className="absolute w-[231px] sm:w-[278px] md:w-[326px] lg:w-[357px] xl:w-[404px] 2xl:w-[452px] h-[231px] sm:h-[278px] md:h-[326px] lg:h-[357px] xl:h-[404px] 2xl:h-[452px] rounded-full border border-blue-500/25"
         style={{ animation: 'spin 20s linear infinite' }}
       >
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 bg-blue-300 rounded-full shadow-lg shadow-blue-300/50" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-300 rounded-full shadow-lg shadow-blue-300/50" />
       </div>
       
       {/* The 3D Globe */}
@@ -281,34 +279,34 @@ export default function HeroGlobe() {
       
       {/* Floating data badges */}
       <div 
-        className="absolute top-[5%] right-[5%] sm:top-[8%] sm:right-[8%] lg:top-[5%] lg:right-[5%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
+        className="absolute -top-[5%] right-[5%] sm:-top-[4%] sm:right-[8%] md:-top-[2%] md:right-[10%] lg:-top-[3%] lg:right-[5%] xl:-top-[2%] xl:right-[8%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1 sm:px-2.5 sm:py-1.5 lg:px-3 lg:py-2 shadow-lg animate-float-slow z-20"
       >
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-[10px] sm:text-xs text-slate-300">Active Learners</span>
-          <span className="text-xs sm:text-sm font-semibold text-white">2.4k+</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2">
+          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+          <span className="text-[9px] sm:text-[10px] lg:text-xs text-slate-300">Active Learners</span>
+          <span className="text-[10px] sm:text-xs lg:text-sm font-semibold text-white">2.4k+</span>
         </div>
       </div>
       
       <div 
-        className="absolute bottom-[25%] left-[-3%] sm:bottom-[22%] sm:left-[-5%] lg:bottom-[20%] lg:left-[-7%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
+        className="absolute bottom-[30%] -left-[5%] sm:bottom-[28%] sm:-left-[2%] md:bottom-[26%] md:-left-[5%] lg:bottom-[28%] lg:-left-[8%] xl:bottom-[26%] xl:-left-[5%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1 sm:px-2.5 sm:py-1.5 lg:px-3 lg:py-2 shadow-lg animate-float-slow z-20"
         style={{ animationDelay: '1s' }}
       >
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full animate-pulse" />
-          <span className="text-[10px] sm:text-xs text-slate-300">Roadmaps</span>
-          <span className="text-xs sm:text-sm font-semibold text-white">5+</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2">
+          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+          <span className="text-[9px] sm:text-[10px] lg:text-xs text-slate-300">Roadmaps</span>
+          <span className="text-[10px] sm:text-xs lg:text-sm font-semibold text-white">5+</span>
         </div>
       </div>
       
       <div 
-        className="absolute bottom-[8%] right-[2%] sm:bottom-[6%] sm:right-[0%] lg:bottom-[5%] lg:right-[0%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
+        className="absolute bottom-[5%] right-[5%] sm:bottom-[8%] sm:right-[8%] md:bottom-[10%] md:right-[5%] lg:bottom-[8%] lg:right-[2%] xl:bottom-[10%] xl:right-[5%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1 sm:px-2.5 sm:py-1.5 lg:px-3 lg:py-2 shadow-lg animate-float-slow z-20"
         style={{ animationDelay: '2s' }}
       >
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-pulse" />
-          <span className="text-[10px] sm:text-xs text-slate-300">Job Opportunities</span>
-          <span className="text-xs sm:text-sm font-semibold text-white">150+</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2">
+          <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
+          <span className="text-[9px] sm:text-[10px] lg:text-xs text-slate-300">Job Opportunities</span>
+          <span className="text-[10px] sm:text-xs lg:text-sm font-semibold text-white">150+</span>
         </div>
       </div>
     </div>
