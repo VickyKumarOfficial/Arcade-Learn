@@ -61,6 +61,7 @@ export interface ExecutionResult {
   error?: string;
   executionTime: number; // in milliseconds
   testCaseId: string;
+  consoleOutput?: string[]; // captured console.log outputs
 }
 
 export interface SubmissionResult {

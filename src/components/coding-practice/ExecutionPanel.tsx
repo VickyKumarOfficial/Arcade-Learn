@@ -184,13 +184,51 @@ export const ExecutionPanel: React.FC<ExecutionPanelProps> = ({
         </div>
       </TabsContent>
 
-      <TabsContent value="console" className="flex-1 m-0 p-4">
-        <div className="h-full bg-muted/50 rounded-lg p-3 font-mono text-sm">
-          <p className="text-muted-foreground">
-            Console output will appear here...
-          </p>
-          {/* TODO: Capture and display console.log outputs */}
-        </div>
+      <TabsContent value="console" className="flex-1 m-0 p-4 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="bg-muted/50 rounded-lg p-3 font-mono text-sm min-h-full">
+            {(() => {
+              // Collect all console output from all test results
+              const allOutput = result.results
+                .flatMap(r => r.consoleOutput || [])
+                .filter(Boolean);
+              
+              if (allOutput.length === 0) {
+                return (
+                  <p className="text-muted-foreground">
+                    No console output. Use console.log() to debug your code.
+                  </p>
+                );
+              }
+              
+              return (
+                <div className="space-y-1">
+                  {allOutput.map((line, index) => {
+                    // Parse log type from prefix like [log], [error], etc.
+                    const match = line.match(/^\[(\w+)\]\s*(.*)/);
+                    const type = match?.[1] || 'log';
+                    const message = match?.[2] || line;
+                    
+                    const colorClass = {
+                      error: 'text-red-400',
+                      warn: 'text-yellow-400',
+                      info: 'text-blue-400',
+                      debug: 'text-gray-400',
+                      log: 'text-foreground',
+                    }[type] || 'text-foreground';
+                    
+                    return (
+                      <div key={index} className={`${colorClass} break-all`}>
+                        <span className="text-muted-foreground select-none">{'>'} </span>
+                        {message}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </ScrollArea>
       </TabsContent>
     </Tabs>
   );
