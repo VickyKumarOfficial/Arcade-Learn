@@ -62,6 +62,7 @@ export interface ExecutionResult {
   executionTime: number; // in milliseconds
   testCaseId: string;
   consoleOutput?: string[]; // captured console.log outputs
+  warnings?: string[]; // security or performance warnings
 }
 
 export interface SubmissionResult {

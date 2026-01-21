@@ -315,37 +315,86 @@ class CodeExecutionEngine {
   }
 }
 
+// ============================================================================
+// SECURITY PATTERNS (mirrored from worker for fallback validation)
+// ============================================================================
+
 // Dangerous patterns to block
 const DANGEROUS_PATTERNS = [
+  // Code execution
   /\beval\s*\(/gi,
   /\bFunction\s*\(/gi,
   /\bnew\s+Function\b/gi,
+  /\bsetTimeout\s*\(\s*["'`]/gi,  // setTimeout with string
+  /\bsetInterval\s*\(\s*["'`]/gi, // setInterval with string
+  
+  // Module loading
   /\bimport\s*\(/gi,
   /\bimport\s+/gi,
   /\brequire\s*\(/gi,
+  /\bimportScripts\s*\(/gi,
+  
+  // Network access
   /\bfetch\s*\(/gi,
   /\bXMLHttpRequest\b/gi,
   /\bWebSocket\b/gi,
+  /\bEventSource\b/gi,
+  /\bRTCPeerConnection\b/gi,
+  
+  // DOM access
   /\bdocument\b/gi,
   /\bwindow\b/gi,
+  /\bself\b(?!\s*\.\s*(?:console|Math|Array|Object|String|Number|Boolean))/gi,
+  /\bglobalThis\b/gi,
+  
+  // Storage
   /\blocalStorage\b/gi,
   /\bsessionStorage\b/gi,
   /\bindexedDB\b/gi,
+  /\bcaches\b/gi,
+  /\bcookieStore\b/gi,
+  
+  // Browser APIs
   /\bnavigator\b/gi,
   /\blocation\b/gi,
   /\bhistory\b/gi,
   /\balert\s*\(/gi,
   /\bconfirm\s*\(/gi,
   /\bprompt\s*\(/gi,
-  /\bsetTimeout\s*\(/gi,
-  /\bsetInterval\s*\(/gi,
+  
+  // Worker/Thread access
+  /\bWorker\s*\(/gi,
+  /\bSharedWorker\s*\(/gi,
+  /\bServiceWorker\b/gi,
   /\bpostMessage\s*\(/gi,
+  
+  // Prototype pollution
   /\b__proto__\b/gi,
   /\bprototype\s*\[/gi,
   /\bconstructor\s*\[/gi,
+  /Object\s*\.\s*setPrototypeOf/gi,
+  /Object\s*\.\s*defineProperty/gi,
+  /Object\s*\.\s*defineProperties/gi,
+  /Reflect\s*\.\s*setPrototypeOf/gi,
+  
+  // Node.js globals
   /\bprocess\b/gi,
   /\bglobal\b/gi,
   /\bBuffer\b/gi,
+  /\b__dirname\b/gi,
+  /\b__filename\b/gi,
+  /\bmodule\s*\.\s*exports/gi,
+  
+  // Dangerous APIs
+  /\bProxy\b/gi,
+  /\bReflect\b/gi,
+];
+
+// Additional patterns that are suspicious
+const SUSPICIOUS_PATTERNS = [
+  /while\s*\(\s*true\s*\)/gi,
+  /while\s*\(\s*1\s*\)/gi,
+  /for\s*\(\s*;\s*;\s*\)/gi,
 ];
 
 // Basic code validation
@@ -353,21 +402,32 @@ function validateCodeBasic(code: string): CodeValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
   
+  // Check code length
+  if (code.length > 100000) {
+    errors.push('Code exceeds maximum length of 100KB');
+    return { isValid: false, errors, warnings };
+  }
+  
   for (const pattern of DANGEROUS_PATTERNS) {
     pattern.lastIndex = 0;
     if (pattern.test(code)) {
       const match = code.match(pattern);
-      errors.push(`Blocked pattern: "${match?.[0] || 'unknown'}"`);
+      errors.push(`Blocked: "${match?.[0]?.trim() || 'pattern'}" is not allowed`);
     }
   }
   
-  // Check for infinite loop indicators
-  if (/while\s*\(\s*true\s*\)/i.test(code) && !/break/i.test(code)) {
-    warnings.push('Potential infinite loop: while(true) without break');
+  // Check for suspicious patterns (warnings only)
+  for (const pattern of SUSPICIOUS_PATTERNS) {
+    pattern.lastIndex = 0;
+    if (pattern.test(code) && !/break/.test(code)) {
+      warnings.push('Potential infinite loop detected - ensure you have proper exit conditions');
+    }
   }
   
-  if (/for\s*\(\s*;\s*;\s*\)/i.test(code) && !/break/i.test(code)) {
-    warnings.push('Potential infinite loop: for(;;) without break');
+  // Check for very deep nesting
+  const bracketCount = (code.match(/[\[{(]/g) || []).length;
+  if (bracketCount > 500) {
+    warnings.push('Very deep nesting detected - may cause stack issues');
   }
   
   return {
@@ -380,23 +440,55 @@ function validateCodeBasic(code: string): CodeValidationResult {
 // Create sandbox for direct execution fallback
 function createSandbox() {
   const consoleOutput: string[] = [];
+  const maxOutput = 100;
+  const maxStringLen = 10000;
+  
+  const stringify = (arg: any): string => {
+    try {
+      if (arg === undefined) return 'undefined';
+      if (arg === null) return 'null';
+      if (typeof arg === 'function') return '[Function]';
+      if (typeof arg === 'symbol') return arg.toString();
+      const str = typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+      return str.length > maxStringLen ? str.slice(0, maxStringLen) + '...' : str;
+    } catch {
+      return '[Object]';
+    }
+  };
+  
+  const addOutput = (type: string, args: any[]) => {
+    if (consoleOutput.length < maxOutput) {
+      const message = args.map(stringify).join(' ');
+      consoleOutput.push(`[${type}] ${message}`);
+    }
+  };
   
   return {
     console: {
-      log: (...args: any[]) => {
-        consoleOutput.push(args.map(a => JSON.stringify(a)).join(' '));
+      log: (...args: any[]) => addOutput('log', args),
+      error: (...args: any[]) => addOutput('error', args),
+      warn: (...args: any[]) => addOutput('warn', args),
+      info: (...args: any[]) => addOutput('info', args),
+      debug: (...args: any[]) => addOutput('debug', args),
+      trace: (...args: any[]) => addOutput('trace', args),
+      table: (data: any) => addOutput('table', [data]),
+      dir: (obj: any) => addOutput('dir', [obj]),
+      assert: (condition: boolean, ...args: any[]) => {
+        if (!condition) addOutput('assert', args.length ? args : ['Assertion failed']);
       },
-      error: (...args: any[]) => {
-        consoleOutput.push('[error] ' + args.map(a => JSON.stringify(a)).join(' '));
-      },
-      warn: (...args: any[]) => {
-        consoleOutput.push('[warn] ' + args.map(a => JSON.stringify(a)).join(' '));
-      },
-      info: (...args: any[]) => {
-        consoleOutput.push('[info] ' + args.map(a => JSON.stringify(a)).join(' '));
-      },
+      clear: () => {},
+      count: () => {},
+      countReset: () => {},
+      group: () => {},
+      groupCollapsed: () => {},
+      groupEnd: () => {},
+      time: () => {},
+      timeEnd: () => {},
+      timeLog: () => {},
     },
-    Math,
+    // Math (frozen copy)
+    Math: Object.freeze({ ...Math }),
+    // Data types
     Array,
     Object,
     String,
@@ -404,17 +496,33 @@ function createSandbox() {
     Boolean,
     BigInt,
     Symbol,
-    JSON,
+    // JSON (safe subset)
+    JSON: Object.freeze({
+      parse: JSON.parse,
+      stringify: JSON.stringify
+    }),
+    // Collections
     Map,
     Set,
     WeakMap,
     WeakSet,
-    Date,
+    // Date with fixed time
+    Date: class SafeDate extends Date {
+      constructor(...args: any[]) {
+        if (args.length === 0) super(1704067200000);
+        else super(...args);
+      }
+      static now() { return 1704067200000; }
+    },
     RegExp,
+    // Errors
     Error,
     TypeError,
     RangeError,
     SyntaxError,
+    ReferenceError,
+    URIError,
+    // Utilities
     parseInt,
     parseFloat,
     isNaN,
@@ -423,9 +531,11 @@ function createSandbox() {
     decodeURI,
     encodeURIComponent,
     decodeURIComponent,
+    // Constants
     undefined,
     NaN,
     Infinity,
+    // Internal
     _consoleOutput: consoleOutput,
   };
 }

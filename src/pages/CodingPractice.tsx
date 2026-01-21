@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   ResizableHandle, 
@@ -6,11 +6,13 @@ import {
   ResizablePanelGroup 
 } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ProblemPanel, 
   CodeEditor, 
   ExecutionPanel, 
-  ProblemList 
+  ProblemList,
+  CodingStatsDashboard
 } from '@/components/coding-practice';
 import { useCodingPractice } from '@/hooks/useCodingPractice';
 import Navigation from '@/components/Navigation';
@@ -19,13 +21,30 @@ import {
   X, 
   Code2, 
   Trophy,
-  Target
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { CodingStats } from '@/types/codingPractice';
 
 const CodingPractice: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [showProblemList, setShowProblemList] = React.useState(true);
+  const [showProblemList, setShowProblemList] = useState(true);
+  const [activeView, setActiveView] = useState<'practice' | 'stats'>('practice');
+  
+  // Mock stats for now - will be replaced with real data from database
+  const [codingStats] = useState<CodingStats>({
+    totalSolved: 0,
+    easySolved: 0,
+    mediumSolved: 0,
+    hardSolved: 0,
+    totalAttempts: 0,
+    successRate: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    totalXpFromCoding: 0,
+    averageExecutionTime: 0,
+  });
   
   const {
     currentProblem,
@@ -140,8 +159,23 @@ const CodingPractice: React.FC = () => {
                   Problems
                 </Button>
               )}
-              {currentProblem && (
-                <div className="flex items-center gap-2">
+              
+              {/* View Toggle Tabs */}
+              <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'practice' | 'stats')}>
+                <TabsList className="h-8">
+                  <TabsTrigger value="practice" className="text-xs px-3 h-7">
+                    <Code2 className="w-3.5 h-3.5 mr-1.5" />
+                    Practice
+                  </TabsTrigger>
+                  <TabsTrigger value="stats" className="text-xs px-3 h-7">
+                    <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
+                    My Stats
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              {activeView === 'practice' && currentProblem && (
+                <div className="flex items-center gap-2 ml-2">
                   <Target className="w-4 h-4 text-primary" />
                   <span className="font-medium text-sm">
                     {currentProblem.title}
@@ -152,13 +186,32 @@ const CodingPractice: React.FC = () => {
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4 text-yellow-500" />
               <span className="text-sm text-muted-foreground">
-                {filteredProblems.length} problems available
+                {codingStats.totalSolved} solved · {filteredProblems.length} available
               </span>
             </div>
           </div>
 
-          {/* Resizable Panels */}
-          <ResizablePanelGroup direction="horizontal" className="flex-1">
+          {/* Stats View */}
+          {activeView === 'stats' && (
+            <div className="flex-1 overflow-auto p-6">
+              <div className="max-w-4xl mx-auto">
+                <div className="mb-6">
+                  <h1 className="text-2xl font-bold flex items-center gap-2">
+                    <BarChart3 className="w-6 h-6 text-primary" />
+                    Coding Statistics
+                  </h1>
+                  <p className="text-muted-foreground mt-1">
+                    Track your progress and improve your skills
+                  </p>
+                </div>
+                <CodingStatsDashboard stats={codingStats} />
+              </div>
+            </div>
+          )}
+
+          {/* Practice View - Resizable Panels */}
+          {activeView === 'practice' && (
+            <ResizablePanelGroup direction="horizontal" className="flex-1">
             {/* Problem Description Panel */}
             <ResizablePanel defaultSize={35} minSize={25}>
               <ProblemPanel
@@ -198,6 +251,7 @@ const CodingPractice: React.FC = () => {
               </ResizablePanelGroup>
             </ResizablePanel>
           </ResizablePanelGroup>
+          )}
         </div>
       </div>
     </div>
