@@ -55,19 +55,19 @@ const Navigation = () => {
 
   const moreMenuItems = [
     {
-      label: 'Coding Challenges',
-      path: '/practice/coding',
+      label: 'Coding Practice',
+      path: '/practice',
       icon: Code2,
-      description: 'Solve problems in multiple languages',
+      description: 'Solve problems and build skills',
       badge: 'New',
-      stats: '0 solved'
+      stats: '10 problems'
     },
     {
       label: 'Daily Challenges',
       path: '/practice/daily',
       icon: Calendar,
       description: '5-15 min daily tasks to build habits',
-      badge: 'Popular',
+      badge: 'Coming Soon',
       stats: '0 day streak'
     },
     {
@@ -75,6 +75,7 @@ const Navigation = () => {
       path: '/practice/study-rooms',
       icon: Users,
       description: 'Co-learn with peers in real-time',
+      badge: 'Coming Soon',
       stats: '2 active now'
     },
     {
@@ -82,6 +83,7 @@ const Navigation = () => {
       path: '/practice/portfolio',
       icon: FolderKanban,
       description: 'Showcase your projects to employers',
+      badge: 'Coming Soon',
       stats: '0 projects'
     },
     {

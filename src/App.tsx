@@ -26,6 +26,7 @@ import ContactUs from "@/pages/ContactUs";
 import AIDoubtSolving from "@/pages/AIDoubtSolving";
 import AIRoadmapGeneration from "@/pages/AIRoadmapGeneration";
 import AIChatPage from "@/pages/AIChatPage";
+import CodingPractice from "@/pages/CodingPractice";
 import { Analytics } from "@vercel/analytics/react"
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
                   <Route path="/ai/chat" element={<AIChatPage />} />
                     <Route path="/ai/doubt-solving" element={<AIDoubtSolving />} />
                     <Route path="/ai/roadmap-generation" element={<AIRoadmapGeneration />} />
+                    <Route path="/practice" element={<CodingPractice />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignIn initialMode="register" />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
