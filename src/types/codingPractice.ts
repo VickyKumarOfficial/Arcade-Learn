@@ -2,6 +2,8 @@
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
+export type SupportedLanguage = 'javascript' | 'python';
+
 export type ProblemCategory = 
   | 'Arrays'
   | 'Strings'
@@ -32,6 +34,18 @@ export interface Hint {
   xpCost: number;
 }
 
+// Language-specific code for a problem
+export interface LanguageCode {
+  javascript: {
+    starterCode: string;
+    functionName: string;
+  };
+  python: {
+    starterCode: string;
+    functionName: string;
+  };
+}
+
 export interface Problem {
   id: string;
   title: string;
@@ -43,14 +57,16 @@ export interface Problem {
     explanation?: string;
   }[];
   constraints: string[];
-  functionSignature: string;
-  starterCode: string;
+  functionSignature: string; // For display (language agnostic)
+  starterCode: string; // Default JS starter code (for backward compat)
+  languageCode?: LanguageCode; // Multi-language support
   testCases: TestCase[];
   hints: Hint[];
   tags: ProblemCategory[];
   relatedRoadmapIds?: string[];
   timeLimit: number; // in milliseconds
   memoryLimit?: number; // in MB (if applicable)
+  supportedLanguages?: SupportedLanguage[]; // Which languages are supported
 }
 
 export interface ExecutionResult {
@@ -79,7 +95,7 @@ export interface Submission {
   odingProblemId: string;
   odingUserId: string;
   code: string;
-  language: 'javascript' | 'python';
+  language: SupportedLanguage;
   status: 'pending' | 'running' | 'passed' | 'failed' | 'error' | 'timeout';
   result?: SubmissionResult;
   xpEarned: number;

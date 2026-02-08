@@ -2,7 +2,8 @@ import {
   TestCase, 
   ExecutionResult, 
   SubmissionResult, 
-  CodeValidationResult 
+  CodeValidationResult,
+  SupportedLanguage
 } from '@/types/codingPractice';
 
 // Worker pool management
@@ -10,23 +11,38 @@ interface WorkerInstance {
   worker: Worker;
   busy: boolean;
   id: number;
+  language: SupportedLanguage;
+}
+
+// Python worker state
+interface PythonWorkerState {
+  worker: Worker | null;
+  ready: boolean;
+  initializing: boolean;
+  initPromise: Promise<void> | null;
 }
 
 class CodeExecutionEngine {
-  private workerPool: WorkerInstance[] = [];
-  private maxWorkers = 2;
+  private jsWorkerPool: WorkerInstance[] = [];
+  private pythonState: PythonWorkerState = {
+    worker: null,
+    ready: false,
+    initializing: false,
+    initPromise: null,
+  };
+  private maxJsWorkers = 2;
   private workerIdCounter = 0;
   private useWorkers = true;
   
   constructor() {
-    // Try to initialize worker pool
-    this.initializeWorkerPool();
+    // Try to initialize JS worker pool
+    this.initializeJsWorkerPool();
   }
   
-  private initializeWorkerPool() {
+  private initializeJsWorkerPool() {
     try {
-      for (let i = 0; i < this.maxWorkers; i++) {
-        this.addWorker();
+      for (let i = 0; i < this.maxJsWorkers; i++) {
+        this.addJsWorker();
       }
     } catch (error) {
       console.warn('Web Workers not available, falling back to direct execution');
@@ -34,7 +50,7 @@ class CodeExecutionEngine {
     }
   }
   
-  private addWorker(): WorkerInstance | null {
+  private addJsWorker(): WorkerInstance | null {
     try {
       const worker = new Worker(
         new URL('../workers/codeExecutor.worker.ts', import.meta.url),
@@ -44,27 +60,74 @@ class CodeExecutionEngine {
       const instance: WorkerInstance = {
         worker,
         busy: false,
-        id: this.workerIdCounter++
+        id: this.workerIdCounter++,
+        language: 'javascript'
       };
       
-      this.workerPool.push(instance);
+      this.jsWorkerPool.push(instance);
       return instance;
     } catch (error) {
-      console.error('Failed to create worker:', error);
+      console.error('Failed to create JS worker:', error);
       this.useWorkers = false;
       return null;
     }
   }
   
-  private getAvailableWorker(): WorkerInstance | null {
+  // Initialize Python worker (lazy loading)
+  async initPythonWorker(): Promise<void> {
+    if (this.pythonState.ready) return;
+    if (this.pythonState.initPromise) return this.pythonState.initPromise;
+    
+    this.pythonState.initializing = true;
+    
+    this.pythonState.initPromise = new Promise((resolve, reject) => {
+      try {
+        const worker = new Worker(
+          new URL('../workers/pythonExecutor.worker.ts', import.meta.url),
+          { type: 'module' }
+        );
+        
+        const timeout = setTimeout(() => {
+          reject(new Error('Python initialization timeout'));
+        }, 60000); // 60 second timeout for Pyodide load
+        
+        worker.onmessage = (event) => {
+          const data = event.data;
+          if (data.type === 'ready') {
+            clearTimeout(timeout);
+            this.pythonState.worker = worker;
+            this.pythonState.ready = true;
+            this.pythonState.initializing = false;
+            resolve();
+          } else if (data.type === 'error' && this.pythonState.initializing) {
+            clearTimeout(timeout);
+            reject(new Error(data.error || 'Failed to initialize Python'));
+          }
+        };
+        
+        worker.onerror = (error) => {
+          clearTimeout(timeout);
+          reject(new Error(`Python worker error: ${error.message}`));
+        };
+        
+        // Trigger initialization
+        worker.postMessage({ type: 'init' });
+      } catch (error: any) {
+        this.pythonState.initializing = false;
+        reject(error);
+      }
+    });
+    
+    return this.pythonState.initPromise;
+  }
+  
+  private getAvailableJsWorker(): WorkerInstance | null {
     if (!this.useWorkers) return null;
     
-    // Find an available worker
-    let instance = this.workerPool.find(w => !w.busy);
+    let instance = this.jsWorkerPool.find(w => !w.busy);
     
-    // If no available worker and we can create more, create one
-    if (!instance && this.workerPool.length < this.maxWorkers) {
-      instance = this.addWorker();
+    if (!instance && this.jsWorkerPool.length < this.maxJsWorkers) {
+      instance = this.addJsWorker();
     }
     
     return instance || null;
@@ -78,9 +141,22 @@ class CodeExecutionEngine {
     code: string,
     functionName: string,
     testCase: TestCase,
+    timeLimit: number = 5000,
+    language: SupportedLanguage = 'javascript'
+  ): Promise<ExecutionResult> {
+    if (language === 'python') {
+      return this.executePythonTestCase(code, functionName, testCase, timeLimit);
+    }
+    return this.executeJsTestCase(code, functionName, testCase, timeLimit);
+  }
+  
+  private async executeJsTestCase(
+    code: string,
+    functionName: string,
+    testCase: TestCase,
     timeLimit: number = 5000
   ): Promise<ExecutionResult> {
-    const instance = this.getAvailableWorker();
+    const instance = this.getAvailableJsWorker();
     
     // Fallback to direct execution if no workers available
     if (!instance) {
@@ -112,12 +188,12 @@ class CodeExecutionEngine {
       timeoutId = setTimeout(() => {
         // Terminate and replace the worker on timeout
         instance.worker.terminate();
-        const index = this.workerPool.indexOf(instance);
+        const index = this.jsWorkerPool.indexOf(instance);
         if (index > -1) {
-          this.workerPool.splice(index, 1);
+          this.jsWorkerPool.splice(index, 1);
         }
         // Add a fresh worker
-        this.addWorker();
+        this.addJsWorker();
         
         resolveOnce({
           success: false,
@@ -186,6 +262,100 @@ class CodeExecutionEngine {
     });
   }
   
+  private async executePythonTestCase(
+    code: string,
+    functionName: string,
+    testCase: TestCase,
+    timeLimit: number = 10000 // Python is slower, give more time
+  ): Promise<ExecutionResult> {
+    const startTime = performance.now();
+    
+    try {
+      // Ensure Python worker is ready
+      await this.initPythonWorker();
+      
+      if (!this.pythonState.worker || !this.pythonState.ready) {
+        return {
+          success: false,
+          passed: false,
+          output: '',
+          expectedOutput: testCase.expectedOutput,
+          error: 'Python environment not available',
+          executionTime: performance.now() - startTime,
+          testCaseId: testCase.id,
+        };
+      }
+      
+      return new Promise<ExecutionResult>((resolve) => {
+        let timeoutId: ReturnType<typeof setTimeout>;
+        let resolved = false;
+        
+        const resolveOnce = (result: ExecutionResult) => {
+          if (resolved) return;
+          resolved = true;
+          if (timeoutId) clearTimeout(timeoutId);
+          resolve(result);
+        };
+        
+        // Set timeout
+        timeoutId = setTimeout(() => {
+          resolveOnce({
+            success: false,
+            passed: false,
+            output: '',
+            expectedOutput: testCase.expectedOutput,
+            error: `Time Limit Exceeded (${timeLimit}ms)`,
+            executionTime: timeLimit,
+            testCaseId: testCase.id,
+          });
+        }, timeLimit + 1000);
+        
+        // Handle response
+        const handler = (event: MessageEvent) => {
+          const data = event.data;
+          if (data.type === 'result' && data.testCaseId === testCase.id) {
+            this.pythonState.worker!.removeEventListener('message', handler);
+            resolveOnce({
+              success: data.success,
+              passed: data.passed,
+              output: data.output,
+              expectedOutput: testCase.expectedOutput,
+              error: data.error,
+              executionTime: data.executionTime || (performance.now() - startTime),
+              testCaseId: testCase.id,
+              consoleOutput: data.consoleOutput,
+            });
+          }
+        };
+        
+        this.pythonState.worker!.addEventListener('message', handler);
+        
+        // Send code to Python worker
+        this.pythonState.worker!.postMessage({
+          type: 'execute',
+          code,
+          functionName,
+          testCase: {
+            id: testCase.id,
+            input: testCase.input,
+            expectedOutput: testCase.expectedOutput,
+          },
+          timeLimit,
+        });
+      });
+    } catch (error: any) {
+      return {
+        success: false,
+        passed: false,
+        output: '',
+        expectedOutput: testCase.expectedOutput,
+        error: error.message || 'Python execution error',
+        executionTime: performance.now() - startTime,
+        testCaseId: testCase.id,
+      };
+    }
+  }
+  
   // Fallback direct execution (less isolated, but works if workers fail)
   private async executeDirectly(
     code: string,
@@ -218,6 +388,8 @@ class CodeExecutionEngine {
       const sandboxKeys = Object.keys(sandbox);
       const sandboxValues = Object.values(sandbox);
       
+      // Note: Don't try to redefine 'eval' or 'arguments' - causes strict mode errors
+      // They are blocked by static analysis instead
       const wrappedCode = `
         "use strict";
         ${code}
@@ -277,7 +449,8 @@ class CodeExecutionEngine {
     functionName: string,
     testCases: TestCase[],
     timeLimit: number = 5000,
-    runHiddenTests: boolean = false
+    runHiddenTests: boolean = false,
+    language: SupportedLanguage = 'javascript'
   ): Promise<SubmissionResult> {
     const testsToRun = runHiddenTests 
       ? testCases 
@@ -288,7 +461,7 @@ class CodeExecutionEngine {
     
     // Run tests sequentially to avoid overwhelming the browser
     for (const testCase of testsToRun) {
-      const result = await this.executeTestCase(code, functionName, testCase, timeLimit);
+      const result = await this.executeTestCase(code, functionName, testCase, timeLimit, language);
       results.push(result);
       totalExecutionTime += result.executionTime;
     }
@@ -308,10 +481,22 @@ class CodeExecutionEngine {
   
   // Clean up workers
   terminate() {
-    for (const instance of this.workerPool) {
+    // Terminate JS workers
+    for (const instance of this.jsWorkerPool) {
       instance.worker.terminate();
     }
-    this.workerPool = [];
+    this.jsWorkerPool = [];
+    
+    // Terminate Python worker
+    if (this.pythonState.worker) {
+      this.pythonState.worker.terminate();
+      this.pythonState = {
+        worker: null,
+        ready: false,
+        initializing: false,
+        initPromise: null,
+      };
+    }
   }
 }
 
@@ -506,11 +691,11 @@ function createSandbox() {
     Set,
     WeakMap,
     WeakSet,
-    // Date with fixed time
+    // Date with fixed time (deterministic for testing)
     Date: class SafeDate extends Date {
-      constructor(...args: any[]) {
-        if (args.length === 0) super(1704067200000);
-        else super(...args);
+      constructor(value?: number | string | Date) {
+        if (value === undefined) super(1704067200000);
+        else super(value as number | string);
       }
       static now() { return 1704067200000; }
     },
@@ -567,9 +752,10 @@ export const runAllTestCases = async (
   functionName: string,
   testCases: TestCase[],
   timeLimit: number = 5000,
-  runHiddenTests: boolean = false
+  runHiddenTests: boolean = false,
+  language: SupportedLanguage = 'javascript'
 ): Promise<SubmissionResult> => {
-  return getExecutionEngine().runAllTestCases(code, functionName, testCases, timeLimit, runHiddenTests);
+  return getExecutionEngine().runAllTestCases(code, functionName, testCases, timeLimit, runHiddenTests, language);
 };
 
 // Extract function name from code

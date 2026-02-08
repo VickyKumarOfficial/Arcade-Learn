@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   ResizableHandle, 
@@ -22,7 +22,9 @@ import {
   Code2, 
   Trophy,
   Target,
-  BarChart3
+  BarChart3,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { CodingStats } from '@/types/codingPractice';
@@ -31,6 +33,8 @@ const CodingPractice: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [showProblemList, setShowProblemList] = useState(true);
   const [activeView, setActiveView] = useState<'practice' | 'stats'>('practice');
+  const [navbarVisible, setNavbarVisible] = useState(false);
+  const navbarRef = useRef<HTMLDivElement>(null);
   
   // Mock stats for now - will be replaced with real data from database
   const [codingStats] = useState<CodingStats>({
@@ -52,6 +56,9 @@ const CodingPractice: React.FC = () => {
     code,
     setCode,
     resetCode,
+    language,
+    setLanguage,
+    supportedLanguages,
     isRunning,
     submissionResult,
     runTests,
@@ -76,6 +83,25 @@ const CodingPractice: React.FC = () => {
     }
   }, [searchParams, selectProblemById, filteredProblems, currentProblem]);
 
+  // Click outside detection to hide navbar
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        navbarVisible &&
+        navbarRef.current &&
+        !navbarRef.current.contains(event.target as Node) &&
+        !(event.target as Element)?.closest('[data-navbar-toggle]')
+      ) {
+        setNavbarVisible(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [navbarVisible]);
+
   const handleSelectProblem = (problemId: string) => {
     selectProblemById(problemId);
     // Update URL without navigation
@@ -84,13 +110,58 @@ const CodingPractice: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      <Navigation />
+      {/* Backdrop blur overlay for navbar area only */}
+      {navbarVisible && (
+        <div 
+          className="fixed top-0 left-0 right-0 h-20 bg-black/20 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={() => setNavbarVisible(false)}
+        />
+      )}
       
-      <div className="flex-1 flex overflow-hidden">
-        {/* Problem List Sidebar - Desktop */}
-        {showProblemList && (
-          <div className="hidden lg:flex w-80 border-r flex-col">
-            <div className="flex items-center justify-between p-3 border-b">
+      <div ref={navbarRef}>
+        <Navigation 
+          externalVisibility={navbarVisible}
+          onVisibilityChange={setNavbarVisible}
+        />
+      </div>
+      
+      {/* Toggle Arrow Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="fixed top-2 left-1/2 transform -translate-x-1/2 z-[60] h-6 w-8 p-0 bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-background/90 transition-all duration-200"
+        onClick={() => setNavbarVisible(!navbarVisible)}
+        data-navbar-toggle
+        title={navbarVisible ? "Hide navigation" : "Show navigation"}
+      >
+        {navbarVisible ? (
+          <ChevronUp className="h-3 w-3" />
+        ) : (
+          <ChevronDown className="h-3 w-3" />
+        )}
+      </Button>
+      
+      {/* Spacer - smaller since navbar is hidden by default */}
+      <div className="shrink-0 h-2" />
+      
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Problem List Sidebar - 3D Sliding Overlay */}
+        <div className={`fixed left-0 z-30 transition-all duration-500 ease-out transform ${
+          showProblemList 
+            ? 'translate-x-0 opacity-100' 
+            : '-translate-x-full opacity-0 pointer-events-none'
+        }`}
+             style={{
+               top: '3.5rem', // Start after the spacer
+               bottom: '0',
+               width: '20rem'
+             }}>
+          <div className="h-full bg-background border-r shadow-2xl backdrop-blur-sm flex flex-col" 
+               style={{
+                 transform: showProblemList ? 'perspective(1000px) rotateY(0deg)' : 'perspective(1000px) rotateY(-10deg)',
+                 boxShadow: '10px 0 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+               }}>
+            <div className="flex items-center justify-between p-3 border-b bg-background/95 relative z-40 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Code2 className="w-5 h-5 text-primary" />
                 <h2 className="font-semibold">Problems</h2>
@@ -98,21 +169,24 @@ const CodingPractice: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 relative z-50 hover:bg-destructive/10 hover:text-destructive transition-colors"
                 onClick={() => setShowProblemList(false)}
+                title="Close problems sidebar"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <ProblemList
-              problems={filteredProblems}
-              selectedProblemId={currentProblem?.id || null}
-              onSelectProblem={handleSelectProblem}
-              filters={filters}
-              onFiltersChange={setFilters}
-            />
+            <div className="flex-1 min-h-0">
+              <ProblemList
+                problems={filteredProblems}
+                selectedProblemId={currentProblem?.id || null}
+                onSelectProblem={handleSelectProblem}
+                filters={filters}
+                onFiltersChange={setFilters}
+              />
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Mobile Problem List */}
         <Sheet>
@@ -146,13 +220,13 @@ const CodingPractice: React.FC = () => {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Bar */}
-          <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+          <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 relative z-10">
             <div className="flex items-center gap-3">
               {!showProblemList && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hidden lg:flex h-8"
+                  className="hidden lg:flex h-8 hover:bg-primary/10 transition-colors duration-200"
                   onClick={() => setShowProblemList(true)}
                 >
                   <List className="h-4 w-4 mr-2" />
@@ -235,6 +309,9 @@ const CodingPractice: React.FC = () => {
                     onSubmit={submitSolution}
                     onReset={resetCode}
                     isRunning={isRunning}
+                    language={language}
+                    onLanguageChange={setLanguage}
+                    supportedLanguages={supportedLanguages}
                   />
                 </ResizablePanel>
 

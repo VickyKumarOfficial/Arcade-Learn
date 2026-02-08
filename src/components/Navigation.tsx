@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, User, Settings, ChevronDown, Brain, Bot, Code2, Calendar, Users, FolderKanban } from "lucide-react";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useState, useEffect } from "react";
+import React from "react";
 import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const Navigation = () => {
+interface NavigationProps {
+  externalVisibility?: boolean;
+  onVisibilityChange?: (visible: boolean) => void;
+}
+
+const Navigation: React.FC<NavigationProps> = ({ 
+  externalVisibility, 
+  onVisibilityChange 
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
@@ -26,6 +35,11 @@ const Navigation = () => {
   const { isAuthenticated, user, logout } = useAuth();
 
   useEffect(() => {
+    // If external visibility is provided, don't use scroll-based visibility
+    if (externalVisibility !== undefined) {
+      return;
+    }
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
@@ -45,7 +59,7 @@ const Navigation = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, externalVisibility]);
 
   const navItems = [
     { label: 'Home', path: '/' },
@@ -106,9 +120,12 @@ const Navigation = () => {
     return `${firstName.charAt(0)}${lastName?.charAt(0) || ''}`.toUpperCase();
   };
 
+  // Use external visibility if provided, otherwise use internal state
+  const effectiveVisibility = externalVisibility !== undefined ? externalVisibility : isVisible;
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
-      isVisible ? 'translate-y-0' : '-translate-y-full'
+      effectiveVisibility ? 'translate-y-0' : '-translate-y-full'
     }`}>
       <div className="container mx-auto px-4 pt-4">
         <div className="flex items-center justify-between h-16">

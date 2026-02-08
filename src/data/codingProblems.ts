@@ -36,6 +36,22 @@ You can return the answer in any order.`,
   // Your code here
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function twoSum(nums, target) {
+  // Your code here
+  
+}`,
+        functionName: 'twoSum',
+      },
+      python: {
+        starterCode: `def two_sum(nums, target):
+    # Your code here
+    pass`,
+        functionName: 'two_sum',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -108,6 +124,22 @@ You must do this by modifying the input array **in-place** with O(1) extra memor
   // Modify s in-place
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function reverseString(s) {
+  // Modify s in-place
+  
+}`,
+        functionName: 'reverseString',
+      },
+      python: {
+        starterCode: `def reverse_string(s):
+    # Modify s in-place and return it
+    pass`,
+        functionName: 'reverse_string',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -176,6 +208,22 @@ You must do this by modifying the input array **in-place** with O(1) extra memor
   // Your code here
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function fizzBuzz(n) {
+  // Your code here
+  
+}`,
+        functionName: 'fizzBuzz',
+      },
+      python: {
+        starterCode: `def fizz_buzz(n):
+    # Your code here
+    pass`,
+        functionName: 'fizz_buzz',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -247,6 +295,22 @@ Given a string \`s\`, return \`true\` if it is a palindrome, or \`false\` otherw
   // Your code here
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function isPalindrome(s) {
+  // Your code here
+  
+}`,
+        functionName: 'isPalindrome',
+      },
+      python: {
+        starterCode: `def is_palindrome(s):
+    # Your code here
+    pass`,
+        functionName: 'is_palindrome',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -313,6 +377,22 @@ Given a string \`s\`, return \`true\` if it is a palindrome, or \`false\` otherw
   // Your code here
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function findMax(nums) {
+  // Your code here
+  
+}`,
+        functionName: 'findMax',
+      },
+      python: {
+        starterCode: `def find_max(nums):
+    # Your code here
+    pass`,
+        functionName: 'find_max',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -393,6 +473,22 @@ An input string is valid if:
   // Your code here
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function isValid(s) {
+  // Your code here
+  
+}`,
+        functionName: 'isValid',
+      },
+      python: {
+        starterCode: `def is_valid(s):
+    # Your code here
+    pass`,
+        functionName: 'is_valid',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -479,6 +575,22 @@ The final sorted array should not be returned by the function, but instead be st
   // Modify nums1 in-place
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function merge(nums1, m, nums2, n) {
+  // Modify nums1 in-place
+  
+}`,
+        functionName: 'merge',
+      },
+      python: {
+        starterCode: `def merge(nums1, m, nums2, n):
+    # Modify nums1 in-place and return it
+    pass`,
+        functionName: 'merge',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -541,6 +653,22 @@ You must write an algorithm with **O(log n)** runtime complexity.`,
   // Your code here
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function search(nums, target) {
+  // Your code here
+  
+}`,
+        functionName: 'search',
+      },
+      python: {
+        starterCode: `def search(nums, target):
+    # Your code here
+    pass`,
+        functionName: 'search',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -615,6 +743,22 @@ Given \`n\`, calculate \`F(n)\`.`,
   // Your code here
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function fib(n) {
+  // Your code here
+  
+}`,
+        functionName: 'fib',
+      },
+      python: {
+        starterCode: `def fib(n):
+    # Your code here
+    pass`,
+        functionName: 'fib',
+      },
+    },
     testCases: [
       {
         id: 'tc1',
@@ -692,6 +836,22 @@ Given \`n\`, calculate \`F(n)\`.`,
   // Your code here
   
 }`,
+    supportedLanguages: ['javascript', 'python'],
+    languageCode: {
+      javascript: {
+        starterCode: `function lengthOfLongestSubstring(s) {
+  // Your code here
+  
+}`,
+        functionName: 'lengthOfLongestSubstring',
+      },
+      python: {
+        starterCode: `def length_of_longest_substring(s):
+    # Your code here
+    pass`,
+        functionName: 'length_of_longest_substring',
+      },
+    },
     testCases: [
       {
         id: 'tc1',

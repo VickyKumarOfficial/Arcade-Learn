@@ -84,40 +84,46 @@ export const ExecutionPanel: React.FC<ExecutionPanelProps> = ({
 }) => {
   if (isRunning) {
     return (
-      <div className="flex items-center justify-center h-full p-8">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Running tests...</p>
+      <ScrollArea className="flex-1">
+        <div className="flex items-center justify-center h-full p-8">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="text-sm text-muted-foreground">Running tests...</p>
+          </div>
         </div>
-      </div>
+      </ScrollArea>  
     );
   }
 
   if (error) {
     return (
-      <div className="p-4">
-        <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
-          <div>
-            <p className="font-medium text-red-500">Error</p>
-            <p className="text-sm text-red-500/80 mt-1">{error}</p>
+      <ScrollArea className="flex-1">
+        <div className="p-4">
+          <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
+            <div>
+              <p className="font-medium text-red-500">Error</p>
+              <p className="text-sm text-red-500/80 mt-1">{error}</p>
+            </div>
           </div>
         </div>
-      </div>
+      </ScrollArea>
     );
   }
 
   if (!result) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <Terminal className="w-12 h-12 text-muted-foreground mb-3" />
-        <p className="text-muted-foreground">
-          Run your code to see results here
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Press <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">Ctrl + Enter</kbd> to run
-        </p>
-      </div>
+      <ScrollArea className="flex-1">
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+          <Terminal className="w-12 h-12 text-muted-foreground mb-3" />
+          <p className="text-muted-foreground">
+            Run your code to see results here
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Press <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">Ctrl + Enter</kbd> to run
+          </p>
+        </div>
+      </ScrollArea>
     );
   }
 
@@ -136,41 +142,41 @@ export const ExecutionPanel: React.FC<ExecutionPanelProps> = ({
         </TabsList>
       </div>
 
-      <TabsContent value="results" className="flex-1 m-0 p-0">
-        <div className="p-4">
-          {/* Summary */}
-          <div className={`flex items-center justify-between p-3 rounded-lg mb-4 ${
-            result.overallPassed 
-              ? 'bg-green-500/10 border border-green-500/20' 
-              : 'bg-red-500/10 border border-red-500/20'
-          }`}>
-            <div className="flex items-center gap-3">
-              {result.overallPassed ? (
-                <CheckCircle2 className="w-6 h-6 text-green-500" />
-              ) : (
-                <XCircle className="w-6 h-6 text-red-500" />
-              )}
-              <div>
-                <p className={`font-semibold ${
-                  result.overallPassed ? 'text-green-500' : 'text-red-500'
-                }`}>
-                  {result.overallPassed ? 'All Tests Passed!' : 'Some Tests Failed'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {result.passedTests}/{result.totalTests} test cases passed
-                </p>
+      <TabsContent value="results" className="flex-1 m-0 p-0 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-4">
+            {/* Summary */}
+            <div className={`flex items-center justify-between p-3 rounded-lg mb-4 ${
+              result.overallPassed 
+                ? 'bg-green-500/10 border border-green-500/20' 
+                : 'bg-red-500/10 border border-red-500/20'
+            }`}>
+              <div className="flex items-center gap-3">
+                {result.overallPassed ? (
+                  <CheckCircle2 className="w-6 h-6 text-green-500" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-red-500" />
+                )}
+                <div>
+                  <p className={`font-semibold ${
+                    result.overallPassed ? 'text-green-500' : 'text-red-500'
+                  }`}>
+                    {result.overallPassed ? 'All Tests Passed!' : 'Some Tests Failed'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {result.passedTests}/{result.totalTests} test cases passed
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  {formatExecutionTime(result.totalExecutionTime)}
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                {formatExecutionTime(result.totalExecutionTime)}
-              </div>
-            </div>
-          </div>
 
-          {/* Individual Results */}
-          <ScrollArea className="h-[calc(100%-80px)]">
+            {/* Individual Results */}
             <div className="space-y-3 pr-4">
               {result.results.map((testResult, index) => (
                 <TestCaseResult 
@@ -180,8 +186,8 @@ export const ExecutionPanel: React.FC<ExecutionPanelProps> = ({
                 />
               ))}
             </div>
-          </ScrollArea>
-        </div>
+          </div>
+        </ScrollArea>
       </TabsContent>
 
       <TabsContent value="console" className="flex-1 m-0 p-4 overflow-hidden">

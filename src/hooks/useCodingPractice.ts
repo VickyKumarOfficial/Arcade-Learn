@@ -4,7 +4,8 @@ import {
   SubmissionResult, 
   CodingStats, 
   ProblemFilters,
-  Difficulty 
+  Difficulty,
+  SupportedLanguage
 } from '@/types/codingPractice';
 import { codingProblems, getProblemById } from '@/data/codingProblems';
 import { runAllTestCases, extractFunctionName } from '@/services/codeExecutionService';
@@ -19,6 +20,11 @@ interface UseCodingPracticeReturn {
   code: string;
   setCode: (code: string) => void;
   resetCode: () => void;
+  
+  // Language state
+  language: SupportedLanguage;
+  setLanguage: (language: SupportedLanguage) => void;
+  supportedLanguages: SupportedLanguage[];
   
   // Execution state
   isRunning: boolean;
@@ -63,6 +69,9 @@ export const useCodingPractice = (): UseCodingPracticeReturn => {
   const [currentProblem, setCurrentProblem] = useState<Problem | null>(null);
   const [code, setCode] = useState<string>('');
   
+  // Language state
+  const [language, setLanguageState] = useState<SupportedLanguage>('javascript');
+  
   // Execution state
   const [isRunning, setIsRunning] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
@@ -78,28 +87,78 @@ export const useCodingPractice = (): UseCodingPracticeReturn => {
   
   // Stats (will be fetched from backend in future)
   const [stats] = useState<CodingStats>(defaultStats);
+  
+  // Get supported languages for current problem
+  const supportedLanguages = useMemo<SupportedLanguage[]>(() => {
+    if (currentProblem?.supportedLanguages) {
+      return currentProblem.supportedLanguages;
+    }
+    // Fallback: check languageCode keys or just JavaScript
+    if (currentProblem?.languageCode) {
+      return Object.keys(currentProblem.languageCode) as SupportedLanguage[];
+    }
+    return ['javascript'];
+  }, [currentProblem]);
+  
+  // Helper to get starter code for a language
+  const getStarterCode = useCallback((problem: Problem, lang: SupportedLanguage): string => {
+    if (problem.languageCode && problem.languageCode[lang]) {
+      return problem.languageCode[lang].starterCode;
+    }
+    // Fallback to default starterCode for JavaScript
+    if (lang === 'javascript') {
+      return problem.starterCode;
+    }
+    return '# Language not supported yet';
+  }, []);
+  
+  // Helper to get function name for a language
+  const getFunctionName = useCallback((problem: Problem, lang: SupportedLanguage): string => {
+    if (problem.languageCode && problem.languageCode[lang]) {
+      return problem.languageCode[lang].functionName;
+    }
+    // Fallback to extracting from signature
+    const signatureMatch = problem.functionSignature.match(/function\s+(\w+)/);
+    return signatureMatch ? signatureMatch[1] : 'solution';
+  }, []);
+  
+  // Change language and update code
+  const setLanguage = useCallback((newLanguage: SupportedLanguage) => {
+    if (!currentProblem) return;
+    if (!supportedLanguages.includes(newLanguage)) return;
+    
+    setLanguageState(newLanguage);
+    setCode(getStarterCode(currentProblem, newLanguage));
+    setSubmissionResult(null);
+  }, [currentProblem, supportedLanguages, getStarterCode]);
 
   // Select problem by ID
   const selectProblemById = useCallback((id: string) => {
     const problem = getProblemById(id);
     if (problem) {
       setCurrentProblem(problem);
-      setCode(problem.starterCode);
+      // Determine which language to use
+      const availableLanguages = problem.supportedLanguages || 
+        (problem.languageCode ? Object.keys(problem.languageCode) as SupportedLanguage[] : ['javascript']);
+      // Use current language if supported, otherwise default to first available
+      const langToUse = availableLanguages.includes(language) ? language : availableLanguages[0];
+      setLanguageState(langToUse);
+      setCode(getStarterCode(problem, langToUse));
       setViewedHints([]);
       setSubmissionResult(null);
       setError(null);
     } else {
       setError(`Problem with ID "${id}" not found`);
     }
-  }, []);
+  }, [language, getStarterCode]);
 
   // Reset code to starter code
   const resetCode = useCallback(() => {
     if (currentProblem) {
-      setCode(currentProblem.starterCode);
+      setCode(getStarterCode(currentProblem, language));
       setSubmissionResult(null);
     }
-  }, [currentProblem]);
+  }, [currentProblem, language, getStarterCode]);
 
   // Run tests (sample tests only)
   const runTests = useCallback(async (runHidden: boolean = false) => {
@@ -113,9 +172,8 @@ export const useCodingPractice = (): UseCodingPracticeReturn => {
     setSubmissionResult(null);
 
     try {
-      // Extract function name from the problem signature
-      const signatureMatch = currentProblem.functionSignature.match(/function\s+(\w+)/);
-      const functionName = signatureMatch ? signatureMatch[1] : extractFunctionName(code);
+      // Get the function name for the current language
+      const functionName = getFunctionName(currentProblem, language);
 
       if (!functionName) {
         setError('Could not determine function name');
@@ -128,7 +186,8 @@ export const useCodingPractice = (): UseCodingPracticeReturn => {
         functionName,
         currentProblem.testCases,
         currentProblem.timeLimit,
-        runHidden
+        runHidden,
+        language
       );
 
       setSubmissionResult(result);
@@ -137,7 +196,7 @@ export const useCodingPractice = (): UseCodingPracticeReturn => {
     } finally {
       setIsRunning(false);
     }
-  }, [currentProblem, code]);
+  }, [currentProblem, code, language, getFunctionName]);
 
   // Submit solution (runs all tests including hidden)
   const submitSolution = useCallback(async () => {
@@ -208,6 +267,11 @@ export const useCodingPractice = (): UseCodingPracticeReturn => {
     code,
     setCode,
     resetCode,
+    
+    // Language state
+    language,
+    setLanguage,
+    supportedLanguages,
     
     // Execution state
     isRunning,

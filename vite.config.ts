@@ -21,12 +21,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ["three", "three-globe", "@react-three/fiber", "@react-three/drei"],
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+          globe: ['three', 'three-globe', '@react-three/fiber', '@react-three/drei'],
         },
       },
     },

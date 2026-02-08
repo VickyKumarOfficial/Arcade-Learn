@@ -2,12 +2,14 @@ import React, { useRef } from 'react';
 import Editor, { OnMount, OnChange } from '@monaco-editor/react';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   Play, 
   RotateCcw, 
   Send, 
-  Settings,
-  Loader2 
+  Loader2,
+  ZoomIn,
+  ZoomOut,
+  ChevronDown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -17,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SupportedLanguage } from '@/types/codingPractice';
 
 interface CodeEditorProps {
   code: string;
@@ -25,8 +28,15 @@ interface CodeEditorProps {
   onSubmit: () => void;
   onReset: () => void;
   isRunning: boolean;
-  language?: string;
+  language?: SupportedLanguage;
+  onLanguageChange?: (language: SupportedLanguage) => void;
+  supportedLanguages?: SupportedLanguage[];
 }
+
+const LANGUAGE_INFO: Record<SupportedLanguage, { label: string; monacoLang: string }> = {
+  javascript: { label: 'JavaScript', monacoLang: 'javascript' },
+  python: { label: 'Python', monacoLang: 'python' },
+};
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   code,
@@ -36,6 +46,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onReset,
   isRunning,
   language = 'javascript',
+  onLanguageChange,
+  supportedLanguages = ['javascript'],
 }) => {
   const { isDarkMode } = useDarkMode();
   const editorRef = useRef<any>(null);
@@ -79,35 +91,68 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Editor Toolbar */}
-      <div className="flex items-center justify-between p-2 border-b bg-background/95">
+      <div className="flex items-center justify-between p-2 border-b bg-background/95 relative z-10">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">
-            JavaScript
-          </span>
+          {/* Language Selector */}
+          {supportedLanguages.length > 1 && onLanguageChange ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 gap-1">
+                  <span className="text-sm font-medium">
+                    {LANGUAGE_INFO[language]?.label || language}
+                  </span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>Language</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {supportedLanguages.map((lang) => (
+                  <DropdownMenuItem
+                    key={lang}
+                    onClick={() => onLanguageChange(lang)}
+                    className={language === lang ? 'bg-accent' : ''}
+                  >
+                    {LANGUAGE_INFO[lang]?.label || lang}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <span className="text-sm font-medium text-muted-foreground">
+              {LANGUAGE_INFO[language]?.label || language}
+            </span>
+          )}
         </div>
         
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Editor Settings</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => changeFontSize(2)}>
-                Increase Font Size
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => changeFontSize(-2)}>
-                Decrease Font Size
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-xs text-muted-foreground">
-                Font Size: {fontSize}px
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex items-center gap-3">
+          {/* Font Controls Group */}
+          <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => changeFontSize(-2)}
+              disabled={fontSize <= 10}
+              className="h-6 w-6 p-0"
+              title={`Decrease font size (${fontSize}px)`}
+            >
+              <ZoomOut className="h-3 w-3" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => changeFontSize(2)}
+              disabled={fontSize >= 24}
+              className="h-6 w-6 p-0"
+              title={`Increase font size (${fontSize}px)`}
+            >
+              <ZoomIn className="h-3 w-3" />
+            </Button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
 
           <Button
             variant="ghost"
@@ -149,6 +194,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             )}
             Submit
           </Button>
+          </div>
         </div>
       </div>
 
