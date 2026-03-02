@@ -122,7 +122,7 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
 
         // Generate content using the new SDK
         const response = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash-exp',
+          model: 'gemini-2.0-flash-lite',
           contents: prompt,
           config: {
             temperature: 0.7,
@@ -159,8 +159,8 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
         // Handle specific error types
         let errorMessage = 'Failed to get AI response. Please try again.';
         
-        if (error?.message?.includes('rate limit') || error?.message?.includes('quota')) {
-          errorMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
+        if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota') || error?.message?.includes('rate limit')) {
+          errorMessage = 'API quota exceeded. Please wait a few minutes and try again, or check your Google AI Studio quota limits.';
         } else if (error?.message?.includes('API key') || error?.message?.includes('401') || error?.message?.includes('Unauthorized') || error?.message?.includes('API_KEY_INVALID')) {
           errorMessage = 'Invalid API key. Please check your configuration.';
         } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
@@ -178,8 +178,8 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
       // Handle specific error types
       let errorMessage = 'Failed to get AI response. Please try again.';
       
-      if (error?.message?.includes('rate limit') || error?.message?.includes('quota')) {
-        errorMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
+      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota') || error?.message?.includes('rate limit')) {
+        errorMessage = 'API quota exceeded. Please wait a few minutes and try again.';
       } else if (error?.message?.includes('API key')) {
         errorMessage = 'Invalid API key. Please check your configuration.';
       } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
@@ -272,16 +272,10 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
   }
 
   /**
-   * Test if AI service is working
+   * Test if AI service is working (checks key config only, no real API call)
    */
   async testConnection(): Promise<boolean> {
-    try {
-      const response = await this.getSimpleResponse('Say "Hello, ArcadeLearn!" to test the connection.');
-      return response.success;
-    } catch (error) {
-      console.error('AI service test failed:', error);
-      return false;
-    }
+    return !!import.meta.env.VITE_GOOGLE_CLOUD_API_KEY;
   }
 
   /**

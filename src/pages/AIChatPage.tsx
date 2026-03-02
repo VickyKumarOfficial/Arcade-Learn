@@ -68,7 +68,7 @@ const AIChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Test AI connection on mount
+  // Test AI connection on mount (only once)
   useEffect(() => {
     const testAIConnection = async () => {
       try {
@@ -80,10 +80,8 @@ const AIChatPage = () => {
       }
     };
 
-    if (isAuthenticated) {
-      testAIConnection();
-    }
-  }, [isAuthenticated]);
+    testAIConnection();
+  }, []);
 
   // Load user chats on component mount
   useEffect(() => {
