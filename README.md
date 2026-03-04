@@ -304,7 +304,145 @@ npm run dev
 
 ---
 
-## 📸 **Screenshots**
+## � **Project Structure**
+
+```
+Arcade-Learn/
+├── public/                        # Static assets (favicon, banner, logos, screenshots)
+│   └── assets/
+├── src/                           # Frontend source code (React + TypeScript)
+│   ├── App.tsx                    # Root application component & route definitions
+│   ├── main.tsx                   # Entry point
+│   ├── index.css / App.css        # Global styles
+│   ├── assets/                    # Images and icons used in components
+│   ├── components/                # Reusable UI components
+│   │   ├── Navigation.tsx         # Top navigation bar
+│   │   ├── Hero.tsx               # Landing page hero section
+│   │   ├── Footer.tsx             # Site-wide footer
+│   │   ├── AuthGuard.tsx          # Route protection wrapper
+│   │   ├── Leaderboard.tsx        # Global leaderboard
+│   │   ├── ActivityHeatmap.tsx    # GitHub-style activity heatmap
+│   │   ├── AchievementPopup.tsx   # Achievement unlock toast
+│   │   ├── AchievementsGrid.tsx   # Achievements display grid
+│   │   ├── RoadmapCard.tsx        # Roadmap preview card
+│   │   ├── CareerCard.tsx         # Career path card
+│   │   ├── ResumeDisplay.tsx      # Resume preview component
+│   │   ├── ResumeDropzone.tsx     # Resume file upload dropzone
+│   │   ├── SurveyModal.tsx        # Onboarding survey modal
+│   │   └── ...                    # Other shared UI components
+│   ├── pages/                     # Page-level route components
+│   │   ├── Index.tsx              # Landing / home page
+│   │   ├── Dashboard.tsx          # User dashboard
+│   │   ├── Roadmaps.tsx           # Roadmaps listing page
+│   │   ├── RoadmapDetail.tsx      # Individual roadmap with progress
+│   │   ├── RoadmapDetailTest.tsx  # Roadmap component test/quiz page
+│   │   ├── Careers.tsx            # Career paths & salary insights
+│   │   ├── Jobs.tsx               # Live job listings
+│   │   ├── Profile.tsx            # User profile & stats
+│   │   ├── Resume.tsx             # Resume viewer
+│   │   ├── ResumeBuilder.tsx      # AI-powered resume builder
+│   │   ├── CodingPractice.tsx     # In-browser coding challenges
+│   │   ├── AIRoadmapGeneration.tsx# AI-generated custom roadmaps
+│   │   ├── AIChatPage.tsx         # AI chat assistant
+│   │   ├── AIDoubtSolving.tsx     # AI doubt-solving tool
+│   │   ├── SignIn.tsx             # Authentication page
+│   │   ├── AuthCallback.tsx       # OAuth callback handler
+│   │   ├── FAQs.tsx               # Frequently asked questions
+│   │   ├── ContactUs.tsx          # Contact form
+│   │   └── NotFound.tsx           # 404 page
+│   ├── contexts/                  # React context providers
+│   │   ├── AuthContext.tsx        # Authentication state
+│   │   ├── GameTestContext.tsx    # Gamification / test state
+│   │   ├── ResumeBuilderContext.tsx# Resume builder state
+│   │   └── SurveyContext.tsx      # Onboarding survey state
+│   ├── hooks/                     # Custom React hooks
+│   │   ├── useAuthWithTimeout.ts  # Auth with session timeout
+│   │   ├── useCareerRecommendations.ts # Career matching logic
+│   │   ├── useCodingPractice.ts   # Coding challenge state
+│   │   ├── use-dark-mode.tsx      # Dark mode toggle
+│   │   ├── use-mobile.tsx         # Mobile breakpoint detection
+│   │   └── use-toast.ts           # Toast notification hook
+│   ├── services/                  # Frontend API & service layer
+│   │   ├── aiService.ts           # Google Gemini AI calls
+│   │   ├── aiRoadmapService.ts    # AI roadmap generation
+│   │   ├── aiChatService.ts       # AI chat & doubt solving
+│   │   ├── quizService.ts         # Quiz & test logic
+│   │   ├── resumeService.ts       # Resume CRUD operations
+│   │   ├── resumeParser/          # Resume parsing utilities
+│   │   ├── userProgressService.ts # Progress tracking calls
+│   │   ├── activityLogger.ts      # Activity event logging
+│   │   ├── codeExecutionService.ts# Code runner integration
+│   │   └── emailService.ts        # Email notifications
+│   ├── lib/                       # Utilities & helpers
+│   │   ├── supabase.ts            # Supabase client setup
+│   │   ├── gamification.ts        # XP, badges, streak logic
+│   │   ├── ratingSystem.ts        # Star rating calculations
+│   │   ├── testSystem.ts          # Test scoring system
+│   │   ├── roadmapProgress.ts     # Progress persistence helpers
+│   │   ├── careerRecommendations.ts# Career match algorithms
+│   │   ├── authUtils.ts           # Auth helper functions
+│   │   └── utils.ts               # General utilities (cn, etc.)
+│   ├── data/                      # Static data & content definitions
+│   │   ├── roadmaps.ts            # All roadmap definitions
+│   │   ├── allNodeDetails.ts      # Node/topic detail content
+│   │   ├── careers.ts             # Career path data
+│   │   ├── codingProblems.ts      # Coding challenge problems
+│   │   ├── componentTests.ts      # Per-component quiz questions
+│   │   ├── componentMapping.ts    # Roadmap node mappings
+│   │   ├── faqs.ts                # FAQ content
+│   │   └── testimonials.ts        # Testimonial content
+│   ├── types/                     # TypeScript type definitions
+│   │   ├── index.ts               # Shared types
+│   │   ├── resume.ts              # Resume-related types
+│   │   └── codingPractice.ts      # Coding challenge types
+│   ├── config/
+│   │   └── env.ts                 # Environment variable access
+│   └── workers/                   # Web workers for code execution
+│       ├── codeExecutor.worker.ts # JS/TS code runner worker
+│       └── pythonExecutor.worker.ts# Python (Pyodide) runner worker
+├── backend/                       # Node.js/Express API server
+│   ├── server.js                  # Express server & API routes
+│   ├── fetch-adzuna-jobs.js       # Adzuna job listings fetcher
+│   ├── fetch-remoteok-jobs.js     # RemoteOK job listings fetcher
+│   ├── check-jobs.js              # Job data validation utility
+│   ├── package.json               # Backend dependencies
+│   ├── database/
+│   │   └── schema.sql             # Backend DB schema
+│   ├── lib/
+│   │   ├── db.js                  # Database connection pool
+│   │   ├── supabase.js            # Supabase admin client
+│   │   └── skillNormalizer.js     # Skill name normalization
+│   └── services/
+│       ├── analyticsService.js    # User analytics
+│       ├── certificateService.js  # Certificate generation
+│       ├── emailService.js        # Email sending (Nodemailer)
+│       ├── jobRecommendationService.js # Job matching logic
+│       ├── pdfService.js          # PDF generation
+│       ├── resumeService.js       # Resume processing
+│       ├── subscriptionService.js # Subscription management
+│       ├── surveyService.js       # Survey data handling
+│       ├── userActivityService.js # Activity tracking
+│       └── userProgressService.js # Progress persistence
+├── database/                      # SQL migration & schema files
+│   ├── activity_tracking_schema.sql
+│   ├── fix_activity_stats_function.sql
+│   ├── jobs_table_migration.sql
+│   ├── resume_schema.sql
+│   └── survey_schema.sql
+├── job-scraper/                   # Standalone job scraping service
+│   ├── backend/                   # Python scraper (requirements.txt + scraper/)
+│   └── frontend/                  # Scraper dashboard (Vite + React)
+├── index.html                     # HTML entry point
+├── vite.config.ts                 # Vite build configuration
+├── tailwind.config.ts             # Tailwind CSS configuration
+├── tsconfig.json                  # TypeScript configuration
+├── render.yaml                    # Render.com deployment config
+└── vercel.json                    # Vercel deployment config
+```
+
+---
+
+## �📸 **Screenshots**
 
 <details>
 <summary><strong>Click to view screenshots</strong></summary>
