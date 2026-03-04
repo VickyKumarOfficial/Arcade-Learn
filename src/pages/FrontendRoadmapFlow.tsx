@@ -368,7 +368,7 @@ export default function FrontendRoadmapFlow() {
   // DEV / TEST BYPASS: comment out the line below and uncomment the one after it.
   const completedSectionCount = MAIN_SECTION_IDS.filter(id => nodes.find(n => n.id === id)?.data?.completed === true).length;
   const isProjectsLocked = completedSectionCount < MAIN_SECTION_IDS.length; // [LOCK] comment to bypass
-//   const isProjectsLocked = false;                                          // [BYPASS] uncomment to bypass
+  // const isProjectsLocked = false;                                          // [BYPASS] uncomment to bypass
   // ── END LOCK GATE ─────────────────────────────────────────────────────────
 
   // Hide legend when Projects section enters the viewport
@@ -574,7 +574,7 @@ export default function FrontendRoadmapFlow() {
 
       {/* ── Projects Section ─────────────────────────────────────────────────── */}
       <div
-        ref={projectsRef}
+        ref={projectsRef} 
         className="w-full py-20 px-4"
         style={{
           background: 'linear-gradient(180deg, #09090b 0%, #0d1117 60%, #09090b 100%)',
