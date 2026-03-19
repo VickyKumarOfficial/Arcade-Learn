@@ -1,208 +1,300 @@
-import React, { Component, ErrorInfo, ReactNode, useState, useEffect, useRef, useMemo } from "react";
-import { World } from "@/components/ui/globe";
-import { motion } from "framer-motion";
+import React, { useEffect, useRef } from "react";
+import createGlobe from "cobe";
+import { cn } from "@/lib/utils";
 
-// Error boundary to prevent globe crashes from breaking the page
-class GlobeErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
+// Utility function to convert a hex color string to a normalized RGB array
+const hexToRgbNormalized = (hex: string): [number, number, number] => {
+  let r = 0, g = 0, b = 0;
+  const cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
+
+  if (cleanHex.length === 3) {
+    r = parseInt(cleanHex[0] + cleanHex[0], 16);
+    g = parseInt(cleanHex[1] + cleanHex[1], 16);
+    b = parseInt(cleanHex[2] + cleanHex[2], 16);
+  } else if (cleanHex.length === 6) {
+    r = parseInt(cleanHex.substring(0, 2), 16);
+    g = parseInt(cleanHex.substring(2, 4), 16);
+    b = parseInt(cleanHex.substring(4, 6), 16);
+  } else {
+    console.warn(`Invalid hex color: ${hex}. Falling back to black.`);
+    return [0, 0, 0];
   }
 
-  static getDerivedStateFromError(_: Error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Globe rendering error:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="text-center text-slate-500">
-            <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-              <span className="text-3xl">🌍</span>
-            </div>
-            <p className="text-sm">Globe visualization unavailable</p>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-const globeConfig = {
-  pointSize: 4,
-  globeColor: "#062056",
-  showAtmosphere: false,
-  atmosphereColor: "#000000",
-  atmosphereAltitude: 0,
-  emissive: "#062056",
-  emissiveIntensity: 0.1,
-  shininess: 0.9,
-  polygonColor: "rgba(255,255,255, 1)",
-  ambientLight: "#38bdf8",
-  directionalLeftLight: "#ffffff",
-  directionalTopLight: "#ffffff",
-  pointLight: "#ffffff",
-  arcTime: 1000,
-  arcLength: 0.9,
-  rings: 1,
-  maxRings: 3,
-  initialPosition: { lat: 22.3193, lng: 114.1694 },
-  autoRotate: true,
-  autoRotateSpeed: 0.5,
+  return [r / 255, g / 255, b / 255];
 };
 
-const colors = ["#06b6d4", "#3b82f6", "#6366f1"];
-
-// Pre-compute arc colors at module level (no random per-render)
-const pickColor = (index: number) => colors[index % colors.length];
-
-// Reduced from 39 arcs to 18 — visually identical at globe scale but halves geometry work
-const sampleArcs = [
-  { order: 1, startLat: -19.885592, startLng: -43.951191, endLat: -22.9068, endLng: -43.1729, arcAlt: 0.1, color: pickColor(0) },
-  { order: 1, startLat: 28.6139, startLng: 77.209, endLat: 3.139, endLng: 101.6869, arcAlt: 0.2, color: pickColor(1) },
-  { order: 2, startLat: 1.3521, startLng: 103.8198, endLat: 35.6762, endLng: 139.6503, arcAlt: 0.2, color: pickColor(2) },
-  { order: 2, startLat: 51.5072, startLng: -0.1276, endLat: 3.139, endLng: 101.6869, arcAlt: 0.3, color: pickColor(0) },
-  { order: 3, startLat: -33.8688, startLng: 151.2093, endLat: 22.3193, endLng: 114.1694, arcAlt: 0.3, color: pickColor(1) },
-  { order: 3, startLat: 21.3099, startLng: -157.8581, endLat: 40.7128, endLng: -74.006, arcAlt: 0.3, color: pickColor(2) },
-  { order: 4, startLat: 11.986597, startLng: 8.571831, endLat: -15.595412, endLng: -56.05918, arcAlt: 0.5, color: pickColor(0) },
-  { order: 4, startLat: -34.6037, startLng: -58.3816, endLat: 22.3193, endLng: 114.1694, arcAlt: 0.7, color: pickColor(1) },
-  { order: 5, startLat: 14.5995, startLng: 120.9842, endLat: 51.5072, endLng: -0.1276, arcAlt: 0.3, color: pickColor(2) },
-  { order: 5, startLat: 34.0522, startLng: -118.2437, endLat: 48.8566, endLng: -2.3522, arcAlt: 0.2, color: pickColor(0) },
-  { order: 6, startLat: -15.432563, startLng: 28.315853, endLat: 1.094136, endLng: -63.34546, arcAlt: 0.7, color: pickColor(1) },
-  { order: 6, startLat: 22.3193, startLng: 114.1694, endLat: 51.5072, endLng: -0.1276, arcAlt: 0.3, color: pickColor(2) },
-  { order: 7, startLat: 48.8566, startLng: -2.3522, endLat: 52.52, endLng: 13.405, arcAlt: 0.1, color: pickColor(0) },
-  { order: 8, startLat: 1.3521, startLng: 103.8198, endLat: 40.7128, endLng: -74.006, arcAlt: 0.5, color: pickColor(1) },
-  { order: 9, startLat: 22.3193, startLng: 114.1694, endLat: -22.9068, endLng: -43.1729, arcAlt: 0.7, color: pickColor(2) },
-  { order: 10, startLat: -22.9068, startLng: -43.1729, endLat: 28.6139, endLng: 77.209, arcAlt: 0.7, color: pickColor(0) },
-  { order: 11, startLat: 41.9028, startLng: 12.4964, endLat: 34.0522, endLng: -118.2437, arcAlt: 0.2, color: pickColor(1) },
-  { order: 12, startLat: 35.6762, startLng: 139.6503, endLat: 22.3193, endLng: 114.1694, arcAlt: 0.2, color: pickColor(2) },
-];
-
-// Check if WebGL is available (avoid loading Three.js on unsupported devices)
-function isWebGLAvailable(): boolean {
-  try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    return !!gl;
-  } catch {
-    return false;
-  }
+interface GlobeProps {
+  className?: string;
+  theta?: number;
+  dark?: number;
+  scale?: number;
+  diffuse?: number;
+  mapSamples?: number;
+  mapBrightness?: number;
+  baseColor?: [number, number, number] | string;
+  markerColor?: [number, number, number] | string;
+  glowColor?: [number, number, number] | string;
 }
 
-// Decorative static fallback when globe can't render
-const GlobeFallback: React.FC = () => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div className="relative w-64 h-64 sm:w-80 sm:h-80">
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-900/40 to-blue-600/20 border border-blue-500/20 animate-pulse" />
-      <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-blue-800/30 to-transparent" />
-      <div className="absolute inset-0 rounded-full" style={{
-        background: 'radial-gradient(circle at 30% 30%, rgba(59,130,246,0.15), transparent 60%)',
-      }} />
-    </div>
-  </div>
-);
+const Globe: React.FC<GlobeProps> = ({
+  className,
+  theta = 0.25,
+  dark = 1,
+  scale = 1.1,
+  diffuse = 1.2,
+  mapSamples = 40000,
+  mapBrightness = 6,
+  baseColor = "#3b82f6", // Blue-500 for land
+  markerColor = "#60a5fa", // Blue-400 for markers
+  glowColor = "#1e40af", // Blue-800 for glow
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const globeRef = useRef<ReturnType<typeof createGlobe> | null>(null);
 
-// Loading skeleton that matches globe dimensions
-const GlobeLoadingSkeleton: React.FC = () => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div className="relative w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96">
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-900/30 to-blue-700/10 border border-blue-500/10" />
-      <div className="absolute inset-0 rounded-full animate-spin-slow border-2 border-transparent border-t-blue-500/30" style={{ animationDuration: '3s' }} />
-      <div className="absolute inset-8 rounded-full animate-spin-slow border border-transparent border-t-blue-400/20" style={{ animationDuration: '5s', animationDirection: 'reverse' }} />
-    </div>
-  </div>
-);
+  // Refs for interactive rotation and dragging state
+  const phiRef = useRef(0);
+  const thetaRef = useRef(theta);
+  const isDragging = useRef(false);
+  const lastMouseX = useRef(0);
+  const lastMouseY = useRef(0);
+  const lastTimeRef = useRef(Date.now());
+  const autoRotateSpeed = 0.0002; // Speed per millisecond (time-based rotation)
 
-const HeroGlobe: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [shouldRender, setShouldRender] = useState(false);
-  const [hasWebGL, setHasWebGL] = useState(true);
-  
-  // Check WebGL support once on mount
   useEffect(() => {
-    setHasWebGL(isWebGLAvailable());
-  }, []);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  // Use IntersectionObserver to only mount globe when visible
-  // Also delay slightly to let the main content paint first
-  useEffect(() => {
-    if (!hasWebGL) return;
-    
-    const el = containerRef.current;
-    if (!el) return;
-    
-    // Use requestIdleCallback (or setTimeout fallback) to defer globe loading
-    // This ensures hero text/buttons render first
-    let timeoutId: number;
-    
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          const scheduleRender = window.requestIdleCallback || ((cb: () => void) => setTimeout(cb, 1));
-          timeoutId = scheduleRender(() => {
-            setShouldRender(true);
-          }) as unknown as number;
-          observer.disconnect();
+    let isMounted = true;
+
+    // Resolve color props
+    const resolvedBaseColor: [number, number, number] =
+      typeof baseColor === "string"
+        ? hexToRgbNormalized(baseColor)
+        : baseColor || [0.4, 0.6509, 1];
+
+    const resolvedMarkerColor: [number, number, number] =
+      typeof markerColor === "string"
+        ? hexToRgbNormalized(markerColor)
+        : markerColor || [1, 0, 0];
+
+    const resolvedGlowColor: [number, number, number] =
+      typeof glowColor === "string"
+        ? hexToRgbNormalized(glowColor)
+        : glowColor || [0.2745, 0.5765, 0.898];
+
+    const initGlobe = () => {
+      if (!isMounted || !canvas) return;
+      
+      // Destroy existing globe instance first
+      if (globeRef.current) {
+        try {
+          (globeRef.current as unknown as () => void)();
+        } catch (e) {
+          // Ignore cleanup errors
         }
-      },
-      { threshold: 0.1 }
-    );
-    
-    observer.observe(el);
-    
-    return () => {
-      observer.disconnect();
-      if (timeoutId) {
-        const cancel = window.cancelIdleCallback || clearTimeout;
-        cancel(timeoutId);
+        globeRef.current = null;
+      }
+
+      // Use larger canvas to accommodate glow effect (36rem = 576px)
+      // The globe sphere will be scaled down to fit nicely within this canvas
+      const fixedSize = 576; // 36rem in pixels - larger to prevent glow cutoff
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      const internalWidth = fixedSize * devicePixelRatio;
+      const internalHeight = fixedSize * devicePixelRatio;
+
+      canvas.width = internalWidth;
+      canvas.height = internalHeight;
+
+      try {
+        globeRef.current = createGlobe(canvas, {
+          devicePixelRatio: devicePixelRatio,
+          width: internalWidth,
+          height: internalHeight,
+          phi: phiRef.current,
+          theta: thetaRef.current,
+          dark: dark,
+          scale: scale,
+          diffuse: diffuse,
+          mapSamples: mapSamples,
+          mapBrightness: mapBrightness,
+          baseColor: resolvedBaseColor,
+          markerColor: resolvedMarkerColor,
+          glowColor: resolvedGlowColor,
+          opacity: 1,
+          offset: [0, 0],
+          markers: [],
+          onRender: (state: Record<string, number>) => {
+            // Time-based rotation for consistent speed regardless of frame rate
+            const now = Date.now();
+            const deltaTime = now - lastTimeRef.current;
+            lastTimeRef.current = now;
+
+            if (!isDragging.current) {
+              phiRef.current += autoRotateSpeed * deltaTime;
+            }
+            state.phi = phiRef.current;
+            state.theta = thetaRef.current;
+          },
+        });
+      } catch (e) {
+        console.error("Failed to initialize globe:", e);
       }
     };
-  }, [hasWebGL]);
 
-  // Memoize arc data since it never changes
-  const arcData = useMemo(() => sampleArcs, []);
+    // Mouse Interaction Handlers
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging.current = true;
+      lastMouseX.current = e.clientX;
+      lastMouseY.current = e.clientY;
+      canvas.style.cursor = "grabbing";
+    };
 
-  if (!hasWebGL) {
-    return <GlobeFallback />;
-  }
+    const onMouseMove = (e: MouseEvent) => {
+      if (isDragging.current) {
+        const deltaX = e.clientX - lastMouseX.current;
+        const deltaY = e.clientY - lastMouseY.current;
+        const rotationSpeed = 0.005;
+
+        phiRef.current += deltaX * rotationSpeed;
+        thetaRef.current = Math.max(
+          -Math.PI / 2,
+          Math.min(Math.PI / 2, thetaRef.current - deltaY * rotationSpeed)
+        );
+
+        lastMouseX.current = e.clientX;
+        lastMouseY.current = e.clientY;
+      }
+    };
+
+    const onMouseUp = () => {
+      isDragging.current = false;
+      canvas.style.cursor = "grab";
+    };
+
+    const onMouseLeave = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        canvas.style.cursor = "grab";
+      }
+    };
+
+    // Small delay to ensure canvas is properly mounted after HMR
+    const initTimeout = setTimeout(() => {
+      initGlobe();
+    }, 100);
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener("mouseleave", onMouseLeave);
+
+    const handleResize = () => {
+      initGlobe();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(initTimeout);
+      window.removeEventListener("resize", handleResize);
+      if (canvas) {
+        canvas.removeEventListener("mousedown", onMouseDown);
+        canvas.removeEventListener("mousemove", onMouseMove);
+        canvas.removeEventListener("mouseup", onMouseUp);
+        canvas.removeEventListener("mouseleave", onMouseLeave);
+      }
+      if (globeRef.current) {
+        try {
+          (globeRef.current as unknown as () => void)();
+        } catch (e) {
+          // Ignore cleanup errors during HMR
+        }
+        globeRef.current = null;
+      }
+    };
+  }, [theta, dark, scale, diffuse, mapSamples, mapBrightness, baseColor, markerColor, glowColor]);
 
   return (
-    <GlobeErrorBoundary>
-      <div ref={containerRef} className="relative w-full h-full flex items-center justify-center overflow-visible">
-        {/* Globe container - responsive sizing with circular mask, offset SE */}
-        <div 
-          className="w-[400px] sm:w-[450px] md:w-[520px] lg:w-[560px] xl:w-[650px] 2xl:w-[760px] 3xl:w-[880px] aspect-square relative translate-x-6 translate-y-6"
-          style={{
-            WebkitMaskImage: "radial-gradient(circle, black 40%, transparent 70%)",
-            maskImage: "radial-gradient(circle, black 40%, transparent 70%)",
-          }}
-        >
-          {shouldRender ? (
-            <motion.div
-              className="w-full h-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            >
-              <World data={arcData} globeConfig={globeConfig} />
-            </motion.div>
-          ) : (
-            <GlobeLoadingSkeleton />
-          )}
-        </div>
-      </div>
-    </GlobeErrorBoundary>
+    <div
+      className={cn(
+        "flex items-center justify-center z-[10]",
+        className
+      )}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        className="w-[20rem] sm:w-[24rem] md:w-[28rem] lg:w-[32rem] xl:w-[36rem] 2xl:w-[40rem] h-[20rem] sm:h-[24rem] md:h-[28rem] lg:h-[32rem] xl:h-[36rem] 2xl:h-[40rem]"
+        style={{
+          maxWidth: "100%",
+          maxHeight: "100%",
+          aspectRatio: "1",
+          display: "block",
+          cursor: "grab",
+        }}
+      />
+    </div>
   );
 };
 
-export default HeroGlobe;
+// Wrapper component with glow effects and floating badges
+export default function HeroGlobe() {
+  return (
+    <div className="relative w-full h-full min-h-[320px] sm:min-h-[380px] md:min-h-[420px] lg:min-h-[480px] xl:min-h-[540px] 2xl:min-h-[600px] flex items-center justify-center">
+      {/* Outer glow effects */}
+      <div className="absolute w-64 h-64 sm:w-72 sm:h-72 lg:w-80 lg:h-80 xl:w-96 xl:h-96 bg-blue-600/20 rounded-full blur-[80px]" />
+      <div className="absolute w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 xl:w-80 xl:h-80 bg-blue-500/15 rounded-full blur-[60px]" />
+      
+      {/* The 3D Globe */}
+      <Globe
+        dark={1}
+        scale={1.0}
+        mapSamples={40000}
+        mapBrightness={3}
+        baseColor="#3b82f6"
+        markerColor="#60a5fa"
+        glowColor="#1e40af"
+      />
+      
+      {/* Floating data badges */}
+      <div 
+        className="absolute top-[7.5%] right-[5%] sm:top-[10%] sm:right-[8%] lg:top-[7.5%] lg:right-[5%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
+      >
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
+          <span className="text-[10px] sm:text-xs text-slate-300">Active Learners</span>
+          <span className="text-xs sm:text-sm font-semibold text-white">2.4k+</span>
+        </div>
+      </div>
+      
+      <div
+        className="absolute bottom-[25%] left-[-3%] sm:bottom-[22%] sm:left-[-5%] lg:bottom-[20%] lg:left-[-7%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
+        style={{ animationDelay: '1s' }}
+      >
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full animate-pulse" />
+          <span className="text-[10px] sm:text-xs text-slate-300">Roadmaps</span>
+          <span className="text-xs sm:text-sm font-semibold text-white">5+</span>
+        </div>
+      </div>
+      
+      <div 
+        className="absolute bottom-[8%] right-[2%] sm:bottom-[6%] sm:right-[0%] lg:bottom-[5%] lg:right-[0%] bg-slate-900/80 backdrop-blur-sm border border-blue-500/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg animate-float-slow"
+        style={{ animationDelay: '2s' }}
+      >
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-pulse" />
+          <span className="text-[10px] sm:text-xs text-slate-300">Job Opportunities</span>
+          <span className="text-xs sm:text-sm font-semibold text-white">150+</span>
+        </div>
+      </div>
+    </div>
+  );
+}
