@@ -6,6 +6,10 @@
 
 @layer base {
   :root {
+    /* Roadmap flow background variables (dark default) */
+    --roadmap-bg: #09090b;
+    --roadmap-dot: #3f3f46;
+
     /* Dark mode theme - Pure black premium aesthetic (dark mode only) */
     --background: 0 0% 4%;            /* Pure black background */
     --foreground: 0 0% 95%;           /* Bright white text */

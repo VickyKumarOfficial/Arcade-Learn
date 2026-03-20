@@ -311,6 +311,9 @@ const Hero = () => {
             >
               <HeroGlobe />
             </Suspense>
+
+
+
           </motion.div>
 
         </div>

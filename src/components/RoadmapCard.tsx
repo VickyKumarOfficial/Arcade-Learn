@@ -7,7 +7,7 @@ import { useGameTest } from "@/contexts/GameTestContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
-import { X } from "lucide-react";
+import { X, GitBranch } from "lucide-react";
 
 interface RoadmapCardProps {
   roadmap: Roadmap;
@@ -96,6 +96,22 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
           >
             {completedCount > 0 ? 'Continue Learning' : 'Start Roadmap'}
           </Button>
+
+          {/* Roadmap Diagram button – only for frontend-react */}
+          {roadmap.id === 'frontend-react' && (
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!user) { setShowAuthPrompt(true); return; }
+                navigate('/roadmap/frontend-react/flow');
+              }}
+              variant="outline"
+              className="w-full mt-2 gap-2 border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 text-sm font-medium"
+            >
+              <GitBranch size={14} /> View Roadmap Diagram
+            </Button>
+          )}
         </div>
       </div>
 
