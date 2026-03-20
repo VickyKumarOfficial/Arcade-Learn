@@ -12,8 +12,6 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
-    "@google/genai": "^1.22.0",
-    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-accordion": "^1.2.0",
@@ -58,7 +56,6 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
     "framer-motion": "^12.23.12",
-    "groq-sdk": "^0.37.0",
     "input-otp": "^1.2.4",
     "jheat.js": "^4.3.1",
     "lightswind": "^3.1.20",

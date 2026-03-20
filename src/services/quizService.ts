@@ -1,5 +1,3 @@
-import Groq from 'groq-sdk';
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface QuizQuestion {
@@ -19,46 +17,6 @@ export interface QuizError {
   error: string;
 }
 
-// ─── Client ───────────────────────────────────────────────────────────────────
-
-function getClient(): Groq {
-  const key = import.meta.env.VITE_GROQ_API_KEY;
-  if (!key) throw new Error('VITE_GROQ_API_KEY is not set in environment variables.');
-  return new Groq({ apiKey: key, dangerouslyAllowBrowser: true });
-}
-
-// ─── Prompt builder ───────────────────────────────────────────────────────────
-
-function buildPrompt(topic: string, context: string[]): string {
-  return `You are a quiz generator for a developer learning platform.
-
-Topic: "${topic}"
-
-The learner is expected to understand these concepts:
-${context.map((c, i) => `${i + 1}. ${c}`).join('\n')}
-
-Generate exactly 4 multiple-choice questions that test fundamental understanding of the topic above.
-
-Rules:
-- Questions must be directly related to the listed concepts
-- Each question has exactly 4 options (A, B, C, D)
-- Only one option is correct
-- Provide a short explanation (1-2 sentences) for why the correct answer is right
-- Vary difficulty: 1 easy, 2 medium, 1 slightly harder
-- Do NOT repeat the same question style
-- Do NOT include any markdown, preamble, or extra text — ONLY the raw JSON array
-
-Return ONLY a valid JSON array in this exact shape, nothing else:
-[
-  {
-    "question": "string",
-    "options": ["string", "string", "string", "string"],
-    "correctIndex": 0,
-    "explanation": "string"
-  }
-]`;
-}
-
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export async function generateQuiz(
@@ -66,63 +24,35 @@ export async function generateQuiz(
   context: string[],
 ): Promise<QuizResult | QuizError> {
   try {
-    const groq = getClient();
-
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      temperature: 1.0,
-      max_completion_tokens: 1500,
-      top_p: 1,
-      stream: false,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a JSON-only quiz generator. You always respond with valid JSON and nothing else. No explanation, no markdown, no preamble.',
-        },
-        {
-          role: 'user',
-          content: buildPrompt(topic, context),
-        },
-      ],
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+    const response = await fetch(`${backendUrl}/api/quiz/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        topic,
+        context,
+        count: 4,
+      }),
     });
 
-    const raw = completion.choices[0]?.message?.content?.trim();
-    if (!raw) throw new Error('Empty response from Groq.');
+    const payload = await response.json().catch(() => ({
+      success: false,
+      error: 'Invalid server response.',
+    }));
 
-    // Strip any accidental markdown fences
-    const jsonString = raw
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/```\s*$/, '')
-      .trim();
-
-    const parsed: unknown = JSON.parse(jsonString);
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      throw new Error('Unexpected response shape — not an array.');
+    if (!response.ok || !payload?.success || !Array.isArray(payload?.questions)) {
+      return {
+        success: false,
+        error: payload?.error || `Quiz request failed with status ${response.status}.`,
+      };
     }
 
-    // Validate shape of each question
-    const questions: QuizQuestion[] = parsed.map((q: unknown, i: number) => {
-      const item = q as Record<string, unknown>;
-      if (
-        typeof item.question !== 'string' ||
-        !Array.isArray(item.options) ||
-        item.options.length !== 4 ||
-        typeof item.correctIndex !== 'number' ||
-        typeof item.explanation !== 'string'
-      ) {
-        throw new Error(`Question ${i + 1} has invalid shape.`);
-      }
-      return {
-        question: item.question,
-        options: item.options as [string, string, string, string],
-        correctIndex: item.correctIndex,
-        explanation: item.explanation,
-      };
-    });
-
-    return { success: true, questions };
+    return {
+      success: true,
+      questions: payload.questions as QuizQuestion[],
+    };
   } catch (err) {
     console.error('[quizService] Error:', err);
     return {
