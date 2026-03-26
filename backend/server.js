@@ -11,6 +11,7 @@ import { surveyService } from './services/surveyService.js';
 import { emailService } from './services/emailService.js';
 import { resumeService } from './services/resumeService.js';
 import { jobRecommendationService } from './services/jobRecommendationService.js';
+import { roadmapJobMatchService } from './services/roadmapJobMatchService.js';
 import { userActivityService } from './services/userActivityService.js';
 import pdfService from './services/pdfService.js';
 import { invokeMcpTool } from './mcpServer.js';
@@ -697,6 +698,24 @@ app.get('/api/user/:userId/jobs/recommendations', async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     
     const result = await jobRecommendationService.getRecommendations(userId, limit);
+
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get roadmap keyword based job matches (no resume required)
+app.get('/api/jobs/roadmap-matches', async (req, res) => {
+  try {
+    const roadmap = typeof req.query.roadmap === 'string' ? req.query.roadmap : 'frontend';
+    const limit = parseInt(req.query.limit, 10) || 20;
+
+    const result = await roadmapJobMatchService.getRoadmapMatches(roadmap, limit);
 
     if (result.success) {
       res.json(result.data);

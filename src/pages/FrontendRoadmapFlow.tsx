@@ -11,16 +11,20 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, BookOpen, CheckSquare, ChevronDown, ChevronRight, Code2, X, Zap,
   Github, Send, Link2, CheckCircle2, AlertCircle, FolderGit2, Trash2, Trophy, Lock,
-  Users, BriefcaseBusiness, ClipboardCheck, ArrowRight,
+  Users, BriefcaseBusiness, ClipboardCheck, ArrowRight, ChevronUp,
+  Loader2, Building2, MapPin, ExternalLink, DollarSign,
+  Heart,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import axios from 'axios';
 
 import { nodeTypes } from '@/components/roadmap/RoadmapFlowNodes';
 import Footer from '@/components/Footer';
 import NodeDetailSidebar from '@/components/roadmap/NodeDetailSidebar';
 import PrivacyWarningModal from '@/components/roadmap/PrivacyWarningModal';
 import ProjectComments from '@/components/roadmap/ProjectComments';
+import { BACKEND_URL } from '@/config/env';
 import { SECTION_NODE_MAP, ALL_NODE_DETAILS } from '@/data/allNodeDetails';
 import { initialNodes, initialEdges, RoadmapNodeData } from '@/data/frontendRoadmapFlow';
 
@@ -281,6 +285,62 @@ interface PrivacyChangeRequest {
   scope: 'form' | 'submission';
 }
 
+interface JobMatch {
+  id: string;
+  title: string;
+  company_name: string;
+  location: string;
+  type: string;
+  salary?: string | null;
+  url: string;
+  source?: string;
+  matchPercentage: number;
+  matchReason?: string;
+  savedCount?: number;
+}
+
+function formatIndianLakhSalary(salary?: string | null): string {
+  if (!salary) return 'Salary not disclosed';
+
+  const normalizedSalary = String(salary).trim();
+  if (!normalizedSalary) return 'Salary not disclosed';
+
+  return normalizedSalary.replace(/\d[\d,]*(?:\.\d+)?/g, (match) => {
+    const numericValue = Number(match.replace(/,/g, ''));
+
+    // Convert only amounts in lakh range or higher.
+    if (!Number.isFinite(numericValue) || numericValue < 100000) {
+      return match;
+    }
+
+    const lakhValue = numericValue / 100000;
+    const display = Number.isInteger(lakhValue)
+      ? String(lakhValue)
+      : lakhValue.toFixed(1).replace(/\.0$/, '');
+
+    return `${display}L`;
+  });
+}
+
+function getSeededSaveCount(jobId: string): number {
+  let hash = 0;
+  for (let i = 0; i < jobId.length; i += 1) {
+    hash = ((hash << 5) - hash) + jobId.charCodeAt(i);
+    hash |= 0;
+  }
+  return (Math.abs(hash) % 90) + 10; // 10-99
+}
+
+const LIKE_POP_PARTICLES = [
+  { x: -24, y: -14, color: '#fb7185', size: 5, delay: 0.0 },
+  { x: -14, y: -24, color: '#f59e0b', size: 4, delay: 0.02 },
+  { x: 0, y: -28, color: '#22d3ee', size: 4, delay: 0.04 },
+  { x: 14, y: -24, color: '#a78bfa', size: 5, delay: 0.06 },
+  { x: 24, y: -14, color: '#34d399', size: 4, delay: 0.08 },
+  { x: 20, y: 0, color: '#f472b6', size: 4, delay: 0.1 },
+  { x: -20, y: 0, color: '#60a5fa', size: 4, delay: 0.12 },
+];
+
 // ── Mock Community Submissions ────────────────────────────────────────────────
 export const MOCK_COMMUNITY_SUBMISSIONS: Submission[] = [
   {
@@ -457,6 +517,13 @@ export default function FrontendRoadmapFlow() {
   const [submissions, setSubmissions]           = useState<Submission[]>([]);
   const [submitError, setSubmitError]           = useState('');
   const [submitSuccess, setSubmitSuccess]       = useState(false);
+  const [matchedJobs, setMatchedJobs]           = useState<JobMatch[]>([]);
+  const [jobMatchesLoading, setJobMatchesLoading] = useState(false);
+  const [jobMatchesError, setJobMatchesError]   = useState('');
+  const [isJobMatchesExpanded, setIsJobMatchesExpanded] = useState(false);
+  const [hasFetchedJobMatches, setHasFetchedJobMatches] = useState(false);
+  const [likedJobIds, setLikedJobIds]           = useState<Record<string, boolean>>({});
+  const [likeBurst, setLikeBurst]               = useState<{ jobId: string; nonce: number } | null>(null);
   const [privacyChangeRequest, setPrivacyChangeRequest] = useState<PrivacyChangeRequest>({
     open: false,
     targetVisibility: false,
@@ -538,6 +605,47 @@ export default function FrontendRoadmapFlow() {
   const [sidebar, setSidebar] = useState<{ open: boolean; sectionId: string | null; activeNodeId: string | null }>({ open: false, sectionId: null, activeNodeId: null });
   const roadmapCanvasRef                     = useRef<HTMLDivElement>(null);
   const projectsRef                          = useRef<HTMLDivElement>(null);
+  const jobMatchesRef                        = useRef<HTMLDivElement>(null);
+
+  const fetchRoadmapJobMatches = useCallback(async () => {
+    if (jobMatchesLoading) return;
+
+    try {
+      setJobMatchesLoading(true);
+      setJobMatchesError('');
+
+      const response = await axios.get(
+        `${BACKEND_URL}/api/jobs/roadmap-matches?roadmap=frontend&limit=18`,
+      );
+
+      const recommendations = response.data?.recommendations || [];
+      setMatchedJobs(recommendations);
+      setHasFetchedJobMatches(true);
+    } catch (error) {
+      console.error('Error fetching roadmap job matches:', error);
+      setJobMatchesError('Unable to load matched jobs right now. Please try again.');
+    } finally {
+      setJobMatchesLoading(false);
+    }
+  }, [jobMatchesLoading]);
+
+  const handleCareerFeatureAction = useCallback(
+    async (featureId: string) => {
+      if (featureId !== 'recommended-jobs') return;
+
+      setIsJobMatchesExpanded(true);
+
+      // Scroll once expanded so users directly land on result queue.
+      setTimeout(() => {
+        jobMatchesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+
+      if (!hasFetchedJobMatches) {
+        await fetchRoadmapJobMatches();
+      }
+    },
+    [hasFetchedJobMatches, fetchRoadmapJobMatches],
+  );
 
   // ── LOCK GATE ─────────────────────────────────────────────────────────────
   // DEV / TEST BYPASS: comment out the line below and uncomment the one after it.
@@ -583,6 +691,12 @@ export default function FrontendRoadmapFlow() {
       projectsObserver.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (!likeBurst) return;
+    const timer = setTimeout(() => setLikeBurst(null), 700);
+    return () => clearTimeout(timer);
+  }, [likeBurst]);
 
   const toggleFaq = (id: string) =>
     setOpenFaqs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -1168,6 +1282,7 @@ export default function FrontendRoadmapFlow() {
 
                   <button
                     type="button"
+                    onClick={() => handleCareerFeatureAction(feature.id)}
                     className="w-full mt-auto rounded-lg border border-white/15 bg-black/30 px-3 py-2.5 text-sm sm:text-[15px] font-semibold text-white/95 hover:bg-black/40 transition-colors"
                   >
                     {feature.action}
@@ -1176,6 +1291,182 @@ export default function FrontendRoadmapFlow() {
               );
             })}
           </div>
+
+          <AnimatePresence>
+            {isJobMatchesExpanded && (
+              <motion.div
+                ref={jobMatchesRef}
+                initial={{ opacity: 0, height: 0, y: 12 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: 8 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+              >
+                <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/8">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-semibold text-white">Recommended Job Matches</h3>
+                    <p className="text-[11px] sm:text-xs text-zinc-400">
+                      Ranked by frontend roadmap keyword relevance.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsJobMatchesExpanded(false)}
+                    className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/10 transition-colors"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" /> Collapse
+                  </button>
+                </div>
+
+                {jobMatchesLoading && (
+                  <div className="px-4 py-8 text-zinc-400 text-sm flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Fetching jobs from your roadmap keywords...
+                  </div>
+                )}
+
+                {!jobMatchesLoading && jobMatchesError && (
+                  <div className="px-4 py-6">
+                    <p className="text-sm text-rose-300 mb-3">{jobMatchesError}</p>
+                    <button
+                      type="button"
+                      onClick={fetchRoadmapJobMatches}
+                      className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 hover:bg-rose-500/20 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                {!jobMatchesLoading && !jobMatchesError && matchedJobs.length === 0 && (
+                  <div className="px-4 py-6 text-sm text-zinc-400">
+                    No relevant jobs found right now. Try again later.
+                  </div>
+                )}
+
+                {!jobMatchesLoading && !jobMatchesError && matchedJobs.length > 0 && (
+                  <div className="px-4 py-4 overflow-x-auto pb-5">
+                    <div className="flex gap-4 min-w-max pr-2 snap-x snap-mandatory">
+                      {matchedJobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="w-[280px] sm:w-[320px] shrink-0 snap-start rounded-xl border border-white/10 bg-black/25 p-4 flex flex-col gap-3"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="text-sm sm:text-base font-semibold text-white leading-snug line-clamp-2">
+                              {job.title}
+                            </h4>
+                            <div className="relative shrink-0 flex flex-col items-end gap-1">
+                              <span className="text-[11px] px-2 py-0.5 rounded-full border border-emerald-500/35 bg-emerald-500/10 text-emerald-300">
+                                {job.matchPercentage}%
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const willLike = !likedJobIds[job.id];
+                                  setLikedJobIds(prev => ({
+                                    ...prev,
+                                    [job.id]: willLike,
+                                  }));
+
+                                  if (willLike) {
+                                    setLikeBurst({ jobId: job.id, nonce: Date.now() });
+                                  }
+                                }}
+                                className={`inline-flex items-center gap-1 text-[11px] transition-colors ${
+                                  likedJobIds[job.id] ? 'text-rose-300' : 'text-zinc-400 hover:text-zinc-200'
+                                }`}
+                                aria-label="Save or like this job"
+                              >
+                                <Heart className={`w-3.5 h-3.5 ${likedJobIds[job.id] ? 'fill-current' : ''}`} />
+                                {(job.savedCount ?? getSeededSaveCount(job.id)) + (likedJobIds[job.id] ? 1 : 0)}
+                              </button>
+
+                              <AnimatePresence>
+                                {likeBurst?.jobId === job.id && (
+                                  <motion.div
+                                    key={likeBurst.nonce}
+                                    className="pointer-events-none absolute right-[25px] top-6"
+                                    initial={{ opacity: 1 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                  >
+                                    <motion.span
+                                      className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-fuchsia-300/70"
+                                      initial={{ scale: 0.5, opacity: 0 }}
+                                      animate={{ scale: 1.6, opacity: [0, 0.8, 0] }}
+                                      transition={{ duration: 0.55, ease: 'easeOut' }}
+                                    />
+
+                                    {LIKE_POP_PARTICLES.map((particle, idx) => (
+                                      <motion.span
+                                        key={`${particle.x}-${particle.y}-${idx}`}
+                                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                                        style={{
+                                          width: `${particle.size}px`,
+                                          height: `${particle.size}px`,
+                                          backgroundColor: particle.color,
+                                        }}
+                                        initial={{ x: 0, y: 0, scale: 0.4, opacity: 0 }}
+                                        animate={{
+                                          x: particle.x,
+                                          y: particle.y,
+                                          scale: [0.4, 1, 0.6],
+                                          opacity: [0, 1, 0],
+                                        }}
+                                        transition={{
+                                          duration: 0.62,
+                                          delay: particle.delay,
+                                          ease: 'easeOut',
+                                        }}
+                                      />
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </div>
+
+                          <div className="text-xs text-zinc-300 flex flex-col gap-1.5">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-zinc-400" />
+                              {job.company_name || 'Unknown company'}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+                              {job.location || 'Location not specified'}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                              <BriefcaseBusiness className="w-3.5 h-3.5" />
+                              {job.type || 'Role'}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                              <DollarSign className="w-3.5 h-3.5" />
+                              {formatIndianLakhSalary(job.salary)}
+                            </span>
+                          </div>
+
+                          {job.matchReason && (
+                            <p className="text-[11px] text-zinc-400 line-clamp-2">{job.matchReason}</p>
+                          )}
+
+                          <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
+                          >
+                            View Job <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
         </div>
       </div>
