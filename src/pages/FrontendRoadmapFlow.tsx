@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button';
 import { nodeTypes } from '@/components/roadmap/RoadmapFlowNodes';
 import Footer from '@/components/Footer';
 import NodeDetailSidebar from '@/components/roadmap/NodeDetailSidebar';
+import PrivacyWarningModal from '@/components/roadmap/PrivacyWarningModal';
+import ProjectComments from '@/components/roadmap/ProjectComments';
 import { SECTION_NODE_MAP, ALL_NODE_DETAILS } from '@/data/allNodeDetails';
 import { initialNodes, initialEdges, RoadmapNodeData } from '@/data/frontendRoadmapFlow';
 
@@ -224,12 +226,111 @@ const FRONTEND_PROJECTS = [
 
 type ProjectId = (typeof FRONTEND_PROJECTS)[number]['id'];
 
-interface Submission {
+export interface ProjectComment {
+  id: string;
+  authorName: string;
+  authorIcon?: string;
+  text: string;
+  timestamp: string;
+  likes: number;
+  dislikes: number;
+  replies: ProjectComment[];
+}
+
+export interface Submission {
   id: string;
   projectId: ProjectId;
   url: string;
   date: string;
+  isPublic?: boolean;
+  comments?: ProjectComment[];
 }
+
+interface PrivacyChangeRequest {
+  open: boolean;
+  targetVisibility: boolean;
+  submissionId: string | null;
+  scope: 'form' | 'submission';
+}
+
+// ── Mock Community Submissions ────────────────────────────────────────────────
+export const MOCK_COMMUNITY_SUBMISSIONS: Submission[] = [
+  {
+    id: 'mock-1',
+    projectId: 'portfolio',
+    url: 'https://github.com/alex-dev/my-portfolio',
+    date: 'Oct 24, 2023',
+    isPublic: true,
+    comments: [
+      {
+        id: 'c1',
+        authorName: 'Sarah Jenkins',
+        text: 'Looks really clean! What CSS framework did you use for those responsive grid layouts?',
+        timestamp: '2 hours ago',
+        likes: 5,
+        dislikes: 0,
+        replies: [
+          {
+            id: 'c1-1',
+            authorName: 'Alex Dev',
+            text: 'Thanks Sarah! I kept it simple and just used Tailwind CSS. Their grid utility classes made it a breeze.',
+            timestamp: '1 hour ago',
+            likes: 3,
+            dislikes: 0,
+            replies: []
+          }
+        ]
+      },
+      {
+        id: 'c2',
+        authorName: 'MichaelT',
+        text: 'Great job handling the dark mode toggle. One small tip: consider storing the theme preference in localStorage so it persists across reloads!',
+        timestamp: '5 hours ago',
+        likes: 12,
+        dislikes: 0,
+        replies: []
+      }
+    ]
+  },
+  {
+    id: 'mock-2',
+    projectId: 'weather-app',
+    url: 'https://github.com/johndoe/react-weather-dashboard',
+    date: 'Nov 02, 2023',
+    isPublic: true,
+    comments: [
+      {
+        id: 'c3',
+        authorName: 'Elena',
+        text: 'Love the smooth transitions when the weather data loads. Did you use Framer Motion?',
+        timestamp: '1 day ago',
+        likes: 8,
+        dislikes: 0,
+        replies: [
+          {
+            id: 'c3-1',
+            authorName: 'John Doe',
+            text: 'Good eye! Yes, Framer Motion for the layout animations and regular CSS transitions for the hover states.',
+            timestamp: '20 hours ago',
+            likes: 4,
+            dislikes: 0,
+            replies: [
+              {
+                id: 'c3-1-1',
+                authorName: 'Elena',
+                text: 'Awesome, looks super professional.',
+                timestamp: '18 hours ago',
+                likes: 1,
+                dislikes: 0,
+                replies: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
 
 // ── IDs of all main section (parent) nodes ────────────────────────────────────
 // These get auto-completed once every sub-node under them is marked done.
@@ -324,9 +425,51 @@ export default function FrontendRoadmapFlow() {
   // ── Projects section state ─────────────────────────────────────────────────
   const [selectedProject, setSelectedProject] = useState<ProjectId>('portfolio');
   const [githubUrl, setGithubUrl]               = useState('');
+  const [isProjectPublic, setIsProjectPublic]   = useState(false);
   const [submissions, setSubmissions]           = useState<Submission[]>([]);
   const [submitError, setSubmitError]           = useState('');
   const [submitSuccess, setSubmitSuccess]       = useState(false);
+  const [privacyChangeRequest, setPrivacyChangeRequest] = useState<PrivacyChangeRequest>({
+    open: false,
+    targetVisibility: false,
+    submissionId: null,
+    scope: 'form',
+  });
+
+  const requestPrivacyChange = (
+    scope: 'form' | 'submission',
+    targetVisibility: boolean,
+    submissionId: string | null = null,
+  ) => {
+    setPrivacyChangeRequest({
+      open: true,
+      targetVisibility,
+      submissionId,
+      scope,
+    });
+  };
+
+  const closePrivacyModal = () => {
+    setPrivacyChangeRequest(prev => ({ ...prev, open: false }));
+  };
+
+  const confirmPrivacyChange = () => {
+    const { scope, targetVisibility, submissionId } = privacyChangeRequest;
+
+    if (scope === 'form') {
+      setIsProjectPublic(targetVisibility);
+    }
+
+    if (scope === 'submission' && submissionId) {
+      setSubmissions(prev =>
+        prev.map(s =>
+          s.id === submissionId ? { ...s, isPublic: targetVisibility } : s,
+        ),
+      );
+    }
+
+    setPrivacyChangeRequest(prev => ({ ...prev, open: false }));
+  };
 
   const handleProjectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -353,34 +496,64 @@ export default function FrontendRoadmapFlow() {
         projectId: selectedProject,
         url: trimmed,
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        isPublic: isProjectPublic,
+        comments: [],
       },
       ...prev,
     ]);
     setGithubUrl('');
+    setIsProjectPublic(false);
     setSubmitSuccess(true);
     setTimeout(() => setSubmitSuccess(false), 3500);
   };
   const [showLegend, setShowLegend]          = useState(true);
   const [sidebar, setSidebar] = useState<{ open: boolean; sectionId: string | null; activeNodeId: string | null }>({ open: false, sectionId: null, activeNodeId: null });
+  const roadmapCanvasRef                     = useRef<HTMLDivElement>(null);
   const projectsRef                          = useRef<HTMLDivElement>(null);
 
   // ── LOCK GATE ─────────────────────────────────────────────────────────────
   // DEV / TEST BYPASS: comment out the line below and uncomment the one after it.
   const completedSectionCount = MAIN_SECTION_IDS.filter(id => nodes.find(n => n.id === id)?.data?.completed === true).length;
-  const isProjectsLocked = completedSectionCount < MAIN_SECTION_IDS.length; // [LOCK] comment to bypass
-  // const isProjectsLocked = false;                                          // [BYPASS] uncomment to bypass
+  // const isProjectsLocked = completedSectionCount < MAIN_SECTION_IDS.length; // [LOCK] comment to bypass
+  const isProjectsLocked = false;                                          // [BYPASS] uncomment to bypass
   // ── END LOCK GATE ─────────────────────────────────────────────────────────
 
-  // Hide legend when Projects section enters the viewport
+  // Show legend only while roadmap is visible and Projects has not started
   useEffect(() => {
-    const el = projectsRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => setShowLegend(!entry.isIntersecting),
+    const roadmapEl = roadmapCanvasRef.current;
+    const projectsEl = projectsRef.current;
+    if (!roadmapEl || !projectsEl) return;
+
+    let roadmapVisible = false;
+    let projectsVisible = false;
+
+    const updateLegend = () => {
+      setShowLegend(roadmapVisible && !projectsVisible);
+    };
+
+    const roadmapObserver = new IntersectionObserver(
+      ([entry]) => {
+        roadmapVisible = entry.isIntersecting;
+        updateLegend();
+      },
       { threshold: 0 },
     );
-    obs.observe(el);
-    return () => obs.disconnect();
+
+    const projectsObserver = new IntersectionObserver(
+      ([entry]) => {
+        projectsVisible = entry.isIntersecting;
+        updateLegend();
+      },
+      { threshold: 0 },
+    );
+
+    roadmapObserver.observe(roadmapEl);
+    projectsObserver.observe(projectsEl);
+
+    return () => {
+      roadmapObserver.disconnect();
+      projectsObserver.disconnect();
+    };
   }, []);
 
   const toggleFaq = (id: string) =>
@@ -543,6 +716,7 @@ export default function FrontendRoadmapFlow() {
       >
         {/* Fixed-size canvas — exactly the size of the roadmap content */}
         <div
+          ref={roadmapCanvasRef}
           style={{ width: CANVAS_W, height: CANVAS_H, position: 'relative', margin: '0 auto' }}
         >
           <ReactFlow
@@ -574,7 +748,7 @@ export default function FrontendRoadmapFlow() {
 
       {/* ── Projects Section ─────────────────────────────────────────────────── */}
       <div
-        ref={projectsRef} 
+        ref={projectsRef}
         className="w-full py-20 px-4"
         style={{
           background: 'linear-gradient(180deg, #09090b 0%, #0d1117 60%, #09090b 100%)',
@@ -744,6 +918,44 @@ export default function FrontendRoadmapFlow() {
                 </div>
               </div>
 
+              {/* Visibility toggle */}
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-zinc-200">Project visibility</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                      Public projects can be discovered by others once comments are enabled in later phases.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => requestPrivacyChange('form', !isProjectPublic)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      isProjectPublic ? 'bg-emerald-500/80' : 'bg-zinc-700/80'
+                    }`}
+                    aria-pressed={isProjectPublic}
+                    aria-label="Toggle project visibility"
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                        isProjectPublic ? 'translate-x-5' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="mt-2 text-[11px]">
+                  <span className={`px-2 py-0.5 rounded-full border ${
+                    isProjectPublic
+                      ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
+                      : 'text-zinc-300 bg-zinc-700/30 border-zinc-500/40'
+                  }`}>
+                    {isProjectPublic ? 'Public' : 'Private'}
+                  </span>
+                </div>
+              </div>
+
               {/* Error / success feedback */}
               {submitError && (
                 <div className="flex items-center gap-2 text-xs text-rose-400">
@@ -790,39 +1002,79 @@ export default function FrontendRoadmapFlow() {
               {submissions.map(sub => {
                 const proj = FRONTEND_PROJECTS.find(p => p.id === sub.projectId);
                 return (
-                  <div
-                    key={sub.id}
-                    className="flex items-center gap-4 rounded-xl border border-white/8
-                               bg-white/3 hover:bg-white/5 px-4 py-3 transition-all group"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div key={sub.id} className="space-y-2">
+                    <div
+                      className="flex items-center gap-4 rounded-xl border border-white/8
+                                 bg-white/3 hover:bg-white/5 px-4 py-3 transition-all group"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{proj?.title ?? sub.projectId}</p>
-                      <a
-                        href={sub.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-indigo-400 hover:text-indigo-300 truncate block transition-colors"
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{proj?.title ?? sub.projectId}</p>
+                        <a
+                          href={sub.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-indigo-400 hover:text-indigo-300 truncate block transition-colors"
+                        >
+                          {sub.url}
+                        </a>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                            sub.isPublic
+                              ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
+                              : 'text-zinc-300 bg-zinc-700/30 border-zinc-500/40'
+                          }`}
+                        >
+                          {sub.isPublic ? 'Public' : 'Private'}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => requestPrivacyChange('submission', !sub.isPublic, sub.id)}
+                          className="text-[10px] px-2 py-0.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition-colors"
+                        >
+                          Make {sub.isPublic ? 'Private' : 'Public'}
+                        </button>
+
+                        <span className="text-[11px] text-zinc-600">{sub.date}</span>
+                      </div>
+
+                      <button
+                        onClick={() => setSubmissions(prev => prev.filter(s => s.id !== sub.id))}
+                        className="p-1.5 rounded-lg text-zinc-700 hover:text-rose-400 hover:bg-rose-400/10
+                                   opacity-0 group-hover:opacity-100 transition-all"
+                        aria-label="Remove submission"
                       >
-                        {sub.url}
-                      </a>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
 
-                    <span className="text-[11px] text-zinc-600 shrink-0">{sub.date}</span>
-
-                    <button
-                      onClick={() => setSubmissions(prev => prev.filter(s => s.id !== sub.id))}
-                      className="p-1.5 rounded-lg text-zinc-700 hover:text-rose-400 hover:bg-rose-400/10
-                                 opacity-0 group-hover:opacity-100 transition-all"
-                      aria-label="Remove submission"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {sub.isPublic && (
+                      <ProjectComments
+                        initialComments={sub.comments ?? []}
+                        currentUserName="You"
+                        initialVisibleCount={2}
+                        onCommentsChange={(comments) =>
+                          setSubmissions(prev =>
+                            prev.map(s => (s.id === sub.id ? { ...s, comments } : s)),
+                          )
+                        }
+                      />
+                    )}
                   </div>
                 );
               })}
             </motion.div>
+          )}
+
+          {submissions.length === 0 && (
+            <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-xs text-zinc-400">
+              No submissions yet. Submit your first project above.
+            </div>
           )}
             </>
           )}
@@ -983,7 +1235,7 @@ export default function FrontendRoadmapFlow() {
         </div>
       )}
 
-      {/* ── Legend — fixed bottom-left, hidden when FAQ is in view ─────────── */}
+      {/* ── Legend — fixed bottom-left, visible only in roadmap section ─────── */}
       <div
         className={`fixed bottom-5 left-5 z-30 rounded-xl border border-zinc-700/60 px-4 py-3 flex flex-col gap-2 pointer-events-none transition-all duration-300 ${
           showLegend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
@@ -1016,6 +1268,13 @@ export default function FrontendRoadmapFlow() {
       </div>
 
       <Footer />
+
+      <PrivacyWarningModal
+        open={privacyChangeRequest.open}
+        targetVisibility={privacyChangeRequest.targetVisibility}
+        onCancel={closePrivacyModal}
+        onConfirm={confirmPrivacyChange}
+      />
 
       {/* ── Generic node detail sidebar ─────────────────────────────── */}
       <NodeDetailSidebar
