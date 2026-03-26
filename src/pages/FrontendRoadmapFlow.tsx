@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, BookOpen, CheckSquare, ChevronDown, ChevronRight, Code2, X, Zap,
   Github, Send, Link2, CheckCircle2, AlertCircle, FolderGit2, Trash2, Trophy, Lock,
+  Users, BriefcaseBusiness, ClipboardCheck, ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -221,6 +222,33 @@ const FRONTEND_PROJECTS = [
     skills: ['React / Vue', 'TypeScript', 'State Mgmt', 'Routing', 'API'],
     difficulty: 'Advanced',
     difficultyColor: 'text-rose-400 bg-rose-400/10 border-rose-400/30',
+  },
+] as const;
+
+const CAREER_SUPPORT_FEATURES = [
+  {
+    id: 'mentor-sessions',
+    title: '1:1 Mentor-Mentee Sessions',
+    highlights: ['Human + AI guidance', 'Weekly goal tracking', 'Code and portfolio feedback'],
+    action: 'Open Mentorship',
+    icon: Users,
+    accent: 'from-indigo-500/25 to-blue-500/20 border-indigo-500/30',
+  },
+  {
+    id: 'recommended-jobs',
+    title: 'Roadmap-Based Job Recommendations',
+    highlights: ['Frontend-focused listings', 'Skill-gap indicators', 'Smart role prioritization'],
+    action: 'View Job Matches',
+    icon: BriefcaseBusiness,
+    accent: 'from-emerald-500/20 to-cyan-500/20 border-emerald-500/30',
+  },
+  {
+    id: 'interview-prep',
+    title: 'Placement & Interview Preparation',
+    highlights: ['Timed coding tests', 'Question bank + patterns', 'Mock interview tracks'],
+    action: 'Start Prep Track',
+    icon: ClipboardCheck,
+    accent: 'from-violet-500/25 to-fuchsia-500/20 border-violet-500/30',
   },
 ] as const;
 
@@ -1078,6 +1106,76 @@ export default function FrontendRoadmapFlow() {
           )}
             </>
           )}
+
+        </div>
+      </div>
+
+      {/* ── Career Support Introduction Section ─────────────────────────────── */}
+      <div
+        className="w-full py-16 px-4"
+        style={{
+          background: 'linear-gradient(180deg, #09090b 0%, #111827 50%, #09090b 100%)',
+          borderTop: '1px solid rgba(99,102,241,0.15)',
+        }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase text-indigo-400 mb-3">
+              <Trophy className="w-3.5 h-3.5" />
+              Career Acceleration
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Career{' '}
+              <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+                Launchpad
+              </span>
+            </h2>
+            <p className="text-zinc-400 text-sm max-w-2xl mx-auto leading-relaxed">
+              Three focused tools to help you move from learning to hiring outcomes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5 items-stretch">
+            {CAREER_SUPPORT_FEATURES.map((feature, index) => {
+              const FeatureIcon = feature.icon;
+              return (
+                <motion.div
+                  key={feature.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.35, delay: index * 0.06 }}
+                  className={`rounded-2xl border p-4 sm:p-5 bg-gradient-to-br h-full flex flex-col ${feature.accent}`}
+                >
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-black/30 border border-white/15">
+                      <FeatureIcon className="w-4.5 h-4.5 text-white" />
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-zinc-300/85 shrink-0" />
+                  </div>
+
+                  <h3 className="text-base sm:text-lg font-bold text-white mb-4 leading-snug min-h-[3.25rem] sm:min-h-[3.75rem]">
+                    {feature.title}
+                  </h3>
+
+                  <div className="flex flex-wrap content-start gap-2 mb-4 sm:mb-5 flex-1">
+                    {feature.highlights.map(item => (
+                      <span key={item} className="px-2.5 py-1 rounded-md bg-black/25 border border-white/10 text-[11px] sm:text-xs text-zinc-100">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="w-full mt-auto rounded-lg border border-white/15 bg-black/30 px-3 py-2.5 text-sm sm:text-[15px] font-semibold text-white/95 hover:bg-black/40 transition-colors"
+                  >
+                    {feature.action}
+                  </button>
+                </motion.div>
+              );
+            })}
+          </div>
 
         </div>
       </div>
