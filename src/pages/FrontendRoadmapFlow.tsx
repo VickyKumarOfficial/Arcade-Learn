@@ -631,6 +631,16 @@ export default function FrontendRoadmapFlow() {
 
   const handleCareerFeatureAction = useCallback(
     async (featureId: string) => {
+      if (featureId === 'mentor-sessions') {
+        navigate('/roadmap/frontend-react/mentor');
+        return;
+      }
+
+      if (featureId === 'interview-prep') {
+        navigate('/practice');
+        return;
+      }
+
       if (featureId !== 'recommended-jobs') return;
 
       setIsJobMatchesExpanded(true);
@@ -644,7 +654,7 @@ export default function FrontendRoadmapFlow() {
         await fetchRoadmapJobMatches();
       }
     },
-    [hasFetchedJobMatches, fetchRoadmapJobMatches],
+    [navigate, hasFetchedJobMatches, fetchRoadmapJobMatches],
   );
 
   // ── LOCK GATE ─────────────────────────────────────────────────────────────
