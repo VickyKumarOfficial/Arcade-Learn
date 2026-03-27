@@ -517,6 +517,7 @@ export default function FrontendRoadmapFlow() {
   const [submissions, setSubmissions]           = useState<Submission[]>([]);
   const [submitError, setSubmitError]           = useState('');
   const [submitSuccess, setSubmitSuccess]       = useState(false);
+  const [submitAction, setSubmitAction]         = useState<'created' | 'updated' | null>(null);
   const [matchedJobs, setMatchedJobs]           = useState<JobMatch[]>([]);
   const [jobMatchesLoading, setJobMatchesLoading] = useState(false);
   const [jobMatchesError, setJobMatchesError]   = useState('');
@@ -530,6 +531,10 @@ export default function FrontendRoadmapFlow() {
     submissionId: null,
     scope: 'form',
   });
+  const selectedProjectSubmission = useMemo(
+    () => submissions.find(sub => sub.projectId === selectedProject),
+    [submissions, selectedProject],
+  );
 
   const requestPrivacyChange = (
     scope: 'form' | 'submission',
@@ -553,6 +558,11 @@ export default function FrontendRoadmapFlow() {
 
     if (scope === 'form') {
       setIsProjectPublic(targetVisibility);
+      setSubmissions(prev =>
+        prev.map(s =>
+          s.projectId === selectedProject ? { ...s, isPublic: targetVisibility } : s,
+        ),
+      );
     }
 
     if (scope === 'submission' && submissionId) {
@@ -570,6 +580,7 @@ export default function FrontendRoadmapFlow() {
     e.preventDefault();
     setSubmitError('');
     setSubmitSuccess(false);
+    setSubmitAction(null);
 
     const trimmed = githubUrl.trim();
     if (!trimmed) { setSubmitError('Please enter a GitHub repository URL.'); return; }
@@ -585,22 +596,51 @@ export default function FrontendRoadmapFlow() {
       return;
     }
 
-    setSubmissions(prev => [
-      {
-        id: crypto.randomUUID(),
-        projectId: selectedProject,
-        url: trimmed,
-        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-        isPublic: isProjectPublic,
-        comments: [],
-      },
-      ...prev,
-    ]);
-    setGithubUrl('');
-    setIsProjectPublic(false);
+    const existingSubmission = submissions.find(s => s.projectId === selectedProject);
+
+    setSubmissions(prev => {
+      if (existingSubmission) {
+        return prev.map(s =>
+          s.projectId === selectedProject
+            ? {
+                ...s,
+                url: trimmed,
+                isPublic: isProjectPublic,
+                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+              }
+            : s,
+        );
+      }
+
+      return [
+        {
+          id: crypto.randomUUID(),
+          projectId: selectedProject,
+          url: trimmed,
+          date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          isPublic: isProjectPublic,
+          comments: [],
+        },
+        ...prev,
+      ];
+    });
+
+    setSubmitAction(existingSubmission ? 'updated' : 'created');
     setSubmitSuccess(true);
     setTimeout(() => setSubmitSuccess(false), 3500);
   };
+
+  useEffect(() => {
+    if (selectedProjectSubmission) {
+      setGithubUrl(selectedProjectSubmission.url);
+      setIsProjectPublic(Boolean(selectedProjectSubmission.isPublic));
+      return;
+    }
+
+    setGithubUrl('');
+    setIsProjectPublic(false);
+  }, [selectedProjectSubmission]);
+
   const [showLegend, setShowLegend]          = useState(true);
   const [sidebar, setSidebar] = useState<{ open: boolean; sectionId: string | null; activeNodeId: string | null }>({ open: false, sectionId: null, activeNodeId: null });
   const roadmapCanvasRef                     = useRef<HTMLDivElement>(null);
@@ -1030,27 +1070,57 @@ export default function FrontendRoadmapFlow() {
               </span>
               <div>
                 <h3 className="text-sm font-bold text-white">Submit Your Project</h3>
-                <p className="text-xs text-zinc-500">Paste your public GitHub repository URL below</p>
+                <p className="text-xs text-zinc-500">Set visibility and submit your GitHub repository URL below</p>
               </div>
             </div>
 
             <form onSubmit={handleProjectSubmit} className="space-y-4">
-              {/* Project selector */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Selected project</label>
-                <select
-                  value={selectedProject}
-                  onChange={e => setSelectedProject(e.target.value as ProjectId)}
-                  className="w-full rounded-xl bg-white/5 border border-white/10 text-sm text-white px-4 py-2.5
-                             focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30
-                             transition-all appearance-none"
-                >
-                  {FRONTEND_PROJECTS.map(p => (
-                    <option key={p.id} value={p.id} className="bg-slate-900">
-                      [{p.difficulty}] {p.title}
-                    </option>
-                  ))}
-                </select>
+              {/* Project selector + visibility */}
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px] gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Selected project</label>
+                  <select
+                    value={selectedProject}
+                    onChange={e => setSelectedProject(e.target.value as ProjectId)}
+                    className="w-full rounded-xl bg-white/5 border border-white/10 text-sm text-white px-4 py-2.5
+                               focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30
+                               transition-all appearance-none"
+                  >
+                    {FRONTEND_PROJECTS.map(p => (
+                      <option key={p.id} value={p.id} className="bg-slate-900">
+                        [{p.difficulty}] {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Visibility</label>
+                  <div className="grid grid-cols-2 rounded-xl border border-white/10 bg-white/5 p-1">
+                    <button
+                      type="button"
+                      onClick={() => requestPrivacyChange('form', false)}
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                        !isProjectPublic
+                          ? 'bg-zinc-700/80 text-zinc-100'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      Private
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => requestPrivacyChange('form', true)}
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                        isProjectPublic
+                          ? 'bg-emerald-500/80 text-white'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      Public
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* GitHub URL input */}
@@ -1070,42 +1140,10 @@ export default function FrontendRoadmapFlow() {
                 </div>
               </div>
 
-              {/* Visibility toggle */}
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-medium text-zinc-200">Project visibility</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
-                      Public projects can be discovered by others once comments are enabled in later phases.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => requestPrivacyChange('form', !isProjectPublic)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      isProjectPublic ? 'bg-emerald-500/80' : 'bg-zinc-700/80'
-                    }`}
-                    aria-pressed={isProjectPublic}
-                    aria-label="Toggle project visibility"
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                        isProjectPublic ? 'translate-x-5' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="mt-2 text-[11px]">
-                  <span className={`px-2 py-0.5 rounded-full border ${
-                    isProjectPublic
-                      ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
-                      : 'text-zinc-300 bg-zinc-700/30 border-zinc-500/40'
-                  }`}>
-                    {isProjectPublic ? 'Public' : 'Private'}
-                  </span>
-                </div>
+              <div className="text-[11px] text-zinc-500">
+                {selectedProjectSubmission
+                  ? 'Updating this form will edit the existing submission for this project.'
+                  : 'This will create your first submission for this project.'}
               </div>
 
               {/* Error / success feedback */}
@@ -1118,7 +1156,9 @@ export default function FrontendRoadmapFlow() {
               {submitSuccess && (
                 <div className="flex items-center gap-2 text-xs text-emerald-400">
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  Project submitted — great work! Keep building.
+                  {submitAction === 'updated'
+                    ? 'Submission updated — visibility and link are synced.'
+                    : 'Project submitted — great work! Keep building.'}
                 </div>
               )}
 
@@ -1131,7 +1171,7 @@ export default function FrontendRoadmapFlow() {
                            shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40"
               >
                 <Send className="w-4 h-4" />
-                Submit Project
+                {selectedProjectSubmission ? 'Update Submission' : 'Submit Project'}
               </button>
             </form>
           </motion.div>
@@ -1183,14 +1223,6 @@ export default function FrontendRoadmapFlow() {
                         >
                           {sub.isPublic ? 'Public' : 'Private'}
                         </span>
-
-                        <button
-                          type="button"
-                          onClick={() => requestPrivacyChange('submission', !sub.isPublic, sub.id)}
-                          className="text-[10px] px-2 py-0.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition-colors"
-                        >
-                          Make {sub.isPublic ? 'Private' : 'Public'}
-                        </button>
 
                         <span className="text-[11px] text-zinc-600">{sub.date}</span>
                       </div>
