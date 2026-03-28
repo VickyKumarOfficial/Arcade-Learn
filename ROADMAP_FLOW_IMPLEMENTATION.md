@@ -1,6 +1,8 @@
 # Roadmap Flow Implementation Guide
 
-> **Goal:** Replicate the interactive `FrontendRoadmapFlow` experience — ReactFlow canvas, node detail sidebar, tooltip resources, project submission, FAQ accordion, lock gate, and completion tracking — for all 14 remaining roadmaps, with zero UI code duplication and identical UX across every roadmap.
+> **Goal:** Replicate the interactive `FrontendRoadmapFlow` experience — ReactFlow canvas, node detail sidebar, quiz integration, project submission, comments, career modules, FAQ accordion, lock gate, and completion tracking — for all remaining roadmaps, with minimal UI duplication and maximum automation.
+
+> **Document Mode:** This is a **target-state implementation blueprint** for scaling. Treat it as the execution playbook for future roadmap expansion, not as a changelog of current implementation state.
 
 ---
 
@@ -16,7 +18,7 @@
 8. [Canvas Layout System](#8-canvas-layout-system)
 9. [All 14 Roadmaps — Section Maps & Node IDs](#9-all-14-roadmaps--section-maps--node-ids)
 10. [SECTION_NODE_MAP — Complete Update Required](#10-section_node_map--complete-update-required)
-11. [App.tsx Route Additions](#11-apptsx-route-additions)
+11. [Feature Modules Matrix (Optional but Reusable)](#11-feature-modules-matrix-optional-but-reusable)
 12. [Exact File Templates](#12-exact-file-templates)
 13. [Quality Gates — Validation Checklist Per Roadmap](#13-quality-gates--validation-checklist-per-roadmap)
 14. [Execution Order — Fastest Path](#14-execution-order--fastest-path)
@@ -37,9 +39,9 @@ Contains the ReactFlow `initialNodes` and `initialEdges` arrays. This is **pure 
 - `RoadmapNodeData` type
 
 ### Layer 2 — Rich Content Data
-**File:** `src/data/allNodeDetails.ts`
+**File:** `src/data/allNodeDetails/index.ts` (aggregates roadmap detail modules)
 
-The single source of truth for all detailed content. Organized as `Record<string, SectionData>` where each key is a section ID (e.g. `'html'`, `'css'`). Each `SectionData` contains:
+The single source of truth for all detailed content (merged from modular files). Organized as `Record<string, SectionData>` where each key is a section ID (e.g. `'html'`, `'css'`). Each `SectionData` contains:
 ```ts
 {
   section: { id, label, description },
@@ -56,15 +58,21 @@ The single source of truth for all detailed content. Organized as `Record<string
 ### Layer 3 — Page-Level Data
 **Location:** Currently inline in `src/pages/FrontendRoadmapFlow.tsx`
 
-Three data blocks that are unique per roadmap:
+Page-level roadmap configuration contains these roadmap-specific blocks:
 - `NODE_DETAILS` — `Record<sectionId, { description, resources[] }>` — the quick-look panel that shows when you click a main (yellow) node. Contains 5–6 resource links per section.
 - `FRONTEND_PROJECTS` — 3 capstone projects (Beginner / Intermediate / Advanced). Each has `id, title, description, skills[], difficulty, difficultyColor`.
 - `FRONTEND_FAQS` — 10–12 Q&A pairs specific to the roadmap's skill.
+- `CAREER_SUPPORT_FEATURES` — feature cards for 1:1 mentorship, roadmap-based job recommendations, and interview prep actions.
 - `MAIN_SECTION_IDS` — array of main node IDs used by the lock gate.
 - `CANVAS_H` — total pixel height of the canvas (number).
 
+Reusable optional UI modules that should be controlled by config (not hardcoded):
+- Project comments module (`ProjectComments`) for public submissions.
+- Privacy visibility confirmation module (`PrivacyWarningModal`).
+- Career launchpad module (mentor, jobs, interview prep) with roadmap-specific actions.
+
 ### Layer 4 — Page Component (The Reusable Logic)
-**File:** `src/pages/FrontendRoadmapFlow.tsx` (~1060 lines)
+**File:** `src/pages/FrontendRoadmapFlow.tsx` (large monolithic page)
 
 Contains ALL the interactive logic that is **identical** for every roadmap:
 - ReactFlow setup (`useNodesState`, `useEdgesState`)
@@ -88,12 +96,12 @@ One line per roadmap:
 - `src/components/roadmap/RoadmapFlowNodes.tsx` — defines `nodeTypes` (startNode, mainNode, branchNode, leftBranchNode, optionNode, infoCard)
 - `src/components/roadmap/NodeDetailSidebar.tsx` — the sliding sidebar panel (reads from `ALL_NODE_DETAILS`)
 - `src/components/roadmap/QuizModal.tsx` — AI quiz triggered from the sidebar
-- `src/data/allNodeDetails.ts` — exports `ALL_NODE_DETAILS` and `SECTION_NODE_MAP`
+- `src/data/allNodeDetails/index.ts` — exports merged `ALL_NODE_DETAILS` and `SECTION_NODE_MAP`
 
 ### How Node Clicks Route to the Sidebar
-`SECTION_NODE_MAP` (exported from `allNodeDetails.ts`) maps every node ID to its parent section ID:
+`SECTION_NODE_MAP` (exported from `allNodeDetails/index.ts`) maps every node ID to its parent section ID:
 ```ts
-// src/data/allNodeDetails.ts (bottom of file)
+// src/data/allNodeDetails/index.ts (merged output)
 export const SECTION_NODE_MAP: Record<string, string> = {
   // internet section
   'i1': 'internet', 'i2': 'internet', 'i3': 'internet',
@@ -103,6 +111,8 @@ export const SECTION_NODE_MAP: Record<string, string> = {
   // ... and so on for ALL nodes
 };
 ```
+
+The snippet above is the **merged output shape**. In practice, edit roadmap-specific map fragments and merge them in `allNodeDetails/index.ts`.
 When a node is clicked, `SECTION_NODE_MAP[node.id]` is looked up. If it returns a value, the `NodeDetailSidebar` opens for that section. If it returns `undefined` (e.g. for a main/yellow node like `'html'`), the quick-look panel opens instead — showing description + resources from `NODE_DETAILS`.
 
 ---
@@ -128,9 +138,21 @@ After refactoring, each roadmap flow is just **3 data files + 1 six-line wrapper
 [Config file]          [Wrapper page]            [Route]
 {key}RoadmapConfig.ts → {Key}RoadmapFlowPage.tsx  → App.tsx
       +
-allNodeDetails.ts (append new sections)
+allNodeDetails/ (modular sections, re-exported)
       +
 {key}RoadmapFlow.ts (node layout)
+```
+
+Recommended content data structure:
+
+```
+src/data/allNodeDetails/
+├── index.ts                // exports merged ALL_NODE_DETAILS + SECTION_NODE_MAP
+├── shared.ts               // shared reusable sections (git/testing/security/etc.)
+├── frontend.ts
+├── backendNode.ts
+├── fullstack.ts
+└── ...one file per roadmap domain
 ```
 
 The 600-line logic lives exactly once in:
@@ -173,6 +195,31 @@ export interface FAQ {
   answer: string;
 }
 
+export interface CareerSupportFeature {
+  id: string;
+  title: string;
+  highlights: readonly string[];
+  action: string;
+  actionType: 'navigate' | 'jobs-expand' | 'custom';
+  navigateTo?: string;
+}
+
+export interface FeatureModules {
+  comments?: {
+    enabled: boolean;
+    requiresPublicSubmission?: boolean;
+  };
+  privacyVisibility?: {
+    enabled: boolean;
+  };
+  careerLaunchpad?: {
+    enabled: boolean;
+    features: readonly CareerSupportFeature[];
+    jobsRoadmapParam?: string;
+    jobsLimit?: number;
+  };
+}
+
 export interface RoadmapFlowConfig {
   /** Must match the roadmap id in roadmaps.ts (e.g. 'frontend-react') */
   roadmapId: string;
@@ -190,6 +237,8 @@ export interface RoadmapFlowConfig {
   projects: readonly Project[];
   /** 10-12 FAQs specific to this roadmap */
   faqs: readonly FAQ[];
+  /** Optional reusable modules (comments, career launchpad, privacy modal) */
+  modules?: FeatureModules;
   /** Total pixel height of the canvas (determines scroll length) */
   canvasHeight: number;
   /** Total pixel width of the canvas */
@@ -228,6 +277,7 @@ export default function GenericRoadmapFlowPage({ config }: Props) {
 | `NODE_DETAILS` | `config.nodeDetails` |
 | `FRONTEND_PROJECTS` | `config.projects` |
 | `FRONTEND_FAQS` | `config.faqs` |
+| `CAREER_SUPPORT_FEATURES` | `config.modules.careerLaunchpad.features` |
 | `MAIN_SECTION_IDS` | `config.mainSectionIds` |
 | `'Frontend Development'` (back button label) | `config.title` |
 | `ProjectId` type | `string` (or derive from `config.projects`) |
@@ -272,6 +322,45 @@ const config: RoadmapFlowConfig = {
   faqs: [
     // Move FRONTEND_FAQS here verbatim
   ],
+  modules: {
+    comments: {
+      enabled: true,
+      requiresPublicSubmission: true,
+    },
+    privacyVisibility: {
+      enabled: true,
+    },
+    careerLaunchpad: {
+      enabled: true,
+      jobsRoadmapParam: 'frontend',
+      jobsLimit: 18,
+      features: [
+        {
+          id: 'mentor-sessions',
+          title: '1:1 Mentor-Mentee Sessions',
+          highlights: ['Human + AI guidance', 'Weekly goal tracking', 'Code and portfolio feedback'],
+          action: 'Open Mentorship',
+          actionType: 'navigate',
+          navigateTo: '/roadmap/frontend-react/mentor',
+        },
+        {
+          id: 'recommended-jobs',
+          title: 'Roadmap-Based Job Recommendations',
+          highlights: ['Frontend-focused listings', 'Skill-gap indicators', 'Smart role prioritization'],
+          action: 'View Job Matches',
+          actionType: 'jobs-expand',
+        },
+        {
+          id: 'interview-prep',
+          title: 'Placement & Interview Preparation',
+          highlights: ['Timed coding tests', 'Question bank + patterns', 'Mock interview tracks'],
+          action: 'Start Prep Track',
+          actionType: 'navigate',
+          navigateTo: '/practice',
+        },
+      ] as const,
+    },
+  },
 };
 
 export default config;
@@ -300,6 +389,9 @@ Run the app and verify the frontend roadmap at `/roadmap/frontend-react/flow`:
 - [ ] When all sub-nodes of a section are complete, the parent section turns green
 - [ ] When all sections are complete, the Projects section unlocks
 - [ ] Project submission validates GitHub URL and adds to the list
+- [ ] If `modules.comments.enabled=true`, public submissions render comments UI
+- [ ] If `modules.privacyVisibility.enabled=true`, privacy confirmation modal appears on visibility changes
+- [ ] If `modules.careerLaunchpad.enabled=true`, feature cards render and actions route/expand correctly
 - [ ] FAQ items toggle open/close
 - [ ] Legend hides when Projects section scrolls into view
 - [ ] Back button navigates correctly
@@ -315,10 +407,11 @@ For each new roadmap, create exactly these artifacts:
 | # | Artifact | Path | Est. Lines | Effort |
 |---|---|---|---|---|
 | A | Layout data | `src/data/{key}RoadmapFlow.ts` | ~250 | Mechanical |
-| B | Rich content | Append to `src/data/allNodeDetails.ts` | ~900 | Content work |
+| B | Rich content | `src/data/allNodeDetails/{domainOrRoadmap}.ts` | ~900 | Content work |
 | C | Config file | `src/data/{key}RoadmapConfig.ts` | ~200 | Semi-mechanical |
 | D | Wrapper page | `src/pages/{Key}RoadmapFlow.tsx` | ~6 | Trivial |
 | E | Route | `src/App.tsx` | 1 line | Trivial |
+| F | Manifest entry | `scripts/roadmap/roadmaps.manifest.json` | ~30 | Mechanical |
 
 ---
 
@@ -356,9 +449,9 @@ For each new roadmap, create exactly these artifacts:
 | `ux-ui-design` | `ux` | `ux1`, `ux2` |
 | `iot-embedded` | `iot` | `iot1`, `iot2` |
 
-### Shared Section IDs (No Prefix Needed — Already in allNodeDetails.ts)
+### Shared Section IDs (No Prefix Needed — Already in allNodeDetails/shared.ts)
 
-These section IDs and their sub-node IDs are **already defined** in `allNodeDetails.ts`. Do NOT redefine them. Reference them directly in any roadmap's `mainSectionIds` and layout nodes. Just use the same IDs in the layout file:
+These section IDs and their sub-node IDs are **already defined** in `allNodeDetails/shared.ts`. Do NOT redefine them. Reference them directly in any roadmap's `mainSectionIds` and layout nodes. Just use the same IDs in the layout file:
 
 ```
 version-control  →  sub-nodes: git
@@ -374,7 +467,7 @@ deployment       →  sub-nodes: dep1, dep2, dep3
 
 ## 7. Reusable Shared Sections (Write Once)
 
-The following sections are **already fully defined** in `allNodeDetails.ts`. They can be included in any roadmap's layout file and `mainSectionIds` array without adding anything to `allNodeDetails.ts`.
+The following sections are **already fully defined** in `allNodeDetails/shared.ts`. They can be included in any roadmap's layout file and `mainSectionIds` array without adding anything to roadmap-specific content files.
 
 | Section ID | Label | Sub-nodes | Applicable Roadmaps |
 |---|---|---|---|
@@ -733,11 +826,11 @@ Route: `/roadmap/iot-embedded/flow`
 
 ## 10. SECTION_NODE_MAP — Complete Update Required
 
-`SECTION_NODE_MAP` lives at the **bottom of `src/data/allNodeDetails.ts`**. It must be updated as each new roadmap's sub-nodes are added.
+`SECTION_NODE_MAP` should be exported from **`src/data/allNodeDetails/index.ts`** and composed from roadmap-specific map fragments. Update the fragment for each roadmap as new sub-nodes are added.
 
 ### How to Update
 
-After appending any new section data to `ALL_NODE_DETAILS`, add entries to `SECTION_NODE_MAP`:
+After adding new section data, add matching entries to that roadmap's section-map fragment:
 
 ```typescript
 export const SECTION_NODE_MAP: Record<string, string> = {
@@ -762,6 +855,52 @@ export const SECTION_NODE_MAP: Record<string, string> = {
 ```
 
 **Rule:** Every sub-node that should open the `NodeDetailSidebar` MUST have an entry here. Main section nodes (yellow nodes) should NOT have entries here — clicking them opens the quick-look panel from `nodeDetails` in the config instead.
+
+**Deterministic click resolver (recommended):**
+1. If `node.id` is in `config.mainSectionIds` → open quick-look panel.
+2. Else if `SECTION_NODE_MAP[node.id]` exists → open `NodeDetailSidebar`.
+3. Else → no-op or fallback handler.
+
+This avoids accidental behavior changes if `SECTION_NODE_MAP` is edited later.
+
+---
+
+## 11. Feature Modules Matrix (Optional but Reusable)
+
+Core roadmap flow should stay identical across all pages. Extra UX blocks should be enabled by config modules, not copied per page.
+
+| Module | Purpose | Typical Config Key | Default |
+|---|---|---|---|
+| Comments | Community discussion on public project submissions | `modules.comments` | disabled |
+| Privacy Visibility | Confirmation dialog for making submissions public/private | `modules.privacyVisibility` | enabled |
+| Career Launchpad | Mentor, roadmap job matches, interview prep actions | `modules.careerLaunchpad` | disabled |
+
+### Module Rules
+
+1. Modules are optional and must degrade gracefully when disabled.
+2. Module UI should not require separate page implementations.
+3. Module behavior should be fully driven by `RoadmapFlowConfig`.
+4. If a roadmap omits a module, generic page logic should skip both rendering and handlers for that block.
+
+### Recommended Rendering Guard Pattern
+
+```tsx
+const commentsEnabled = Boolean(config.modules?.comments?.enabled);
+const privacyEnabled = Boolean(config.modules?.privacyVisibility?.enabled);
+const careerEnabled = Boolean(config.modules?.careerLaunchpad?.enabled);
+```
+
+### Recommended Action Pattern for Career Cards
+
+```tsx
+if (feature.actionType === 'navigate' && feature.navigateTo) {
+  navigate(feature.navigateTo);
+} else if (feature.actionType === 'jobs-expand') {
+  // expand + fetch jobs using config.modules.careerLaunchpad.jobsRoadmapParam/jobsLimit
+}
+```
+
+This keeps roadmap-specific behavior in config and preserves one generic codepath.
 
 ---
 
@@ -821,7 +960,7 @@ export const initialEdges: Edge[] = [
 
 ---
 
-### Template B — Rich Content (append to `src/data/allNodeDetails.ts`)
+### Template B — Rich Content (`src/data/allNodeDetails/{domainOrRoadmap}.ts`)
 
 ```typescript
 // ── {ROADMAP NAME}: {SECTION LABEL} ──────────────────────────────────────────
@@ -935,6 +1074,22 @@ const config: RoadmapFlowConfig = {
     },
     // ... 9–11 more FAQs
   ] as const,
+
+  modules: {
+    comments: {
+      enabled: false,
+      requiresPublicSubmission: true,
+    },
+    privacyVisibility: {
+      enabled: true,
+    },
+    careerLaunchpad: {
+      enabled: false,
+      jobsRoadmapParam: '{roadmap-query-param}',
+      jobsLimit: 18,
+      features: [],
+    },
+  },
 };
 
 export default config;
@@ -962,7 +1117,7 @@ export default function {Key}RoadmapFlow() {
 
 ### Template E — Route Entry (`src/App.tsx`)
 
-Add inside the authenticated routes block, alongside the existing frontend route:
+Add inside the routes block in `src/App.tsx`, alongside the existing frontend route:
 
 ```tsx
 // Already existing:
@@ -984,6 +1139,44 @@ Add inside the authenticated routes block, alongside the existing frontend route
 <Route path="/roadmap/ux-ui-design/flow"          element={<UxUiRoadmapFlow />} />
 <Route path="/roadmap/iot-embedded/flow"          element={<IotRoadmapFlow />} />
 ```
+
+---
+
+### Template F — Manifest Entry (`scripts/roadmap/roadmaps.manifest.json`)
+
+```json
+{
+  "roadmapId": "backend-nodejs",
+  "displayTitle": "Backend Development",
+  "route": "/roadmap/backend-nodejs/flow",
+  "layoutKey": "backendRoadmapFlow",
+  "configKey": "backendRoadmapConfig",
+  "pageName": "BackendRoadmapFlow",
+  "jobsRoadmapParam": "backend",
+  "modules": {
+    "comments": true,
+    "privacyVisibility": true,
+    "careerLaunchpad": true
+  }
+}
+```
+
+### Template G — `package.json` Script Hooks
+
+```json
+{
+  "scripts": {
+    "generate:roadmap": "tsx scripts/roadmap/generateRoadmapScaffold.ts",
+    "validate:roadmap-ids": "tsx scripts/roadmap/validateRoadmapIds.ts",
+    "validate:section-map": "tsx scripts/roadmap/validateSectionMap.ts",
+    "validate:config": "tsx scripts/roadmap/validateRoadmapConfig.ts",
+    "validate:links": "tsx scripts/roadmap/validateResourceLinks.ts",
+    "validate:roadmap": "npm run validate:roadmap-ids && npm run validate:section-map && npm run validate:config && npm run validate:links"
+  }
+}
+```
+
+These scripts are the primary mechanism that removes repetitive manual work at scale.
 
 ---
 
@@ -1030,6 +1223,8 @@ Run through this checklist for **every** roadmap after implementing it.
 - [ ] Valid submission adds to list with project title and date
 - [ ] Success toast shows and disappears after 3.5 seconds
 - [ ] Submissions persist within the session (not cleared on re-click)
+- [ ] If comments module is enabled: comments render only for public submissions
+- [ ] If privacy module is enabled: visibility toggle triggers confirmation modal before applying change
 
 ### G. FAQ Section
 - [ ] All FAQ items render
@@ -1046,6 +1241,19 @@ Run through this checklist for **every** roadmap after implementing it.
 - [ ] Back button navigates to `/roadmaps`
 - [ ] Page title in the browser tab is correct
 
+### J. Career Module (Optional)
+- [ ] If career module is enabled: all configured feature cards render from config
+- [ ] `navigate` actions route to the configured destination
+- [ ] `jobs-expand` action opens jobs panel and fetches with roadmap param + limit from config
+- [ ] Career module disabled state renders no career block and causes no runtime errors
+
+### K. Automation Gates (Required for Scale)
+- [ ] `validate:roadmap-ids` passes (global node-id uniqueness)
+- [ ] `validate:section-map` passes (every sub-node in layouts maps to SECTION_NODE_MAP)
+- [ ] `validate:config` passes (required config keys + module schema)
+- [ ] `validate:links` passes (resource URL health check)
+- [ ] CI blocks merge on any validator failure
+
 ---
 
 ## 14. Execution Order — Fastest Path
@@ -1053,24 +1261,32 @@ Run through this checklist for **every** roadmap after implementing it.
 Work **layer by layer** across all roadmaps rather than completing one roadmap fully before starting the next. This minimises context-switching and lets you batch similar work.
 
 ```
+STEP 0 ─ Automation Foundations (do once, before scaling)
+│
+│   0a. Create roadmap manifest format (json/ts) for scaffold generation
+│   0b. Add generators: layout/config/wrapper/route scaffold
+│   0c. Add validators: node-id uniqueness, section-map coverage, config schema, link health
+│   0d. Wire validators into CI (fail build on violations)
+│
 STEP 1 ─ Phase 0 Refactor (do once, validate completely)
 │
 │   1a. Create src/types/roadmapFlow.ts
 │   1b. Create src/components/roadmap/GenericRoadmapFlowPage.tsx (move logic from Frontend page)
 │   1c. Create src/data/frontendRoadmapConfig.ts (move data from Frontend page)
-│   1d. Shrink src/pages/FrontendRoadmapFlow.tsx to wrapper
-│   1e. Run app → validate all 13 quality gate checks pass on frontend roadmap
+│   1d. Extract optional feature modules (comments, privacy modal, career launchpad) behind config flags
+│   1e. Shrink src/pages/FrontendRoadmapFlow.tsx to wrapper
+│   1f. Run app → validate quality gates (including optional module checks) on frontend roadmap
 │
-STEP 2 ─ Layout Files (all 14 at once — mechanical work, copy-paste pattern)
+STEP 2 ─ Layout Files (all 14 at once — generated, not hand-copied)
 │
-│   Create all 14 src/data/{key}RoadmapFlow.ts files
+│   Generate all 14 src/data/{key}RoadmapFlow.ts files from manifest
 │   Use the canvas system (Section 8) to calculate y positions
 │   For roadmaps reusing shared section IDs, copy those node definitions exactly
 │
 STEP 3 ─ SECTION_NODE_MAP updates (do alongside Step 2)
 │
-│   For each layout file created, immediately add all its sub-node → section mappings
-│   to SECTION_NODE_MAP at the bottom of allNodeDetails.ts
+│   Generate/append sub-node → section mappings from manifest
+│   Run `validate:section-map` after each roadmap batch
 │
 STEP 4 ─ Rich Content (one roadmap at a time — this is the intellectual work)
 │
@@ -1090,23 +1306,24 @@ STEP 4 ─ Rich Content (one roadmap at a time — this is the intellectual work
 │   4m. product-management
 │   4n. iot-embedded
 │
-│   For each roadmap: append ALL sections to allNodeDetails.ts as one contiguous block
+│   For each roadmap: write ALL sections in its own `allNodeDetails/{roadmapOrDomain}.ts` module
+│   Re-export from `allNodeDetails/index.ts`
 │   Do NOT leave stubs — write complete content with all sub-nodes
 │
 STEP 5 ─ Config Files (all 14)
 │
-│   Create src/data/{key}RoadmapConfig.ts for each roadmap
-│   Fill nodeDetails, projects, faqs
+│   Generate src/data/{key}RoadmapConfig.ts for each roadmap
+│   Fill nodeDetails, projects, faqs, and module toggles
 │
 STEP 6 ─ Wrapper Pages + Routes (30 minutes total)
 │
-│   Create 14 wrapper pages in src/pages/
-│   Add 14 route lines to src/App.tsx
+│   Generate 14 wrapper pages in src/pages/
+│   Generate/add 14 route lines to src/App.tsx
 │
 STEP 7 ─ Validate Each Roadmap
 │
-    Run the quality gate checklist (Section 13) for each roadmap
-    Fix issues before moving to the next
+│   Run validators + quality gate checklist (Section 13) for each roadmap
+│   Fix issues before moving to the next
 ```
 
 ---
@@ -1115,33 +1332,37 @@ STEP 7 ─ Validate Each Roadmap
 
 | Step | Task | Estimated Time |
 |---|---|---|
-| Phase 0 | Refactor + GenericRoadmapFlowPage | 2–3 hours |
-| Step 2 | 14 layout files | 3–4 hours |
-| Step 3 | SECTION_NODE_MAP updates | Included in Step 2 |
-| Step 4 | 14 × rich content (avg ~1h per roadmap) | 12–16 hours |
-| Step 5 | 14 config files | 3–4 hours |
-| Step 6 | 14 wrapper pages + routes | 30 minutes |
-| Step 7 | Testing & bug fixing | 2–3 hours |
-| **Total** | | **~23–31 hours** |
+| Step 0 | Automation foundations (generators + validators + CI) | 4–8 hours |
+| Step 1 | Phase 0 refactor + module extraction | 4–8 hours |
+| Steps 2/3/5/6 | Scaffold generation for 14 roadmaps | 2–4 hours |
+| Step 4 | Rich content authoring (major effort driver) | 28–70 hours |
+| Step 7 | Validation, visual QA, bug fixes | 6–12 hours |
+| **Total (14 roadmaps)** | | **~44–102 hours** |
 
 ### Breakdown of Step 4 (Rich Content per Roadmap)
 
-Each roadmap has ~11–13 unique sections. Each section has ~3–4 sub-nodes.
+Each roadmap typically has ~7–13 unique sections. Shared sections reduce duplication, but content authoring still dominates.
 
 Per sub-node:
-- 2–3 sentences for `intro` (~3 min)
-- 5 `whatYoullLearn` bullets (~5 min)
-- 3–4 `resources` with real URLs (~7 min)
+- 2–3 sentences for `intro` (~3–5 min)
+- 4–6 `whatYoullLearn` bullets (~4–8 min)
+- 3–4 verified `resources` with real URLs (~8–15 min)
 
-Per section: ~60 min for 3–4 sub-nodes + section description.
-Per roadmap with 7 unique sections (rest are shared): ~60–70 min.
+Per section: ~20–40 min for 2–4 sub-nodes plus section description.
+Per roadmap: ~2–5 hours depending on number of unique sections and research depth.
+
+### Scaling Formula (Use This for 50+ Roadmaps)
+
+`totalHours ≈ oneTimeSetup + (roadmapCount × avgContentHoursPerRoadmap) + qaBuffer`
+
+Example: `8 + (50 × 3) + 25 ≈ 183 hours`
 
 ---
 
 ## Edge Cases & Common Mistakes
 
 ### 1. Shared section IDs in multiple roadmaps
-If both `backend-nodejs` and `fullstack-mern` include `version-control`, the layout file for both can reference the same node IDs (`version-control`, `git`) and same edges. The `SECTION_NODE_MAP` entry `'git': 'version-control'` is written once and works for both.
+If both `backend-nodejs` and `fullstack-mern` include `version-control`, both layouts can reference the same shared node IDs (`version-control`, `git`) and same edges. Keep shared mappings (like `'git': 'version-control'`) in `allNodeDetails/shared.ts` and import once into `allNodeDetails/index.ts`.
 
 ### 2. Option nodes (pill nodes) for alternatives
 Use `type: 'optionNode'` for nodes representing tool choices (e.g. PostgreSQL vs MongoDB). These have a smaller, rounded appearance. They should still be in `allNodeDetails` if you want sidebar content, or omit from `SECTION_NODE_MAP` if you want them to be display-only.
@@ -1153,7 +1374,11 @@ If `canvasHeight` is too small, nodes will be clipped. Always set it to `(last n
 FAQ IDs (`fq1`, `fq2`, etc.) are local to each config file's `faqs` array — they are only used as React keys within that page. They do NOT need global uniqueness.
 
 ### 5. Main section nodes appearing in SECTION_NODE_MAP
-Do NOT put main section node IDs (like `'html'`, `'css'`) in `SECTION_NODE_MAP`. Those IDs are expected to resolve to `undefined` from the map, which signals the page to open the quick-look panel instead of the sidebar. Only sub-node IDs go in `SECTION_NODE_MAP`.
+Do not rely on map presence alone for click behavior. Use deterministic resolver order:
+1. If node is in `mainSectionIds` → quick-look panel.
+2. Else if node exists in `SECTION_NODE_MAP` → sidebar.
+
+This prevents accidental routing bugs even if map content changes.
 
 ### 6. RoadmapNodeData type
 The `RoadmapNodeData` type is defined in `src/data/frontendRoadmapFlow.ts` and re-exported. All layout files import it from there:
@@ -1170,6 +1395,9 @@ The flow page is accessed via `/roadmap/{id}/flow`. The `RoadmapDetail.tsx` page
 
 ### 9. Progress not persisting on refresh
 The current implementation stores node completion state in React state (in-memory). If Supabase persistence is added in the future, `GenericRoadmapFlowPage` is the only file that needs updating — all 15 roadmaps get the feature automatically. This is the main benefit of the generic component.
+
+### 10. Optional modules causing runtime checks everywhere
+Avoid scattered `if` checks in JSX. Compute module flags once at top-level from config (`commentsEnabled`, `careerEnabled`, `privacyEnabled`) and use guarded render blocks. This keeps the generic component readable as modules grow.
 
 ---
 
@@ -1227,12 +1455,22 @@ src/
     ├── QaRoadmapFlow.tsx
     ├── UxUiRoadmapFlow.tsx
     └── IotRoadmapFlow.tsx
+
+  scripts/
+  └── roadmap/
+    ├── generateRoadmapScaffold.ts            ← Step 0 automation
+    ├── validateRoadmapIds.ts                 ← global node-id uniqueness
+    ├── validateSectionMap.ts                 ← SECTION_NODE_MAP coverage
+    ├── validateRoadmapConfig.ts              ← config schema validation
+    └── validateResourceLinks.ts              ← URL health checks
 ```
 
 **Modified files (not created):**
-- `src/data/allNodeDetails.ts` — append all new section data + extend `SECTION_NODE_MAP`
+- `src/data/allNodeDetails/index.ts` — merge exports for section data and section maps
+- `src/data/allNodeDetails/{domainOrRoadmap}.ts` — add roadmap section data + section map fragment
 - `src/App.tsx` — add 14 route lines
+  - `package.json` — add roadmap generation/validation scripts
 
 ---
 
-*This document is the single source of truth for implementing roadmap flows. Follow it top to bottom, do not skip Phase 0, and do not start Phase 1 until the frontend validation checklist passes.*
+  *This document is the single source of truth for implementing roadmap flows. Follow it top to bottom, do not skip Phase 0, and do not start Phase 1 until validators and frontend quality gates pass.*

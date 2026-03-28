@@ -221,7 +221,7 @@ const mkBranch = (id: string, src: string, tgt: string, srcHandle = 'right'): Ed
   target: tgt,
   sourceHandle: srcHandle,
   targetHandle: 'left',
-  type: 'bezier',
+  type: 'default',
   style: branchEdgeStyle,
 });
 
@@ -231,7 +231,7 @@ const mkLeft = (id: string, src: string, tgt: string, srcHandle = 'left'): Edge 
   target: tgt,
   sourceHandle: srcHandle,
   targetHandle: 'right',
-  type: 'bezier',
+  type: 'default',
   style: leftEdgeStyle,
 });
 

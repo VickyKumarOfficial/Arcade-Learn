@@ -1,3 +1,5 @@
+import { BACKEND_NODE_DETAILS, BACKEND_SECTION_NODE_MAP } from '@/data/backendNodeDetails';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Unified detail data for all 15 roadmap sections and their sub-nodes
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1140,6 +1142,8 @@ export const ALL_NODE_DETAILS: Record<string, SectionData> = {
       },
     ],
   },
+
+  ...BACKEND_NODE_DETAILS,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1178,4 +1182,6 @@ export const SECTION_NODE_MAP: Record<string, string> = {
   performance: 'performance', perf1: 'performance', perf2: 'performance', perf3: 'performance',
   // deployment
   deployment: 'deployment', dep1: 'deployment', dep2: 'deployment', dep3: 'deployment',
+
+  ...BACKEND_SECTION_NODE_MAP,
 };

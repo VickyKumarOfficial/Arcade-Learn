@@ -15,8 +15,22 @@ const FRONTEND_ROADMAP_KEYWORDS = [
   'git', 'github', 'nodejs',
 ];
 
+const BACKEND_ROADMAP_KEYWORDS = [
+  'backend', 'backend developer',
+  'nodejs', 'node.js', 'javascript', 'typescript',
+  'express', 'nestjs', 'api', 'rest api', 'microservices',
+  'database', 'sql', 'postgresql', 'mysql', 'mongodb',
+  'redis', 'queue', 'kafka', 'rabbitmq',
+  'authentication', 'jwt', 'security',
+  'docker', 'kubernetes', 'ci/cd',
+  'testing', 'jest', 'mocha',
+  'system design',
+];
+
 const ROADMAP_KEYWORD_MAP = {
   frontend: FRONTEND_ROADMAP_KEYWORDS,
+  backend: BACKEND_ROADMAP_KEYWORDS,
+  'backend-nodejs': BACKEND_ROADMAP_KEYWORDS,
 };
 
 class RoadmapJobMatchService {
@@ -99,7 +113,7 @@ class RoadmapJobMatchService {
           ...job,
           matchReason: job.matchedKeywords.length > 0
             ? `Matched on: ${job.matchedKeywords.slice(0, 3).join(', ')}`
-            : 'Matched by frontend roadmap relevance',
+            : `Matched by ${normalizedRoadmap} roadmap relevance`,
         }));
 
       return {

@@ -28,6 +28,7 @@ import AIRoadmapGeneration from "@/pages/AIRoadmapGeneration";
 import AIChatPage from "@/pages/AIChatPage";
 import CodingPractice from '@/pages/CodingPractice';
 import FrontendRoadmapFlow from '@/pages/FrontendRoadmapFlow';
+import BackendRoadmapFlow from '@/pages/BackendRoadmapFlow';
 import MentorBooking from '@/pages/MentorBooking';
 import { Analytics } from "@vercel/analytics/react"
 
@@ -49,7 +50,9 @@ const App = () => (
                     <Route path="/roadmaps" element={<Roadmaps />} />
                     <Route path="/roadmap/:id" element={<RoadmapDetailTest />} />
                     <Route path="/roadmap/frontend-react/flow" element={<FrontendRoadmapFlow />} />
+                    <Route path="/roadmap/backend-nodejs/flow" element={<BackendRoadmapFlow />} />
                     <Route path="/roadmap/frontend-react/mentor" element={<MentorBooking />} />
+                    <Route path="/roadmap/backend-nodejs/mentor" element={<MentorBooking />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/aim" element={<Aim />} />

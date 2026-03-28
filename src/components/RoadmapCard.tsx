@@ -97,14 +97,18 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
             {completedCount > 0 ? 'Continue Learning' : 'Start Roadmap'}
           </Button>
 
-          {/* Roadmap Diagram button – only for frontend-react */}
-          {roadmap.id === 'frontend-react' && (
+          {/* Roadmap Diagram button for supported interactive flows */}
+          {(roadmap.id === 'frontend-react' || roadmap.id === 'backend-nodejs') && (
             <Button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (!user) { setShowAuthPrompt(true); return; }
-                navigate('/roadmap/frontend-react/flow');
+                const flowRoute =
+                  roadmap.id === 'frontend-react'
+                    ? '/roadmap/frontend-react/flow'
+                    : '/roadmap/backend-nodejs/flow';
+                navigate(flowRoute);
               }}
               variant="outline"
               className="w-full mt-2 gap-2 border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 text-sm font-medium"
