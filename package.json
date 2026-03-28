@@ -12,10 +12,11 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
-    "@google/genai": "^1.22.0",
-    "@google/generative-ai": "^0.24.1",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^3.9.0",
     "@monaco-editor/react": "^4.7.0",
+    "@mui/material": "^7.3.9",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -58,7 +59,6 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
     "framer-motion": "^12.23.12",
-    "groq-sdk": "^0.37.0",
     "input-otp": "^1.2.4",
     "jheat.js": "^4.3.1",
     "lightswind": "^3.1.20",
@@ -104,5 +104,17 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.21.2"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

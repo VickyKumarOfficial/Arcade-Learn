@@ -1,14 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
-
-// Initialize Gemini AI client
-const genAI = new GoogleGenAI({ apiKey: import.meta.env.VITE_GOOGLE_CLOUD_API_KEY || '' });
-
-// Debug: Check if API key is loaded
-console.log('🔑 Gemini API Key Status:', {
-  loaded: !!import.meta.env.VITE_GOOGLE_CLOUD_API_KEY,
-  length: import.meta.env.VITE_GOOGLE_CLOUD_API_KEY?.length || 0,
-  firstChars: import.meta.env.VITE_GOOGLE_CLOUD_API_KEY?.substring(0, 8) + '...' || 'MISSING'
-});
+// Backend URL from environment (e.g., http://localhost:8081)
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -22,51 +13,6 @@ export interface ChatCompletionResponse {
 }
 
 class AIService {
-  private systemPrompt = `You are a helpful AI coding assistant for ArcadeLearn and Your name is - "Nova" not 'ChatGPT', an interactive programming learning platform. Your role is to:
-
-1. Help users understand programming concepts
-2. Provide code examples and explanations
-3. Debug code issues
-4. Suggest best practices
-5. Guide users through learning roadmaps
-6. Answer questions about web development, data structures, algorithms, and other programming topics
-
-CRITICAL CODE FORMATTING RULES:
-- ALWAYS wrap code in triple backticks with language specification: \`\`\`javascript, \`\`\`html, \`\`\`css, etc.
-- For inline code, use single backticks: \`variable\`, \`function()\`
-- NEVER use any other format for code - only triple backticks for blocks
-- Always specify the programming language after the opening triple backticks
-- Ensure there's a line break after opening backticks and before closing backticks
-
-FORMATTING GUIDELINES:
-- Use ## for main headings, ### for subheadings  
-- Use **bold** for important terms and concepts
-- Use numbered lists (1. 2. 3.) for step-by-step instructions
-- Use bullet points (-) for feature lists or key points
-- Keep paragraphs concise and well-spaced
-
-EXAMPLE RESPONSE FORMAT:
-## Topic Overview
-Brief explanation here...
-
-### Code Example
-\`\`\`javascript
-function example() {
-    console.log("Hello World");
-    return true;
-}
-\`\`\`
-
-### Key Points
-- Important point with \`inline code\`
-- Another point
-
-### Best Practices
-1. Always use \`const\` for variables that don't change
-2. Write descriptive function names
-
-Remember: Code readability is CRITICAL. Always use proper code blocks with language specification.`;
-
   /**
    * Clean up AI response for better formatting
    */
@@ -92,97 +38,47 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
    */
   async getChatCompletion(messages: ChatMessage[]): Promise<ChatCompletionResponse> {
     try {
-      // Validate API key
-      if (!import.meta.env.VITE_GOOGLE_CLOUD_API_KEY) {
-        console.error('Gemini API key is not configured');
+      // Call the backend API endpoint
+      const response = await fetch(`${backendUrl}/api/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages }),
+      });
+
+      const payload = await response.json().catch(() => ({
+        success: false,
+        error: 'Invalid server response.'
+      }));
+
+      if (!response.ok || !payload?.success) {
         return {
           success: false,
-          error: 'AI service is not properly configured. Please check your environment variables.'
+          error: payload?.error || `AI service request failed with status ${response.status}.`
         };
       }
 
-      // Create chat completion using Gemini
-      try {
-        // Build the prompt with system prompt and user messages
-        let prompt = this.systemPrompt + '\n\n';
-        
-        // Add conversation history
-        for (const msg of messages) {
-          if (msg.role === 'user') {
-            prompt += `User: ${msg.content}\n\n`;
-          } else if (msg.role === 'assistant') {
-            prompt += `Assistant: ${msg.content}\n\n`;
-          }
-        }
-        
-        // For multi-turn conversations, we need to add "Assistant:" at the end to prompt a response
-        if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
-          prompt += 'Assistant: ';
-        }
-
-        // Generate content using the new SDK
-        const response = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash-lite',
-          contents: prompt,
-          config: {
-            temperature: 0.7,
-            maxOutputTokens: 2000,
-            topP: 0.9,
-          }
-        });
-
-        const text = response.text;
-
-        if (!text) {
-          return {
-            success: false,
-            error: 'No response received from AI service'
-          };
-        }
-
-        // Clean up the response for better formatting
-        const cleanedResponse = this.cleanResponse(text);
-
-        return {
-          success: true,
-          response: cleanedResponse
-        };
-
-      } catch (error: any) {
-        console.error('Gemini API Error Details:', {
-          error: error,
-          message: error.message,
-          status: error.status,
-          code: error.code
-        });
-        
-        // Handle specific error types
-        let errorMessage = 'Failed to get AI response. Please try again.';
-        
-        if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota') || error?.message?.includes('rate limit')) {
-          errorMessage = 'API quota exceeded. Please wait a few minutes and try again, or check your Google AI Studio quota limits.';
-        } else if (error?.message?.includes('API key') || error?.message?.includes('401') || error?.message?.includes('Unauthorized') || error?.message?.includes('API_KEY_INVALID')) {
-          errorMessage = 'Invalid API key. Please check your configuration.';
-        } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
-          errorMessage = 'Network error. Please check your internet connection and try again.';
-        }
-
+      if (!payload?.response) {
         return {
           success: false,
-          error: errorMessage
+          error: 'No response received from AI service'
         };
       }
+
+      // Clean up the response for better formatting
+      const cleanedResponse = this.cleanResponse(payload.response);
+
+      return {
+        success: true,
+        response: cleanedResponse
+      };
+
     } catch (error: any) {
-      console.error('Error in AI service:', error);
-      
+      console.error('Error calling AI service:', error);
+
       // Handle specific error types
       let errorMessage = 'Failed to get AI response. Please try again.';
-      
-      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota') || error?.message?.includes('rate limit')) {
-        errorMessage = 'API quota exceeded. Please wait a few minutes and try again.';
-      } else if (error?.message?.includes('API key')) {
-        errorMessage = 'Invalid API key. Please check your configuration.';
-      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+
+      if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       }
 
@@ -272,10 +168,17 @@ Remember: Code readability is CRITICAL. Always use proper code blocks with langu
   }
 
   /**
-   * Test if AI service is working (checks key config only, no real API call)
+   * Test if AI service is working (checks backend connectivity)
    */
   async testConnection(): Promise<boolean> {
-    return !!import.meta.env.VITE_GOOGLE_CLOUD_API_KEY;
+    try {
+      const response = await fetch(`${backendUrl}/health`, {
+        method: 'GET',
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }
 
   /**

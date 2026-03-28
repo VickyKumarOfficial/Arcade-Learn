@@ -11,8 +11,12 @@ import { surveyService } from './services/surveyService.js';
 import { emailService } from './services/emailService.js';
 import { resumeService } from './services/resumeService.js';
 import { jobRecommendationService } from './services/jobRecommendationService.js';
+import { roadmapJobMatchService } from './services/roadmapJobMatchService.js';
 import { userActivityService } from './services/userActivityService.js';
 import pdfService from './services/pdfService.js';
+import { invokeMcpTool } from './mcpServer.js';
+import { getRegisteredMcpTools } from './mcpServer.js';
+import { aiOrchestratorService } from './services/aiOrchestratorService.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -43,6 +47,119 @@ app.use(express.json());
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// MCP discovery endpoint for developer tooling and integration checks.
+app.get('/mcp', (req, res) => {
+  res.json({
+    name: 'arcadelearn-mcp',
+    version: '0.2.0-stop-f',
+    tools: getRegisteredMcpTools(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Stop B: secure server-side quiz generation route (frontend cutover comes in next stop)
+const quizRateLimitStore = new Map();
+const QUIZ_MAX_PER_HOUR = 10;
+const QUIZ_WINDOW_MS = 60 * 60 * 1000;
+
+app.post('/api/quiz/generate', async (req, res) => {
+  try {
+    const { topic, context = [], count = 4, userId } = req.body ?? {};
+
+    if (typeof topic !== 'string' || topic.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'A valid topic is required.'
+      });
+    }
+
+    if (!Array.isArray(context) || context.some((item) => typeof item !== 'string')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Context must be an array of strings.'
+      });
+    }
+
+    const safeCount = Number.isInteger(count) ? Math.max(2, Math.min(10, count)) : 4;
+    const rateLimitKey = userId || req.ip || 'anonymous';
+    const now = Date.now();
+    const rateState = quizRateLimitStore.get(rateLimitKey) || { count: 0, resetAt: now + QUIZ_WINDOW_MS };
+
+    if (now > rateState.resetAt) {
+      rateState.count = 0;
+      rateState.resetAt = now + QUIZ_WINDOW_MS;
+    }
+
+    rateState.count += 1;
+    quizRateLimitStore.set(rateLimitKey, rateState);
+
+    if (rateState.count > QUIZ_MAX_PER_HOUR) {
+      return res.status(429).json({
+        success: false,
+        error: 'Rate limit exceeded. Try again later.'
+      });
+    }
+
+    const result = await invokeMcpTool('generate_quiz', {
+      topic: topic.trim(),
+      context,
+      count: safeCount
+    });
+
+    return res.json(result);
+  } catch (error) {
+    console.error('Quiz generation error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to generate quiz.'
+    });
+  }
+});
+
+// Stop D: backend AI chat endpoint (frontend cutover comes later)
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const { messages } = req.body ?? {};
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Messages array is required.',
+      });
+    }
+
+    const hasInvalidMessage = messages.some(
+      (message) =>
+        !message ||
+        (message.role !== 'user' && message.role !== 'assistant' && message.role !== 'system') ||
+        typeof message.content !== 'string' ||
+        message.content.trim().length === 0 ||
+        message.content.length > 6000
+    );
+
+    if (hasInvalidMessage) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid message payload.',
+      });
+    }
+
+    const result = await aiOrchestratorService.getChatCompletion({ messages });
+    if (!result.success) {
+      const status = Number.isInteger(result.statusCode) ? result.statusCode : 500;
+      return res.status(status).json(result);
+    }
+
+    return res.json(result);
+  } catch (error) {
+    console.error('AI chat error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to process AI chat request.',
+    });
+  }
 });
 
 // User Progress Routes
@@ -581,6 +698,24 @@ app.get('/api/user/:userId/jobs/recommendations', async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     
     const result = await jobRecommendationService.getRecommendations(userId, limit);
+
+    if (result.success) {
+      res.json(result.data);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get roadmap keyword based job matches (no resume required)
+app.get('/api/jobs/roadmap-matches', async (req, res) => {
+  try {
+    const roadmap = typeof req.query.roadmap === 'string' ? req.query.roadmap : 'frontend';
+    const limit = parseInt(req.query.limit, 10) || 20;
+
+    const result = await roadmapJobMatchService.getRoadmapMatches(roadmap, limit);
 
     if (result.success) {
       res.json(result.data);

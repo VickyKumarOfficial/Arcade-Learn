@@ -11,13 +11,20 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, BookOpen, CheckSquare, ChevronDown, ChevronRight, Code2, X, Zap,
   Github, Send, Link2, CheckCircle2, AlertCircle, FolderGit2, Trash2, Trophy, Lock,
+  Users, BriefcaseBusiness, ClipboardCheck, ArrowRight, ChevronUp,
+  Loader2, Building2, MapPin, ExternalLink, DollarSign,
+  Heart,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import axios from 'axios';
 
 import { nodeTypes } from '@/components/roadmap/RoadmapFlowNodes';
 import Footer from '@/components/Footer';
 import NodeDetailSidebar from '@/components/roadmap/NodeDetailSidebar';
+import PrivacyWarningModal from '@/components/roadmap/PrivacyWarningModal';
+import ProjectComments from '@/components/roadmap/ProjectComments';
+import { BACKEND_URL } from '@/config/env';
 import { SECTION_NODE_MAP, ALL_NODE_DETAILS } from '@/data/allNodeDetails';
 import { initialNodes, initialEdges, RoadmapNodeData } from '@/data/frontendRoadmapFlow';
 
@@ -222,14 +229,196 @@ const FRONTEND_PROJECTS = [
   },
 ] as const;
 
+const CAREER_SUPPORT_FEATURES = [
+  {
+    id: 'mentor-sessions',
+    title: '1:1 Mentor-Mentee Sessions',
+    highlights: ['Human + AI guidance', 'Weekly goal tracking', 'Code and portfolio feedback'],
+    action: 'Open Mentorship',
+    icon: Users,
+    accent: 'from-indigo-500/25 to-blue-500/20 border-indigo-500/30',
+  },
+  {
+    id: 'recommended-jobs',
+    title: 'Roadmap-Based Job Recommendations',
+    highlights: ['Frontend-focused listings', 'Skill-gap indicators', 'Smart role prioritization'],
+    action: 'View Job Matches',
+    icon: BriefcaseBusiness,
+    accent: 'from-emerald-500/20 to-cyan-500/20 border-emerald-500/30',
+  },
+  {
+    id: 'interview-prep',
+    title: 'Placement & Interview Preparation',
+    highlights: ['Timed coding tests', 'Question bank + patterns', 'Mock interview tracks'],
+    action: 'Start Prep Track',
+    icon: ClipboardCheck,
+    accent: 'from-violet-500/25 to-fuchsia-500/20 border-violet-500/30',
+  },
+] as const;
+
 type ProjectId = (typeof FRONTEND_PROJECTS)[number]['id'];
 
-interface Submission {
+export interface ProjectComment {
+  id: string;
+  authorName: string;
+  authorIcon?: string;
+  text: string;
+  timestamp: string;
+  likes: number;
+  dislikes: number;
+  replies: ProjectComment[];
+}
+
+export interface Submission {
   id: string;
   projectId: ProjectId;
   url: string;
   date: string;
+  isPublic?: boolean;
+  comments?: ProjectComment[];
 }
+
+interface PrivacyChangeRequest {
+  open: boolean;
+  targetVisibility: boolean;
+  submissionId: string | null;
+  scope: 'form' | 'submission';
+}
+
+interface JobMatch {
+  id: string;
+  title: string;
+  company_name: string;
+  location: string;
+  type: string;
+  salary?: string | null;
+  url: string;
+  source?: string;
+  matchPercentage: number;
+  matchReason?: string;
+  savedCount?: number;
+}
+
+function formatIndianLakhSalary(salary?: string | null): string {
+  if (!salary) return 'Salary not disclosed';
+
+  const normalizedSalary = String(salary).trim();
+  if (!normalizedSalary) return 'Salary not disclosed';
+
+  return normalizedSalary.replace(/\d[\d,]*(?:\.\d+)?/g, (match) => {
+    const numericValue = Number(match.replace(/,/g, ''));
+
+    // Convert only amounts in lakh range or higher.
+    if (!Number.isFinite(numericValue) || numericValue < 100000) {
+      return match;
+    }
+
+    const lakhValue = numericValue / 100000;
+    const display = Number.isInteger(lakhValue)
+      ? String(lakhValue)
+      : lakhValue.toFixed(1).replace(/\.0$/, '');
+
+    return `${display}L`;
+  });
+}
+
+function getSeededSaveCount(jobId: string): number {
+  let hash = 0;
+  for (let i = 0; i < jobId.length; i += 1) {
+    hash = ((hash << 5) - hash) + jobId.charCodeAt(i);
+    hash |= 0;
+  }
+  return (Math.abs(hash) % 90) + 10; // 10-99
+}
+
+const LIKE_POP_PARTICLES = [
+  { x: -24, y: -14, color: '#fb7185', size: 5, delay: 0.0 },
+  { x: -14, y: -24, color: '#f59e0b', size: 4, delay: 0.02 },
+  { x: 0, y: -28, color: '#22d3ee', size: 4, delay: 0.04 },
+  { x: 14, y: -24, color: '#a78bfa', size: 5, delay: 0.06 },
+  { x: 24, y: -14, color: '#34d399', size: 4, delay: 0.08 },
+  { x: 20, y: 0, color: '#f472b6', size: 4, delay: 0.1 },
+  { x: -20, y: 0, color: '#60a5fa', size: 4, delay: 0.12 },
+];
+
+// ── Mock Community Submissions ────────────────────────────────────────────────
+export const MOCK_COMMUNITY_SUBMISSIONS: Submission[] = [
+  {
+    id: 'mock-1',
+    projectId: 'portfolio',
+    url: 'https://github.com/alex-dev/my-portfolio',
+    date: 'Oct 24, 2023',
+    isPublic: true,
+    comments: [
+      {
+        id: 'c1',
+        authorName: 'Sarah Jenkins',
+        text: 'Looks really clean! What CSS framework did you use for those responsive grid layouts?',
+        timestamp: '2 hours ago',
+        likes: 5,
+        dislikes: 0,
+        replies: [
+          {
+            id: 'c1-1',
+            authorName: 'Alex Dev',
+            text: 'Thanks Sarah! I kept it simple and just used Tailwind CSS. Their grid utility classes made it a breeze.',
+            timestamp: '1 hour ago',
+            likes: 3,
+            dislikes: 0,
+            replies: []
+          }
+        ]
+      },
+      {
+        id: 'c2',
+        authorName: 'MichaelT',
+        text: 'Great job handling the dark mode toggle. One small tip: consider storing the theme preference in localStorage so it persists across reloads!',
+        timestamp: '5 hours ago',
+        likes: 12,
+        dislikes: 0,
+        replies: []
+      }
+    ]
+  },
+  {
+    id: 'mock-2',
+    projectId: 'weather-app',
+    url: 'https://github.com/johndoe/react-weather-dashboard',
+    date: 'Nov 02, 2023',
+    isPublic: true,
+    comments: [
+      {
+        id: 'c3',
+        authorName: 'Elena',
+        text: 'Love the smooth transitions when the weather data loads. Did you use Framer Motion?',
+        timestamp: '1 day ago',
+        likes: 8,
+        dislikes: 0,
+        replies: [
+          {
+            id: 'c3-1',
+            authorName: 'John Doe',
+            text: 'Good eye! Yes, Framer Motion for the layout animations and regular CSS transitions for the hover states.',
+            timestamp: '20 hours ago',
+            likes: 4,
+            dislikes: 0,
+            replies: [
+              {
+                id: 'c3-1-1',
+                authorName: 'Elena',
+                text: 'Awesome, looks super professional.',
+                timestamp: '18 hours ago',
+                likes: 1,
+                dislikes: 0,
+                replies: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
 
 // ── IDs of all main section (parent) nodes ────────────────────────────────────
 // These get auto-completed once every sub-node under them is marked done.
@@ -324,14 +513,74 @@ export default function FrontendRoadmapFlow() {
   // ── Projects section state ─────────────────────────────────────────────────
   const [selectedProject, setSelectedProject] = useState<ProjectId>('portfolio');
   const [githubUrl, setGithubUrl]               = useState('');
+  const [isProjectPublic, setIsProjectPublic]   = useState(false);
   const [submissions, setSubmissions]           = useState<Submission[]>([]);
   const [submitError, setSubmitError]           = useState('');
   const [submitSuccess, setSubmitSuccess]       = useState(false);
+  const [submitAction, setSubmitAction]         = useState<'created' | 'updated' | null>(null);
+  const [matchedJobs, setMatchedJobs]           = useState<JobMatch[]>([]);
+  const [jobMatchesLoading, setJobMatchesLoading] = useState(false);
+  const [jobMatchesError, setJobMatchesError]   = useState('');
+  const [isJobMatchesExpanded, setIsJobMatchesExpanded] = useState(false);
+  const [hasFetchedJobMatches, setHasFetchedJobMatches] = useState(false);
+  const [likedJobIds, setLikedJobIds]           = useState<Record<string, boolean>>({});
+  const [likeBurst, setLikeBurst]               = useState<{ jobId: string; nonce: number } | null>(null);
+  const [privacyChangeRequest, setPrivacyChangeRequest] = useState<PrivacyChangeRequest>({
+    open: false,
+    targetVisibility: false,
+    submissionId: null,
+    scope: 'form',
+  });
+  const selectedProjectSubmission = useMemo(
+    () => submissions.find(sub => sub.projectId === selectedProject),
+    [submissions, selectedProject],
+  );
+
+  const requestPrivacyChange = (
+    scope: 'form' | 'submission',
+    targetVisibility: boolean,
+    submissionId: string | null = null,
+  ) => {
+    setPrivacyChangeRequest({
+      open: true,
+      targetVisibility,
+      submissionId,
+      scope,
+    });
+  };
+
+  const closePrivacyModal = () => {
+    setPrivacyChangeRequest(prev => ({ ...prev, open: false }));
+  };
+
+  const confirmPrivacyChange = () => {
+    const { scope, targetVisibility, submissionId } = privacyChangeRequest;
+
+    if (scope === 'form') {
+      setIsProjectPublic(targetVisibility);
+      setSubmissions(prev =>
+        prev.map(s =>
+          s.projectId === selectedProject ? { ...s, isPublic: targetVisibility } : s,
+        ),
+      );
+    }
+
+    if (scope === 'submission' && submissionId) {
+      setSubmissions(prev =>
+        prev.map(s =>
+          s.id === submissionId ? { ...s, isPublic: targetVisibility } : s,
+        ),
+      );
+    }
+
+    setPrivacyChangeRequest(prev => ({ ...prev, open: false }));
+  };
 
   const handleProjectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
     setSubmitSuccess(false);
+    setSubmitAction(null);
 
     const trimmed = githubUrl.trim();
     if (!trimmed) { setSubmitError('Please enter a GitHub repository URL.'); return; }
@@ -347,41 +596,157 @@ export default function FrontendRoadmapFlow() {
       return;
     }
 
-    setSubmissions(prev => [
-      {
-        id: crypto.randomUUID(),
-        projectId: selectedProject,
-        url: trimmed,
-        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-      },
-      ...prev,
-    ]);
-    setGithubUrl('');
+    const existingSubmission = submissions.find(s => s.projectId === selectedProject);
+
+    setSubmissions(prev => {
+      if (existingSubmission) {
+        return prev.map(s =>
+          s.projectId === selectedProject
+            ? {
+                ...s,
+                url: trimmed,
+                isPublic: isProjectPublic,
+                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+              }
+            : s,
+        );
+      }
+
+      return [
+        {
+          id: crypto.randomUUID(),
+          projectId: selectedProject,
+          url: trimmed,
+          date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          isPublic: isProjectPublic,
+          comments: [],
+        },
+        ...prev,
+      ];
+    });
+
+    setSubmitAction(existingSubmission ? 'updated' : 'created');
     setSubmitSuccess(true);
     setTimeout(() => setSubmitSuccess(false), 3500);
   };
+
+  useEffect(() => {
+    if (selectedProjectSubmission) {
+      setGithubUrl(selectedProjectSubmission.url);
+      setIsProjectPublic(Boolean(selectedProjectSubmission.isPublic));
+      return;
+    }
+
+    setGithubUrl('');
+    setIsProjectPublic(false);
+  }, [selectedProjectSubmission]);
+
   const [showLegend, setShowLegend]          = useState(true);
   const [sidebar, setSidebar] = useState<{ open: boolean; sectionId: string | null; activeNodeId: string | null }>({ open: false, sectionId: null, activeNodeId: null });
+  const roadmapCanvasRef                     = useRef<HTMLDivElement>(null);
   const projectsRef                          = useRef<HTMLDivElement>(null);
+  const jobMatchesRef                        = useRef<HTMLDivElement>(null);
+
+  const fetchRoadmapJobMatches = useCallback(async () => {
+    if (jobMatchesLoading) return;
+
+    try {
+      setJobMatchesLoading(true);
+      setJobMatchesError('');
+
+      const response = await axios.get(
+        `${BACKEND_URL}/api/jobs/roadmap-matches?roadmap=frontend&limit=18`,
+      );
+
+      const recommendations = response.data?.recommendations || [];
+      setMatchedJobs(recommendations);
+      setHasFetchedJobMatches(true);
+    } catch (error) {
+      console.error('Error fetching roadmap job matches:', error);
+      setJobMatchesError('Unable to load matched jobs right now. Please try again.');
+    } finally {
+      setJobMatchesLoading(false);
+    }
+  }, [jobMatchesLoading]);
+
+  const handleCareerFeatureAction = useCallback(
+    async (featureId: string) => {
+      if (featureId === 'mentor-sessions') {
+        navigate('/roadmap/frontend-react/mentor');
+        return;
+      }
+
+      if (featureId === 'interview-prep') {
+        navigate('/practice');
+        return;
+      }
+
+      if (featureId !== 'recommended-jobs') return;
+
+      setIsJobMatchesExpanded(true);
+
+      // Scroll once expanded so users directly land on result queue.
+      setTimeout(() => {
+        jobMatchesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+
+      if (!hasFetchedJobMatches) {
+        await fetchRoadmapJobMatches();
+      }
+    },
+    [navigate, hasFetchedJobMatches, fetchRoadmapJobMatches],
+  );
 
   // ── LOCK GATE ─────────────────────────────────────────────────────────────
   // DEV / TEST BYPASS: comment out the line below and uncomment the one after it.
   const completedSectionCount = MAIN_SECTION_IDS.filter(id => nodes.find(n => n.id === id)?.data?.completed === true).length;
-  const isProjectsLocked = completedSectionCount < MAIN_SECTION_IDS.length; // [LOCK] comment to bypass
-  // const isProjectsLocked = false;                                          // [BYPASS] uncomment to bypass
+  // const isProjectsLocked = completedSectionCount < MAIN_SECTION_IDS.length; // [LOCK] comment to bypass
+  const isProjectsLocked = false;                                          // [BYPASS] uncomment to bypass
   // ── END LOCK GATE ─────────────────────────────────────────────────────────
 
-  // Hide legend when Projects section enters the viewport
+  // Show legend only while roadmap is visible and Projects has not started
   useEffect(() => {
-    const el = projectsRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => setShowLegend(!entry.isIntersecting),
+    const roadmapEl = roadmapCanvasRef.current;
+    const projectsEl = projectsRef.current;
+    if (!roadmapEl || !projectsEl) return;
+
+    let roadmapVisible = false;
+    let projectsVisible = false;
+
+    const updateLegend = () => {
+      setShowLegend(roadmapVisible && !projectsVisible);
+    };
+
+    const roadmapObserver = new IntersectionObserver(
+      ([entry]) => {
+        roadmapVisible = entry.isIntersecting;
+        updateLegend();
+      },
       { threshold: 0 },
     );
-    obs.observe(el);
-    return () => obs.disconnect();
+
+    const projectsObserver = new IntersectionObserver(
+      ([entry]) => {
+        projectsVisible = entry.isIntersecting;
+        updateLegend();
+      },
+      { threshold: 0 },
+    );
+
+    roadmapObserver.observe(roadmapEl);
+    projectsObserver.observe(projectsEl);
+
+    return () => {
+      roadmapObserver.disconnect();
+      projectsObserver.disconnect();
+    };
   }, []);
+
+  useEffect(() => {
+    if (!likeBurst) return;
+    const timer = setTimeout(() => setLikeBurst(null), 700);
+    return () => clearTimeout(timer);
+  }, [likeBurst]);
 
   const toggleFaq = (id: string) =>
     setOpenFaqs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -543,6 +908,7 @@ export default function FrontendRoadmapFlow() {
       >
         {/* Fixed-size canvas — exactly the size of the roadmap content */}
         <div
+          ref={roadmapCanvasRef}
           style={{ width: CANVAS_W, height: CANVAS_H, position: 'relative', margin: '0 auto' }}
         >
           <ReactFlow
@@ -574,7 +940,7 @@ export default function FrontendRoadmapFlow() {
 
       {/* ── Projects Section ─────────────────────────────────────────────────── */}
       <div
-        ref={projectsRef} 
+        ref={projectsRef}
         className="w-full py-20 px-4"
         style={{
           background: 'linear-gradient(180deg, #09090b 0%, #0d1117 60%, #09090b 100%)',
@@ -704,27 +1070,57 @@ export default function FrontendRoadmapFlow() {
               </span>
               <div>
                 <h3 className="text-sm font-bold text-white">Submit Your Project</h3>
-                <p className="text-xs text-zinc-500">Paste your public GitHub repository URL below</p>
+                <p className="text-xs text-zinc-500">Set visibility and submit your GitHub repository URL below</p>
               </div>
             </div>
 
             <form onSubmit={handleProjectSubmit} className="space-y-4">
-              {/* Project selector */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Selected project</label>
-                <select
-                  value={selectedProject}
-                  onChange={e => setSelectedProject(e.target.value as ProjectId)}
-                  className="w-full rounded-xl bg-white/5 border border-white/10 text-sm text-white px-4 py-2.5
-                             focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30
-                             transition-all appearance-none"
-                >
-                  {FRONTEND_PROJECTS.map(p => (
-                    <option key={p.id} value={p.id} className="bg-slate-900">
-                      [{p.difficulty}] {p.title}
-                    </option>
-                  ))}
-                </select>
+              {/* Project selector + visibility */}
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px] gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Selected project</label>
+                  <select
+                    value={selectedProject}
+                    onChange={e => setSelectedProject(e.target.value as ProjectId)}
+                    className="w-full rounded-xl bg-white/5 border border-white/10 text-sm text-white px-4 py-2.5
+                               focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30
+                               transition-all appearance-none"
+                  >
+                    {FRONTEND_PROJECTS.map(p => (
+                      <option key={p.id} value={p.id} className="bg-slate-900">
+                        [{p.difficulty}] {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Visibility</label>
+                  <div className="grid grid-cols-2 rounded-xl border border-white/10 bg-white/5 p-1">
+                    <button
+                      type="button"
+                      onClick={() => requestPrivacyChange('form', false)}
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                        !isProjectPublic
+                          ? 'bg-zinc-700/80 text-zinc-100'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      Private
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => requestPrivacyChange('form', true)}
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                        isProjectPublic
+                          ? 'bg-emerald-500/80 text-white'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      Public
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* GitHub URL input */}
@@ -744,6 +1140,12 @@ export default function FrontendRoadmapFlow() {
                 </div>
               </div>
 
+              <div className="text-[11px] text-zinc-500">
+                {selectedProjectSubmission
+                  ? 'Updating this form will edit the existing submission for this project.'
+                  : 'This will create your first submission for this project.'}
+              </div>
+
               {/* Error / success feedback */}
               {submitError && (
                 <div className="flex items-center gap-2 text-xs text-rose-400">
@@ -754,7 +1156,9 @@ export default function FrontendRoadmapFlow() {
               {submitSuccess && (
                 <div className="flex items-center gap-2 text-xs text-emerald-400">
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  Project submitted — great work! Keep building.
+                  {submitAction === 'updated'
+                    ? 'Submission updated — visibility and link are synced.'
+                    : 'Project submitted — great work! Keep building.'}
                 </div>
               )}
 
@@ -767,7 +1171,7 @@ export default function FrontendRoadmapFlow() {
                            shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40"
               >
                 <Send className="w-4 h-4" />
-                Submit Project
+                {selectedProjectSubmission ? 'Update Submission' : 'Submit Project'}
               </button>
             </form>
           </motion.div>
@@ -790,42 +1194,321 @@ export default function FrontendRoadmapFlow() {
               {submissions.map(sub => {
                 const proj = FRONTEND_PROJECTS.find(p => p.id === sub.projectId);
                 return (
-                  <div
-                    key={sub.id}
-                    className="flex items-center gap-4 rounded-xl border border-white/8
-                               bg-white/3 hover:bg-white/5 px-4 py-3 transition-all group"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div key={sub.id} className="space-y-2">
+                    <div
+                      className="flex items-center gap-4 rounded-xl border border-white/8
+                                 bg-white/3 hover:bg-white/5 px-4 py-3 transition-all group"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{proj?.title ?? sub.projectId}</p>
-                      <a
-                        href={sub.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-indigo-400 hover:text-indigo-300 truncate block transition-colors"
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{proj?.title ?? sub.projectId}</p>
+                        <a
+                          href={sub.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-indigo-400 hover:text-indigo-300 truncate block transition-colors"
+                        >
+                          {sub.url}
+                        </a>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                            sub.isPublic
+                              ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
+                              : 'text-zinc-300 bg-zinc-700/30 border-zinc-500/40'
+                          }`}
+                        >
+                          {sub.isPublic ? 'Public' : 'Private'}
+                        </span>
+
+                        <span className="text-[11px] text-zinc-600">{sub.date}</span>
+                      </div>
+
+                      <button
+                        onClick={() => setSubmissions(prev => prev.filter(s => s.id !== sub.id))}
+                        className="p-1.5 rounded-lg text-zinc-700 hover:text-rose-400 hover:bg-rose-400/10
+                                   opacity-0 group-hover:opacity-100 transition-all"
+                        aria-label="Remove submission"
                       >
-                        {sub.url}
-                      </a>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
 
-                    <span className="text-[11px] text-zinc-600 shrink-0">{sub.date}</span>
-
-                    <button
-                      onClick={() => setSubmissions(prev => prev.filter(s => s.id !== sub.id))}
-                      className="p-1.5 rounded-lg text-zinc-700 hover:text-rose-400 hover:bg-rose-400/10
-                                 opacity-0 group-hover:opacity-100 transition-all"
-                      aria-label="Remove submission"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {sub.isPublic && (
+                      <ProjectComments
+                        initialComments={sub.comments ?? []}
+                        currentUserName="You"
+                        initialVisibleCount={2}
+                        onCommentsChange={(comments) =>
+                          setSubmissions(prev =>
+                            prev.map(s => (s.id === sub.id ? { ...s, comments } : s)),
+                          )
+                        }
+                      />
+                    )}
                   </div>
                 );
               })}
             </motion.div>
           )}
+
+          {submissions.length === 0 && (
+            <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-xs text-zinc-400">
+              No submissions yet. Submit your first project above.
+            </div>
+          )}
             </>
           )}
+
+        </div>
+      </div>
+
+      {/* ── Career Support Introduction Section ─────────────────────────────── */}
+      <div
+        className="w-full py-16 px-4"
+        style={{
+          background: 'linear-gradient(180deg, #09090b 0%, #111827 50%, #09090b 100%)',
+          borderTop: '1px solid rgba(99,102,241,0.15)',
+        }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase text-indigo-400 mb-3">
+              <Trophy className="w-3.5 h-3.5" />
+              Career Acceleration
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Career{' '}
+              <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+                Launchpad
+              </span>
+            </h2>
+            <p className="text-zinc-400 text-sm max-w-2xl mx-auto leading-relaxed">
+              Three focused tools to help you move from learning to hiring outcomes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5 items-stretch">
+            {CAREER_SUPPORT_FEATURES.map((feature, index) => {
+              const FeatureIcon = feature.icon;
+              return (
+                <motion.div
+                  key={feature.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.35, delay: index * 0.06 }}
+                  className={`rounded-2xl border p-4 sm:p-5 bg-gradient-to-br h-full flex flex-col ${feature.accent}`}
+                >
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-black/30 border border-white/15">
+                      <FeatureIcon className="w-4.5 h-4.5 text-white" />
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-zinc-300/85 shrink-0" />
+                  </div>
+
+                  <h3 className="text-base sm:text-lg font-bold text-white mb-4 leading-snug min-h-[3.25rem] sm:min-h-[3.75rem]">
+                    {feature.title}
+                  </h3>
+
+                  <div className="flex flex-wrap content-start gap-2 mb-4 sm:mb-5 flex-1">
+                    {feature.highlights.map(item => (
+                      <span key={item} className="px-2.5 py-1 rounded-md bg-black/25 border border-white/10 text-[11px] sm:text-xs text-zinc-100">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCareerFeatureAction(feature.id)}
+                    className="w-full mt-auto rounded-lg border border-white/15 bg-black/30 px-3 py-2.5 text-sm sm:text-[15px] font-semibold text-white/95 hover:bg-black/40 transition-colors"
+                  >
+                    {feature.action}
+                  </button>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <AnimatePresence>
+            {isJobMatchesExpanded && (
+              <motion.div
+                ref={jobMatchesRef}
+                initial={{ opacity: 0, height: 0, y: 12 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: 8 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+              >
+                <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/8">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-semibold text-white">Recommended Job Matches</h3>
+                    <p className="text-[11px] sm:text-xs text-zinc-400">
+                      Ranked by frontend roadmap keyword relevance.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsJobMatchesExpanded(false)}
+                    className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-white/10 transition-colors"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" /> Collapse
+                  </button>
+                </div>
+
+                {jobMatchesLoading && (
+                  <div className="px-4 py-8 text-zinc-400 text-sm flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Fetching jobs from your roadmap keywords...
+                  </div>
+                )}
+
+                {!jobMatchesLoading && jobMatchesError && (
+                  <div className="px-4 py-6">
+                    <p className="text-sm text-rose-300 mb-3">{jobMatchesError}</p>
+                    <button
+                      type="button"
+                      onClick={fetchRoadmapJobMatches}
+                      className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 hover:bg-rose-500/20 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                {!jobMatchesLoading && !jobMatchesError && matchedJobs.length === 0 && (
+                  <div className="px-4 py-6 text-sm text-zinc-400">
+                    No relevant jobs found right now. Try again later.
+                  </div>
+                )}
+
+                {!jobMatchesLoading && !jobMatchesError && matchedJobs.length > 0 && (
+                  <div className="px-4 py-4 overflow-x-auto pb-5">
+                    <div className="flex gap-4 min-w-max pr-2 snap-x snap-mandatory">
+                      {matchedJobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="w-[280px] sm:w-[320px] shrink-0 snap-start rounded-xl border border-white/10 bg-black/25 p-4 flex flex-col gap-3"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="text-sm sm:text-base font-semibold text-white leading-snug line-clamp-2">
+                              {job.title}
+                            </h4>
+                            <div className="relative shrink-0 flex flex-col items-end gap-1">
+                              <span className="text-[11px] px-2 py-0.5 rounded-full border border-emerald-500/35 bg-emerald-500/10 text-emerald-300">
+                                {job.matchPercentage}%
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const willLike = !likedJobIds[job.id];
+                                  setLikedJobIds(prev => ({
+                                    ...prev,
+                                    [job.id]: willLike,
+                                  }));
+
+                                  if (willLike) {
+                                    setLikeBurst({ jobId: job.id, nonce: Date.now() });
+                                  }
+                                }}
+                                className={`inline-flex items-center gap-1 text-[11px] transition-colors ${
+                                  likedJobIds[job.id] ? 'text-rose-300' : 'text-zinc-400 hover:text-zinc-200'
+                                }`}
+                                aria-label="Save or like this job"
+                              >
+                                <Heart className={`w-3.5 h-3.5 ${likedJobIds[job.id] ? 'fill-current' : ''}`} />
+                                {(job.savedCount ?? getSeededSaveCount(job.id)) + (likedJobIds[job.id] ? 1 : 0)}
+                              </button>
+
+                              <AnimatePresence>
+                                {likeBurst?.jobId === job.id && (
+                                  <motion.div
+                                    key={likeBurst.nonce}
+                                    className="pointer-events-none absolute right-[25px] top-6"
+                                    initial={{ opacity: 1 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                  >
+                                    <motion.span
+                                      className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-fuchsia-300/70"
+                                      initial={{ scale: 0.5, opacity: 0 }}
+                                      animate={{ scale: 1.6, opacity: [0, 0.8, 0] }}
+                                      transition={{ duration: 0.55, ease: 'easeOut' }}
+                                    />
+
+                                    {LIKE_POP_PARTICLES.map((particle, idx) => (
+                                      <motion.span
+                                        key={`${particle.x}-${particle.y}-${idx}`}
+                                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                                        style={{
+                                          width: `${particle.size}px`,
+                                          height: `${particle.size}px`,
+                                          backgroundColor: particle.color,
+                                        }}
+                                        initial={{ x: 0, y: 0, scale: 0.4, opacity: 0 }}
+                                        animate={{
+                                          x: particle.x,
+                                          y: particle.y,
+                                          scale: [0.4, 1, 0.6],
+                                          opacity: [0, 1, 0],
+                                        }}
+                                        transition={{
+                                          duration: 0.62,
+                                          delay: particle.delay,
+                                          ease: 'easeOut',
+                                        }}
+                                      />
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </div>
+
+                          <div className="text-xs text-zinc-300 flex flex-col gap-1.5">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-zinc-400" />
+                              {job.company_name || 'Unknown company'}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+                              {job.location || 'Location not specified'}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                              <BriefcaseBusiness className="w-3.5 h-3.5" />
+                              {job.type || 'Role'}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                              <DollarSign className="w-3.5 h-3.5" />
+                              {formatIndianLakhSalary(job.salary)}
+                            </span>
+                          </div>
+
+                          {job.matchReason && (
+                            <p className="text-[11px] text-zinc-400 line-clamp-2">{job.matchReason}</p>
+                          )}
+
+                          <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
+                          >
+                            View Job <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
         </div>
       </div>
@@ -983,7 +1666,7 @@ export default function FrontendRoadmapFlow() {
         </div>
       )}
 
-      {/* ── Legend — fixed bottom-left, hidden when FAQ is in view ─────────── */}
+      {/* ── Legend — fixed bottom-left, visible only in roadmap section ─────── */}
       <div
         className={`fixed bottom-5 left-5 z-30 rounded-xl border border-zinc-700/60 px-4 py-3 flex flex-col gap-2 pointer-events-none transition-all duration-300 ${
           showLegend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
@@ -1016,6 +1699,13 @@ export default function FrontendRoadmapFlow() {
       </div>
 
       <Footer />
+
+      <PrivacyWarningModal
+        open={privacyChangeRequest.open}
+        targetVisibility={privacyChangeRequest.targetVisibility}
+        onCancel={closePrivacyModal}
+        onConfirm={confirmPrivacyChange}
+      />
 
       {/* ── Generic node detail sidebar ─────────────────────────────── */}
       <NodeDetailSidebar
