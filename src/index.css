@@ -191,6 +191,21 @@
   }
 }
 
+@keyframes roadmap-subnode-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(6px) scale(0.9935);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .animate-float-slow {
   animation: float-slow 6s ease-in-out infinite;
 }
@@ -201,4 +216,15 @@
 
 .animate-float-fast {
   animation: float-fast 3s ease-in-out infinite;
+}
+
+.roadmap-subnode-fade {
+  animation: roadmap-subnode-fade-in .5s ease-out;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roadmap-subnode-fade {
+    animation: none;
+  }
 }

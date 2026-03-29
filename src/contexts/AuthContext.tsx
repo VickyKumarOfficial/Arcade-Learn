@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { activityLogger } from '@/services/activityLogger';
@@ -43,12 +43,27 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const authDebug = import.meta.env.DEV && import.meta.env.VITE_DEBUG_AUTH === 'true';
+  const lastLoggedSessionTokenRef = useRef<string | null>(null);
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isLoading: true,
     isAuthenticated: false,
     session: null,
   });
+
+  const commitAuthState = useCallback((nextState: AuthState) => {
+    setAuthState((prev) => {
+      const sameState =
+        prev.isLoading === nextState.isLoading &&
+        prev.isAuthenticated === nextState.isAuthenticated &&
+        prev.user?.id === nextState.user?.id &&
+        prev.user?.email === nextState.user?.email &&
+        prev.session?.access_token === nextState.session?.access_token;
+
+      return sameState ? prev : nextState;
+    });
+  }, []);
 
   // Helper function to convert Supabase user to our User type
   const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User> => {
@@ -71,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Check if we have valid Supabase environment variables
         if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
           console.warn('⚠️ Supabase not configured. Running in demo mode.');
-          setAuthState({
+          commitAuthState({
             user: null,
             isLoading: false,
             isAuthenticated: false,
@@ -84,7 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error('Error getting session:', error);
-          setAuthState({
+          commitAuthState({
             user: null,
             isLoading: false,
             isAuthenticated: false,
@@ -95,14 +110,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (session?.user) {
           const user = await convertSupabaseUser(session.user);
-          setAuthState({
+          commitAuthState({
             user,
             isLoading: false,
             isAuthenticated: !!user,
             session,
           });
         } else {
-          setAuthState({
+          commitAuthState({
             user: null,
             isLoading: false,
             isAuthenticated: false,
@@ -111,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error('Error in getSession:', error);
-        setAuthState({
+        commitAuthState({
           user: null,
           isLoading: false,
           isAuthenticated: false,
@@ -128,13 +143,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (import.meta.env.VITE_SUPABASE_URL && !import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
       const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
-          console.log('Auth state changed:', event, session?.user?.email);
+          if (authDebug) {
+            console.log('Auth state changed:', event, session?.user?.email);
+          }
           
           try {
             if (session?.user && event !== 'SIGNED_OUT') {
               const user = await convertSupabaseUser(session.user);
               // Since convertSupabaseUser now always returns a user object, we can safely use it
-              setAuthState({
+              commitAuthState({
                 user,
                 isLoading: false,
                 isAuthenticated: true,
@@ -143,13 +160,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
               // Log login activity (only for SIGNED_IN event to avoid duplicates)
               if (event === 'SIGNED_IN' && user.id) {
-                activityLogger.logLogin(user.id, 'email').catch(err => 
-                  console.warn('Failed to log login activity:', err)
-                );
+                const currentToken = session.access_token ?? `${user.id}:${Date.now()}`;
+                if (lastLoggedSessionTokenRef.current !== currentToken) {
+                  lastLoggedSessionTokenRef.current = currentToken;
+                  window.setTimeout(() => {
+                    activityLogger.logLogin(user.id, 'email').catch((err) =>
+                      console.warn('Failed to log login activity:', err),
+                    );
+                  }, 0);
+                }
               }
             } else if (event === 'SIGNED_OUT') {
+              lastLoggedSessionTokenRef.current = null;
               // Only clear auth state on explicit sign out
-              setAuthState({
+              commitAuthState({
                 user: null,
                 isLoading: false,
                 isAuthenticated: false,
@@ -160,10 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           } catch (error) {
             console.warn('Error in auth state change handler, maintaining current state:', error);
             // Don't clear the auth state on errors - just ensure loading is false
-            setAuthState(prev => ({
-              ...prev,
-              isLoading: false,
-            }));
+            setAuthState((prev) => ({ ...prev, isLoading: false }));
           }
         }
       );
@@ -175,7 +196,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         subscription.unsubscribe();
       }
     };
-  }, []);
+  }, [authDebug, commitAuthState]);
 
   const login = async (email: string, password: string) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));

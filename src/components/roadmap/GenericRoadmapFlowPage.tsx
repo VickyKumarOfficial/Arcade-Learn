@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -139,6 +139,9 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
   const canvasWidth = config.canvasWidth ?? 1040;
   const canvasHeight = config.canvasHeight ?? 2700;
+  const NODE_LAZY_PRELOAD_PX = 180;
+  const NODE_LAZY_BUCKET_PX = 80;
+  const NODE_LAZY_REVEAL_STEP_PX = 80;
 
   const defaultViewport = useMemo(() => ({ x: 0, y: 20, zoom: 1 }), []);
   const reactFlowProOptions = useMemo(() => ({ hideAttribution: true }), []);
@@ -173,6 +176,13 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   const [edges, , onEdgesChange] = useEdgesState(config.flowEdges);
   const [selected, setSelected] = useState<Node<RoadmapNodeData> | null>(null);
   const [openFaqs, setOpenFaqs] = useState<string[]>([]);
+  const [flowLazyCutoffY, setFlowLazyCutoffY] = useState(0);
+  const [flowLazyTargetCutoffY, setFlowLazyTargetCutoffY] = useState(0);
+  const [secondarySectionVisibility, setSecondarySectionVisibility] = useState({
+    projects: false,
+    career: false,
+    faq: false,
+  });
   const sectionCollapseEnabled = config.sectionCollapseEnabled ?? true;
   const defaultCollapsedSectionIds = config.defaultCollapsedSectionIds ?? [];
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
@@ -199,6 +209,132 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     submissionId: null,
     scope: 'form',
   });
+
+  useEffect(() => {
+    setFlowLazyCutoffY(0);
+    setFlowLazyTargetCutoffY(0);
+    setSecondarySectionVisibility({ projects: false, career: false, faq: false });
+  }, [config.roadmapKey]);
+
+  useEffect(() => {
+    if (flowLazyCutoffY >= flowLazyTargetCutoffY) return;
+
+    let rafId = 0;
+
+    const revealNextChunk = () => {
+      rafId = 0;
+      startTransition(() => {
+        setFlowLazyCutoffY((prev) => {
+          if (prev >= flowLazyTargetCutoffY) {
+            return prev;
+          }
+
+          return Math.min(prev + NODE_LAZY_REVEAL_STEP_PX, flowLazyTargetCutoffY);
+        });
+      });
+    };
+
+    rafId = window.requestAnimationFrame(revealNextChunk);
+
+    return () => {
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [flowLazyCutoffY, flowLazyTargetCutoffY, NODE_LAZY_REVEAL_STEP_PX]);
+
+  useEffect(() => {
+    if (!modules.projects || secondarySectionVisibility.projects) return;
+
+    const triggerEl = projectsTriggerRef.current;
+    if (!triggerEl) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+
+        setSecondarySectionVisibility((prev) =>
+          prev.projects ? prev : { ...prev, projects: true },
+        );
+        observer.disconnect();
+      },
+      {
+        root: null,
+        rootMargin: '550px 0px',
+        threshold: 0,
+      },
+    );
+
+    observer.observe(triggerEl);
+    return () => observer.disconnect();
+  }, [modules.projects, secondarySectionVisibility.projects]);
+
+  useEffect(() => {
+    if (!modules.careerSupport || secondarySectionVisibility.career) return;
+    if (modules.projects && !secondarySectionVisibility.projects) return;
+
+    const triggerEl = careerTriggerRef.current;
+    if (!triggerEl) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+
+        setSecondarySectionVisibility((prev) =>
+          prev.career ? prev : { ...prev, career: true },
+        );
+        observer.disconnect();
+      },
+      {
+        root: null,
+        rootMargin: '550px 0px',
+        threshold: 0,
+      },
+    );
+
+    observer.observe(triggerEl);
+    return () => observer.disconnect();
+  }, [
+    modules.careerSupport,
+    modules.projects,
+    secondarySectionVisibility.career,
+    secondarySectionVisibility.projects,
+  ]);
+
+  useEffect(() => {
+    if (!modules.faq || secondarySectionVisibility.faq) return;
+    if (modules.projects && !secondarySectionVisibility.projects) return;
+    if (modules.careerSupport && !secondarySectionVisibility.career) return;
+
+    const triggerEl = faqTriggerRef.current;
+    if (!triggerEl) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+
+        setSecondarySectionVisibility((prev) =>
+          prev.faq ? prev : { ...prev, faq: true },
+        );
+        observer.disconnect();
+      },
+      {
+        root: null,
+        rootMargin: '550px 0px',
+        threshold: 0,
+      },
+    );
+
+    observer.observe(triggerEl);
+    return () => observer.disconnect();
+  }, [
+    modules.faq,
+    modules.projects,
+    modules.careerSupport,
+    secondarySectionVisibility.faq,
+    secondarySectionVisibility.projects,
+    secondarySectionVisibility.career,
+  ]);
 
   useEffect(() => {
     if (!sectionCollapseEnabled) {
@@ -365,8 +501,74 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   });
 
   const roadmapCanvasRef = useRef<HTMLDivElement>(null);
+  const roadmapScrollContainerRef = useRef<HTMLDivElement>(null);
+  const projectsTriggerRef = useRef<HTMLDivElement>(null);
+  const careerTriggerRef = useRef<HTMLDivElement>(null);
+  const faqTriggerRef = useRef<HTMLDivElement>(null);
   const projectsRef = useRef<HTMLDivElement>(null);
   const jobMatchesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = roadmapScrollContainerRef.current;
+    const roadmapCanvas = roadmapCanvasRef.current;
+    if (!roadmapCanvas) return;
+
+    let rafId = 0;
+    let canvasPageTop = 0;
+
+    const measureCanvasTop = () => {
+      canvasPageTop = roadmapCanvas.getBoundingClientRect().top + window.scrollY;
+    };
+
+    const updateCutoff = () => {
+      rafId = 0;
+      const viewportBottom = window.scrollY + window.innerHeight + NODE_LAZY_PRELOAD_PX;
+      const viewportCutoff = viewportBottom - canvasPageTop;
+
+      const hasContainerScroll =
+        !!container && (container.scrollHeight - container.clientHeight > 24);
+      const containerCutoff = hasContainerScroll
+        ? container.scrollTop + container.clientHeight + NODE_LAZY_PRELOAD_PX
+        : 0;
+
+      const nextCutoff = Math.max(0, Math.min(
+        canvasHeight + NODE_LAZY_PRELOAD_PX,
+        Math.max(viewportCutoff, containerCutoff),
+      ));
+      const bucketedCutoff =
+        Math.ceil(nextCutoff / NODE_LAZY_BUCKET_PX) * NODE_LAZY_BUCKET_PX;
+
+      startTransition(() => {
+        setFlowLazyTargetCutoffY((prev) => (bucketedCutoff > prev ? bucketedCutoff : prev));
+      });
+    };
+
+    const onScrollOrResize = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(updateCutoff);
+    };
+
+    const onResize = () => {
+      measureCanvasTop();
+      onScrollOrResize();
+    };
+
+    measureCanvasTop();
+    updateCutoff();
+
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onResize);
+    container?.addEventListener('scroll', onScrollOrResize, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onResize);
+      container?.removeEventListener('scroll', onScrollOrResize);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [config.roadmapKey, canvasHeight, NODE_LAZY_PRELOAD_PX, NODE_LAZY_BUCKET_PX]);
 
   const fetchRoadmapJobMatches = useCallback(async () => {
     if (jobMatchesLoading || !modules.jobMatches) return;
@@ -498,21 +700,45 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     return completedIds;
   }, [nodes]);
 
-  const visibleNodes = useMemo(() => {
-    if (!sectionCollapseEnabled || collapsedSections.size === 0) {
-      return nodes;
+  const alwaysVisibleNodeIds = useMemo(() => {
+    const ids = new Set<string>([...config.mainNodeIds, ...config.mainSectionIds]);
+
+    for (const node of nodes) {
+      if (node.type === 'startNode' || node.type === 'infoCard') {
+        ids.add(node.id);
+      }
     }
+
+    return ids;
+  }, [config.mainNodeIds, config.mainSectionIds, nodes]);
+
+  const lazyHiddenNodeIds = useMemo(() => {
+    const hiddenIds = new Set<string>();
+
+    for (const node of nodes) {
+      if (alwaysVisibleNodeIds.has(node.id)) continue;
+      if ((node.position?.y ?? 0) > flowLazyCutoffY) {
+        hiddenIds.add(node.id);
+      }
+    }
+
+    return hiddenIds;
+  }, [nodes, alwaysVisibleNodeIds, flowLazyCutoffY]);
+
+  const visibleNodes = useMemo(() => {
+    const useCollapseVisibility = sectionCollapseEnabled && collapsedSections.size > 0;
 
     return nodes.map((node) => {
       const sectionId = SECTION_NODE_MAP[node.id];
-      if (!sectionId || sectionId === node.id) {
-        return node.hidden ? { ...node, hidden: false } : node;
-      }
+      const hiddenByCollapse = useCollapseVisibility && Boolean(sectionId) && sectionId !== node.id
+        ? collapsedSections.has(sectionId)
+        : false;
+      const hiddenByLazy = lazyHiddenNodeIds.has(node.id);
+      const shouldHide = hiddenByCollapse || hiddenByLazy;
 
-      const shouldHide = collapsedSections.has(sectionId);
       return node.hidden === shouldHide ? node : { ...node, hidden: shouldHide };
     });
-  }, [nodes, sectionCollapseEnabled, collapsedSections]);
+  }, [nodes, sectionCollapseEnabled, collapsedSections, lazyHiddenNodeIds]);
 
   const hiddenNodeIds = useMemo(() => {
     const hiddenIds = new Set<string>();
@@ -526,7 +752,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
   const visibleEdges = useMemo(() => {
     if (!sectionCollapseEnabled || hiddenNodeIds.size === 0) {
-      return edges.map((edge) => (edge.hidden ? { ...edge, hidden: false } : edge));
+      return edges;
     }
 
     return edges.map((edge) => {
@@ -589,7 +815,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
     if (!roadmapEl) return;
 
-    if (!projectsEl || !modules.projects) {
+    if (!projectsEl || !modules.projects || !secondarySectionVisibility.projects) {
       setShowLegend(true);
       return;
     }
@@ -624,7 +850,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       roadmapObserver.disconnect();
       projectsObserver.disconnect();
     };
-  }, [modules.projects]);
+  }, [modules.projects, secondarySectionVisibility.projects]);
 
   useEffect(() => {
     if (!likeBurst) return;
@@ -789,7 +1015,8 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       </div>
 
       <div
-        className="flex-1 overflow-x-auto overflow-y-auto"
+        ref={roadmapScrollContainerRef}
+        className="flex-1 min-h-0 overflow-x-auto overflow-y-auto"
         style={{
           backgroundColor: 'var(--roadmap-bg, #f9fafb)',
           backgroundImage: 'radial-gradient(circle, var(--roadmap-dot, #d1d5db) 1px, transparent 1px)',
@@ -807,6 +1034,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
             onEdgesChange={onEdgesChange}
             onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
+            onlyRenderVisibleElements
             fitView={false}
             defaultViewport={defaultViewport}
             panOnDrag={false}
@@ -824,7 +1052,9 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         </div>
       </div>
 
-      {modules.projects && (
+      <div ref={projectsTriggerRef} className="h-px w-full" />
+
+      {secondarySectionVisibility.projects && modules.projects && (
         <div
           ref={projectsRef}
           className="w-full py-20 px-4"
@@ -1151,7 +1381,11 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         </div>
       )}
 
-      {modules.careerSupport && careerFeatures.length > 0 && (
+      {(!modules.projects || secondarySectionVisibility.projects) && (
+        <div ref={careerTriggerRef} className="h-px w-full" />
+      )}
+
+      {secondarySectionVisibility.career && modules.careerSupport && careerFeatures.length > 0 && (
         <div
           className="w-full py-16 px-4"
           style={{
@@ -1403,7 +1637,11 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         </div>
       )}
 
-      {modules.faq && faqs.length > 0 && (
+      {(!modules.careerSupport || secondarySectionVisibility.career) && (
+        <div ref={faqTriggerRef} className="h-px w-full" />
+      )}
+
+      {secondarySectionVisibility.faq && modules.faq && faqs.length > 0 && (
         <div
           className="w-full py-16 px-4"
           style={{

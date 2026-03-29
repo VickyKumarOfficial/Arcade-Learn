@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,31 +10,37 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SurveyProvider } from "@/contexts/SurveyContext";
 import { SurveyModal } from "@/components/SurveyModal";
 // import DevelopmentBanner from "@/components/DevelopmentBanner"; // Commented out - can be enabled in future
-import Index from "./pages/Index";
-import Roadmaps from "./pages/Roadmaps";
-import RoadmapDetailTest from "./pages/RoadmapDetailTest";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import Aim from "./pages/Aim";
-import Resume from "./pages/Resume";
-import ResumeBuilder from "./pages/ResumeBuilder";
-import Jobs from "./pages/Jobs";
-import NotFound from "./pages/NotFound";
-import SignIn from "@/pages/SignIn";
-import AuthCallback from "@/pages/AuthCallback";
-import FAQs from "@/pages/FAQs";
-import ContactUs from "@/pages/ContactUs";
-import AIDoubtSolving from "@/pages/AIDoubtSolving";
-import AIRoadmapGeneration from "@/pages/AIRoadmapGeneration";
-import AIChatPage from "@/pages/AIChatPage";
-import CodingPractice from '@/pages/CodingPractice';
-import FrontendRoadmapFlow from '@/pages/FrontendRoadmapFlow';
-import BackendRoadmapFlow from '@/pages/BackendRoadmapFlow';
-import FullstackMernRoadmapFlow from '@/pages/FullstackMernRoadmapFlow';
-import MentorBooking from '@/pages/MentorBooking';
-import { Analytics } from "@vercel/analytics/react"
+
+const Index = lazy(() => import("./pages/Index"));
+const Roadmaps = lazy(() => import("./pages/Roadmaps"));
+const RoadmapDetailTest = lazy(() => import("./pages/RoadmapDetailTest"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Aim = lazy(() => import("./pages/Aim"));
+const Resume = lazy(() => import("./pages/Resume"));
+const ResumeBuilder = lazy(() => import("./pages/ResumeBuilder"));
+const Jobs = lazy(() => import("./pages/Jobs"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const SignIn = lazy(() => import("@/pages/SignIn"));
+const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
+const FAQs = lazy(() => import("@/pages/FAQs"));
+const ContactUs = lazy(() => import("@/pages/ContactUs"));
+const AIDoubtSolving = lazy(() => import("@/pages/AIDoubtSolving"));
+const AIRoadmapGeneration = lazy(() => import("@/pages/AIRoadmapGeneration"));
+const AIChatPage = lazy(() => import("@/pages/AIChatPage"));
+const CodingPractice = lazy(() => import("@/pages/CodingPractice"));
+const FrontendRoadmapFlow = lazy(() => import("@/pages/FrontendRoadmapFlow"));
+const BackendRoadmapFlow = lazy(() => import("@/pages/BackendRoadmapFlow"));
+const FullstackMernRoadmapFlow = lazy(() => import("@/pages/FullstackMernRoadmapFlow"));
+const MentorBooking = lazy(() => import("@/pages/MentorBooking"));
 
 const queryClient = new QueryClient();
+
+const RouteFallback = () => (
+  <div className="min-h-screen w-full bg-background text-foreground flex items-center justify-center text-sm text-zinc-400">
+    Loading page...
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -46,33 +53,35 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/roadmaps" element={<Roadmaps />} />
-                    <Route path="/roadmap/:id" element={<RoadmapDetailTest />} />
-                    <Route path="/roadmap/frontend-react/flow" element={<FrontendRoadmapFlow />} />
-                    <Route path="/roadmap/backend-nodejs/flow" element={<BackendRoadmapFlow />} />
-                    <Route path="/roadmap/fullstack-mern/flow" element={<FullstackMernRoadmapFlow />} />
-                    <Route path="/roadmap/frontend-react/mentor" element={<MentorBooking />} />
-                    <Route path="/roadmap/backend-nodejs/mentor" element={<MentorBooking />} />
-                    <Route path="/roadmap/fullstack-mern/mentor" element={<MentorBooking />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/aim" element={<Aim />} />
-                    <Route path="/resume" element={<Resume />} />
-                    <Route path="/resume-builder" element={<ResumeBuilder />} />
-                    <Route path="/jobs" element={<Jobs />} />
-                    <Route path="/faqs" element={<FAQs />} />
-                    <Route path="/contactus" element={<ContactUs />} />
-                  <Route path="/ai/chat" element={<AIChatPage />} />
-                    <Route path="/ai/doubt-solving" element={<AIDoubtSolving />} />
-                    <Route path="/ai/roadmap-generation" element={<AIRoadmapGeneration />} />
-                    <Route path="/practice" element={<CodingPractice />} />
-                    <Route path="/signin" element={<SignIn />} />
-                    <Route path="/signup" element={<SignIn initialMode="register" />} />
-                    <Route path="/auth/callback" element={<AuthCallback />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                  <Suspense fallback={<RouteFallback />}>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/roadmaps" element={<Roadmaps />} />
+                      <Route path="/roadmap/:id" element={<RoadmapDetailTest />} />
+                      <Route path="/roadmap/frontend-react/flow" element={<FrontendRoadmapFlow />} />
+                      <Route path="/roadmap/backend-nodejs/flow" element={<BackendRoadmapFlow />} />
+                      <Route path="/roadmap/fullstack-mern/flow" element={<FullstackMernRoadmapFlow />} />
+                      <Route path="/roadmap/frontend-react/mentor" element={<MentorBooking />} />
+                      <Route path="/roadmap/backend-nodejs/mentor" element={<MentorBooking />} />
+                      <Route path="/roadmap/fullstack-mern/mentor" element={<MentorBooking />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/aim" element={<Aim />} />
+                      <Route path="/resume" element={<Resume />} />
+                      <Route path="/resume-builder" element={<ResumeBuilder />} />
+                      <Route path="/jobs" element={<Jobs />} />
+                      <Route path="/faqs" element={<FAQs />} />
+                      <Route path="/contactus" element={<ContactUs />} />
+                      <Route path="/ai/chat" element={<AIChatPage />} />
+                      <Route path="/ai/doubt-solving" element={<AIDoubtSolving />} />
+                      <Route path="/ai/roadmap-generation" element={<AIRoadmapGeneration />} />
+                      <Route path="/practice" element={<CodingPractice />} />
+                      <Route path="/signin" element={<SignIn />} />
+                      <Route path="/signup" element={<SignIn initialMode="register" />} />
+                      <Route path="/auth/callback" element={<AuthCallback />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
                   <SurveyModal />
                 </BrowserRouter>
               </TooltipProvider>

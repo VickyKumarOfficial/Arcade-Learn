@@ -4,6 +4,8 @@ import { CheckCircle2 } from 'lucide-react';
 import { RoadmapNodeData } from '@/data/frontendRoadmapFlow';
 import { Tooltip } from '@/components/ui/tooltip-card';
 
+const SUBNODE_FADE_CLASS = import.meta.env.PROD ? 'roadmap-subnode-fade' : '';
+
 // ─── Tooltip descriptions for every node label ────────────────────────────────
 const TOOLTIP_MAP: Record<string, string> = {
   // Start
@@ -195,7 +197,7 @@ MainNode.displayName = 'MainNode';
 export const BranchNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
-      relative px-3 py-2 rounded-md border min-w-[190px] text-center text-xs font-medium
+      relative ${SUBNODE_FADE_CLASS} px-3 py-2 rounded-md border min-w-[190px] text-center text-xs font-medium
       shadow-sm cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5
       ${
         data.completed
@@ -221,7 +223,7 @@ BranchNode.displayName = 'BranchNode';
 export const LeftBranchNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
-      relative px-3 py-2 rounded-md border min-w-[190px] text-center text-xs font-medium
+      relative ${SUBNODE_FADE_CLASS} px-3 py-2 rounded-md border min-w-[190px] text-center text-xs font-medium
       shadow-sm cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5
       ${
         data.completed
@@ -247,7 +249,7 @@ LeftBranchNode.displayName = 'LeftBranchNode';
 export const OptionNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
-      relative px-3 py-1.5 rounded-full border text-center text-xs font-semibold
+      relative ${SUBNODE_FADE_CLASS} px-3 py-1.5 rounded-full border text-center text-xs font-semibold
       shadow-sm cursor-pointer transition-all hover:shadow-md
       ${
         data.completed

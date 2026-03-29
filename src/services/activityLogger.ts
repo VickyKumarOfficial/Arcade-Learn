@@ -7,6 +7,14 @@
 import axios from 'axios';
 import { BACKEND_URL } from '@/config/env';
 
+const ACTIVITY_LOGGER_DEBUG = import.meta.env.DEV && import.meta.env.VITE_DEBUG_ACTIVITY_LOGGER === 'true';
+
+const debugActivityLog = (...args: unknown[]) => {
+  if (ACTIVITY_LOGGER_DEBUG) {
+    console.log(...args);
+  }
+};
+
 export const ACTIVITY_TYPES = {
   TEST_COMPLETED: 'test_completed',
   ROADMAP_COMPLETED: 'roadmap_completed',
@@ -45,7 +53,7 @@ class ActivityLogger {
         return false;
       }
 
-      console.log(`📊 Logging activity: ${activityType} for user ${userId}`);
+      debugActivityLog(`📊 Logging activity: ${activityType} for user ${userId}`);
 
       const response = await axios.post(
         `${BACKEND_URL}/api/user/${userId}/activity/log`,
@@ -57,7 +65,7 @@ class ActivityLogger {
       );
 
       if (response.data.success) {
-        console.log(`✅ Activity logged successfully: ${activityType}`);
+        debugActivityLog(`✅ Activity logged successfully: ${activityType}`);
         return true;
       } else {
         console.error('Failed to log activity:', response.data.error);
@@ -232,7 +240,7 @@ class ActivityLogger {
         return false;
       }
 
-      console.log(`📊 Bulk logging ${activities.length} activities for user ${userId}`);
+      debugActivityLog(`📊 Bulk logging ${activities.length} activities for user ${userId}`);
 
       const response = await axios.post(
         `${BACKEND_URL}/api/user/${userId}/activity/bulk`,
@@ -240,7 +248,7 @@ class ActivityLogger {
       );
 
       if (response.data.success) {
-        console.log(`✅ Bulk logged ${response.data.successCount} activities`);
+        debugActivityLog(`✅ Bulk logged ${response.data.successCount} activities`);
         return true;
       } else {
         console.error('Failed to bulk log activities:', response.data.error);
