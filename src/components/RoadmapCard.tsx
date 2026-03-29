@@ -18,6 +18,14 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
   const { state } = useGameTest();
   const { user } = useAuth();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+
+  const flowRouteByRoadmapId: Record<string, string> = {
+    'frontend-react': '/roadmap/frontend-react/flow',
+    'backend-nodejs': '/roadmap/backend-nodejs/flow',
+    'fullstack-mern': '/roadmap/fullstack-mern/flow',
+  };
+
+  const flowRoute = flowRouteByRoadmapId[roadmap.id];
   
   // Calculate real-time progress
   const completedCount = roadmap.components.filter(component => 
@@ -98,16 +106,12 @@ const RoadmapCard = ({ roadmap }: RoadmapCardProps) => {
           </Button>
 
           {/* Roadmap Diagram button for supported interactive flows */}
-          {(roadmap.id === 'frontend-react' || roadmap.id === 'backend-nodejs') && (
+          {flowRoute && (
             <Button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (!user) { setShowAuthPrompt(true); return; }
-                const flowRoute =
-                  roadmap.id === 'frontend-react'
-                    ? '/roadmap/frontend-react/flow'
-                    : '/roadmap/backend-nodejs/flow';
                 navigate(flowRoute);
               }}
               variant="outline"

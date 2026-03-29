@@ -186,6 +186,8 @@ export const frontendRoadmapConfig: RoadmapFlowConfig = {
   breadcrumbLabel: 'Frontend',
   detailRoute: '/roadmap/frontend-react',
   mentorRoute: '/roadmap/frontend-react/mentor',
+  sectionCollapseEnabled: true,
+  defaultCollapsedSectionIds: [],
   flowNodes: initialNodes,
   flowEdges: initialEdges,
   mainNodeIds: [...FRONTEND_MAIN_NODE_IDS],

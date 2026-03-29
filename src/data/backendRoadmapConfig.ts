@@ -161,6 +161,8 @@ export const backendRoadmapConfig: RoadmapFlowConfig = {
   breadcrumbLabel: 'Backend',
   detailRoute: '/roadmap/backend-nodejs',
   mentorRoute: '/roadmap/backend-nodejs/mentor',
+  sectionCollapseEnabled: true,
+  defaultCollapsedSectionIds: [],
   flowNodes: initialNodes,
   flowEdges: initialEdges,
   mainNodeIds: [...BACKEND_MAIN_SECTION_IDS],

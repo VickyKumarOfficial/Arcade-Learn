@@ -1,4 +1,8 @@
 import { BACKEND_NODE_DETAILS, BACKEND_SECTION_NODE_MAP } from '@/data/backendNodeDetails';
+import {
+  FULLSTACK_MERN_NODE_DETAILS,
+  FULLSTACK_MERN_SECTION_NODE_MAP,
+} from '@/data/fullstackMernNodeDetails';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Unified detail data for all 15 roadmap sections and their sub-nodes
@@ -1144,6 +1148,7 @@ export const ALL_NODE_DETAILS: Record<string, SectionData> = {
   },
 
   ...BACKEND_NODE_DETAILS,
+  ...FULLSTACK_MERN_NODE_DETAILS,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1184,4 +1189,5 @@ export const SECTION_NODE_MAP: Record<string, string> = {
   deployment: 'deployment', dep1: 'deployment', dep2: 'deployment', dep3: 'deployment',
 
   ...BACKEND_SECTION_NODE_MAP,
+  ...FULLSTACK_MERN_SECTION_NODE_MAP,
 };

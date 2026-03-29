@@ -27,10 +27,23 @@ const BACKEND_ROADMAP_KEYWORDS = [
   'system design',
 ];
 
+const FULLSTACK_MERN_ROADMAP_KEYWORDS = [
+  'full stack', 'fullstack', 'mern',
+  'react', 'nodejs', 'node.js', 'express', 'mongodb',
+  'javascript', 'typescript', 'frontend', 'backend',
+  'api', 'rest api', 'jwt', 'authentication', 'authorization',
+  'redux', 'context api', 'state management',
+  'testing', 'jest', 'cypress',
+  'docker', 'ci/cd', 'deployment', 'cloud',
+  'system design',
+];
+
 const ROADMAP_KEYWORD_MAP = {
   frontend: FRONTEND_ROADMAP_KEYWORDS,
   backend: BACKEND_ROADMAP_KEYWORDS,
   'backend-nodejs': BACKEND_ROADMAP_KEYWORDS,
+  mern: FULLSTACK_MERN_ROADMAP_KEYWORDS,
+  'fullstack-mern': FULLSTACK_MERN_ROADMAP_KEYWORDS,
 };
 
 class RoadmapJobMatchService {

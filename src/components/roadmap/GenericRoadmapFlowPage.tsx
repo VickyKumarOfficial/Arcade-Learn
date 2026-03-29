@@ -140,6 +140,17 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   const canvasWidth = config.canvasWidth ?? 1040;
   const canvasHeight = config.canvasHeight ?? 2700;
 
+  const defaultViewport = useMemo(() => ({ x: 0, y: 20, zoom: 1 }), []);
+  const reactFlowProOptions = useMemo(() => ({ hideAttribution: true }), []);
+  const roadmapCanvasStyle = useMemo(
+    () => ({ width: canvasWidth, height: canvasHeight, position: 'relative' as const, margin: '0 auto' }),
+    [canvasWidth, canvasHeight],
+  );
+  const reactFlowStyle = useMemo(
+    () => ({ width: canvasWidth, height: canvasHeight, background: 'transparent' }),
+    [canvasWidth, canvasHeight],
+  );
+
   const modules = {
     projects: true,
     comments: true,
@@ -162,6 +173,11 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   const [edges, , onEdgesChange] = useEdgesState(config.flowEdges);
   const [selected, setSelected] = useState<Node<RoadmapNodeData> | null>(null);
   const [openFaqs, setOpenFaqs] = useState<string[]>([]);
+  const sectionCollapseEnabled = config.sectionCollapseEnabled ?? true;
+  const defaultCollapsedSectionIds = config.defaultCollapsedSectionIds ?? [];
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    () => new Set(defaultCollapsedSectionIds.filter((sectionId) => config.mainSectionIds.includes(sectionId))),
+  );
 
   const [selectedProject, setSelectedProject] = useState<string>(projects[0]?.id ?? '');
   const [githubUrl, setGithubUrl] = useState('');
@@ -183,6 +199,17 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     submissionId: null,
     scope: 'form',
   });
+
+  useEffect(() => {
+    if (!sectionCollapseEnabled) {
+      setCollapsedSections(new Set());
+      return;
+    }
+
+    setCollapsedSections(
+      new Set(defaultCollapsedSectionIds.filter((sectionId) => config.mainSectionIds.includes(sectionId))),
+    );
+  }, [sectionCollapseEnabled, defaultCollapsedSectionIds, config.mainSectionIds]);
 
   const selectedProjectSubmission = useMemo(
     () => submissions.find((sub) => sub.projectId === selectedProject),
@@ -461,9 +488,97 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     ],
   );
 
-  const completedSectionCount = config.mainSectionIds.filter(
-    (id) => nodes.find((n) => n.id === id)?.data?.completed === true,
-  ).length;
+  const completedNodeIds = useMemo(() => {
+    const completedIds = new Set<string>();
+    for (const node of nodes) {
+      if (node.data.completed) {
+        completedIds.add(node.id);
+      }
+    }
+    return completedIds;
+  }, [nodes]);
+
+  const visibleNodes = useMemo(() => {
+    if (!sectionCollapseEnabled || collapsedSections.size === 0) {
+      return nodes;
+    }
+
+    return nodes.map((node) => {
+      const sectionId = SECTION_NODE_MAP[node.id];
+      if (!sectionId || sectionId === node.id) {
+        return node.hidden ? { ...node, hidden: false } : node;
+      }
+
+      const shouldHide = collapsedSections.has(sectionId);
+      return node.hidden === shouldHide ? node : { ...node, hidden: shouldHide };
+    });
+  }, [nodes, sectionCollapseEnabled, collapsedSections]);
+
+  const hiddenNodeIds = useMemo(() => {
+    const hiddenIds = new Set<string>();
+    for (const node of visibleNodes) {
+      if (node.hidden) {
+        hiddenIds.add(node.id);
+      }
+    }
+    return hiddenIds;
+  }, [visibleNodes]);
+
+  const visibleEdges = useMemo(() => {
+    if (!sectionCollapseEnabled || hiddenNodeIds.size === 0) {
+      return edges.map((edge) => (edge.hidden ? { ...edge, hidden: false } : edge));
+    }
+
+    return edges.map((edge) => {
+      const shouldHide = hiddenNodeIds.has(edge.source) || hiddenNodeIds.has(edge.target);
+      return edge.hidden === shouldHide ? edge : { ...edge, hidden: shouldHide };
+    });
+  }, [edges, sectionCollapseEnabled, hiddenNodeIds]);
+
+  const nodeLabelById = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const node of nodes) {
+      labels.set(node.id, node.data.label);
+    }
+    return labels;
+  }, [nodes]);
+
+  const sectionControls = useMemo(
+    () => config.mainSectionIds.map((id) => ({
+      id,
+      label: nodeLabelById.get(id) ?? id,
+      collapsed: collapsedSections.has(id),
+    })),
+    [config.mainSectionIds, nodeLabelById, collapsedSections],
+  );
+
+  const toggleSectionCollapse = useCallback((sectionId: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  }, []);
+
+  const collapseAllSections = useCallback(() => {
+    setCollapsedSections(new Set(config.mainSectionIds));
+  }, [config.mainSectionIds]);
+
+  const expandAllSections = useCallback(() => {
+    setCollapsedSections(new Set());
+  }, []);
+
+  const completedSectionCount = useMemo(
+    () => config.mainSectionIds.reduce(
+      (count, id) => count + (completedNodeIds.has(id) ? 1 : 0),
+      0,
+    ),
+    [config.mainSectionIds, completedNodeIds],
+  );
 
   const isProjectsLocked =
     modules.lockGate && completedSectionCount < config.mainSectionIds.length;
@@ -542,16 +657,22 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   );
 
   const completedMain = useMemo(
-    () => nodes.filter((n) => config.mainNodeIds.includes(n.id) && n.data.completed).length,
-    [nodes, config.mainNodeIds],
+    () => config.mainNodeIds.reduce(
+      (count, id) => count + (completedNodeIds.has(id) ? 1 : 0),
+      0,
+    ),
+    [config.mainNodeIds, completedNodeIds],
   );
 
   const progressPct = Math.round((completedMain / Math.max(config.mainNodeIds.length, 1)) * 100);
 
-  const activeBreadcrumbLabel =
-    nodes.find((n) => n.id === sidebar.activeNodeId)?.data?.label ??
-    selected?.data.label ??
-    'Interactive Diagram';
+  const activeBreadcrumbLabel = useMemo(() => {
+    if (sidebar.activeNodeId) {
+      return nodeLabelById.get(sidebar.activeNodeId) ?? selected?.data.label ?? 'Interactive Diagram';
+    }
+
+    return selected?.data.label ?? 'Interactive Diagram';
+  }, [sidebar.activeNodeId, nodeLabelById, selected]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col">
@@ -677,17 +798,17 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       >
         <div
           ref={roadmapCanvasRef}
-          style={{ width: canvasWidth, height: canvasHeight, position: 'relative', margin: '0 auto' }}
+          style={roadmapCanvasStyle}
         >
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            nodes={visibleNodes}
+            edges={visibleEdges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView={false}
-            defaultViewport={{ x: 0, y: 20, zoom: 1 }}
+            defaultViewport={defaultViewport}
             panOnDrag={false}
             panOnScroll={false}
             zoomOnScroll={false}
@@ -697,8 +818,8 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
             nodesDraggable={false}
             nodesConnectable={false}
             elementsSelectable={false}
-            proOptions={{ hideAttribution: true }}
-            style={{ width: canvasWidth, height: canvasHeight, background: 'transparent' }}
+            proOptions={reactFlowProOptions}
+            style={reactFlowStyle}
           />
         </div>
       </div>
@@ -1466,6 +1587,52 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
           </div>
         </div>
       </div>
+
+      {sectionCollapseEnabled && (
+        <div
+          className="fixed bottom-5 right-5 z-30 rounded-xl border border-zinc-700/60 px-4 py-3 flex flex-col gap-2 w-64 max-h-[40vh]"
+          style={{
+            background: 'linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,27,75,0.95) 100%)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.15)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Sections</span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={expandAllSections}
+                disabled={collapsedSections.size === 0}
+                className="text-[10px] px-2 py-1 rounded-md border border-zinc-600 text-zinc-300 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Expand all
+              </button>
+              <button
+                onClick={collapseAllSections}
+                disabled={collapsedSections.size === config.mainSectionIds.length}
+                className="text-[10px] px-2 py-1 rounded-md border border-zinc-600 text-zinc-300 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Collapse all
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-y-auto pr-1 flex flex-col gap-1">
+            {sectionControls.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => toggleSectionCollapse(section.id)}
+                className="w-full flex items-center justify-between text-left px-2 py-1.5 rounded-md border border-zinc-700/80 hover:bg-white/10"
+              >
+                <span className="text-[11px] text-zinc-200 truncate pr-2">{section.label}</span>
+                <span className="text-zinc-400 shrink-0">
+                  {section.collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Footer />
 

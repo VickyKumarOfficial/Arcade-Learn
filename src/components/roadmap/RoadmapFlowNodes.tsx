@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { CheckCircle2 } from 'lucide-react';
 import { RoadmapNodeData } from '@/data/frontendRoadmapFlow';
@@ -137,19 +138,21 @@ const CompletedBadge = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 // START NODE  – dark header at the top
 // ─────────────────────────────────────────────────────────────────────────────
-export const StartNode = ({ data }: NodeProps<RoadmapNodeData>) => (
+export const StartNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div className="relative px-6 py-3 rounded-lg border-2 border-gray-800 bg-gray-900 text-white text-center font-bold text-base shadow-lg w-[200px]">
     <H type="source" pos={Position.Bottom} />
     <Tooltip content={TOOLTIP_MAP[data.label] ?? data.label} containerClassName="text-white cursor-default">
       <span>{data.label}</span>
     </Tooltip>
   </div>
-);
+));
+
+StartNode.displayName = 'StartNode';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN NODE  – solid yellow, bold – central learning path
 // ─────────────────────────────────────────────────────────────────────────────
-export const MainNode = ({ data }: NodeProps<RoadmapNodeData>) => (
+export const MainNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
       relative px-4 py-2.5 rounded-md border-2 w-[200px] text-center font-semibold text-sm
@@ -182,12 +185,14 @@ export const MainNode = ({ data }: NodeProps<RoadmapNodeData>) => (
       <span>{data.label}</span>
     </Tooltip>
   </div>
-);
+));
+
+MainNode.displayName = 'MainNode';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BRANCH NODE (right)  – cream/amber box, sub-topic
 // ─────────────────────────────────────────────────────────────────────────────
-export const BranchNode = ({ data }: NodeProps<RoadmapNodeData>) => (
+export const BranchNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
       relative px-3 py-2 rounded-md border min-w-[190px] text-center text-xs font-medium
@@ -206,12 +211,14 @@ export const BranchNode = ({ data }: NodeProps<RoadmapNodeData>) => (
       <span>{data.label}</span>
     </Tooltip>
   </div>
-);
+));
+
+BranchNode.displayName = 'BranchNode';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LEFT BRANCH NODE  – same style but flipped handles (appears on left column)
 // ─────────────────────────────────────────────────────────────────────────────
-export const LeftBranchNode = ({ data }: NodeProps<RoadmapNodeData>) => (
+export const LeftBranchNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
       relative px-3 py-2 rounded-md border min-w-[190px] text-center text-xs font-medium
@@ -230,12 +237,14 @@ export const LeftBranchNode = ({ data }: NodeProps<RoadmapNodeData>) => (
       <span>{data.label}</span>
     </Tooltip>
   </div>
-);
+));
+
+LeftBranchNode.displayName = 'LeftBranchNode';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OPTION NODE  – small pill, for npm/yarn/pnpm/Bun etc.
 // ─────────────────────────────────────────────────────────────────────────────
-export const OptionNode = ({ data }: NodeProps<RoadmapNodeData>) => (
+export const OptionNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
       relative px-3 py-1.5 rounded-full border text-center text-xs font-semibold
@@ -255,16 +264,20 @@ export const OptionNode = ({ data }: NodeProps<RoadmapNodeData>) => (
       <span>{data.label}</span>
     </Tooltip>
   </div>
-);
+));
+
+OptionNode.displayName = 'OptionNode';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INFO CARD  – text hint block, no connection handles needed
 // ─────────────────────────────────────────────────────────────────────────────
-export const InfoCard = ({ data }: NodeProps<RoadmapNodeData>) => (
+export const InfoCard = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div className="max-w-[220px] rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 shadow-sm p-3 text-xs text-gray-600 dark:text-zinc-300 italic leading-relaxed text-center pointer-events-none">
     {data.label}
   </div>
-);
+));
+
+InfoCard.displayName = 'InfoCard';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // nodeTypes map – import this into the ReactFlow page

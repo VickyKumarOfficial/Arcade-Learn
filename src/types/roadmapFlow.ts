@@ -72,6 +72,8 @@ export interface RoadmapFlowConfig {
   breadcrumbLabel: string;
   detailRoute: string;
   mentorRoute?: string;
+  sectionCollapseEnabled?: boolean;
+  defaultCollapsedSectionIds?: string[];
   flowNodes: Node<RoadmapNodeData>[];
   flowEdges: Edge[];
   mainNodeIds: string[];
