@@ -149,7 +149,7 @@ interface SurveyContextType {
   toggleMultiAnswer: (questionId: keyof SurveyAnswers, option: string, maxSelections?: number) => void;
   nextQuestion: () => void;
   previousQuestion: () => void;
-  completeSurvey: () => void;
+  completeSurvey: () => Promise<void>;
   showSurvey: () => void;
   hideSurvey: () => void;
   getCurrentQuestion: () => SurveyQuestion;
@@ -358,11 +358,15 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     console.log('🔄 Starting survey completion process for user:', user.id);
     console.log('📝 Survey answers:', state.answers);
 
+    let saveSucceeded = false;
+    let finalError: unknown = null;
+
     try {
       // Try to save completed survey to backend first
       console.log('💾 Attempting to save survey via backend...');
       await saveSurveyToBackend(state.answers as SurveyAnswers);
       console.log('✅ Survey saved via backend successfully');
+      saveSucceeded = true;
     } catch (backendError) {
       console.error('❌ Backend save failed, trying direct Supabase save:', backendError);
       
@@ -371,10 +375,19 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
         console.log('💾 Attempting to save survey via Supabase fallback...');
         await saveSurveyToSupabase(state.answers as SurveyAnswers);
         console.log('✅ Survey saved via Supabase fallback successfully');
+        saveSucceeded = true;
       } catch (supabaseError) {
         console.error('❌ Supabase fallback save also failed:', supabaseError);
-        // Continue anyway - we'll still mark as completed locally
+        finalError = supabaseError;
       }
+    }
+
+    if (!saveSucceeded) {
+      throw new Error(
+        finalError instanceof Error
+          ? finalError.message
+          : 'Failed to save survey. Please try again.',
+      );
     }
     
     // Mark as completed in localStorage regardless of save success
@@ -435,7 +448,8 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to save survey: ${response.statusText}`);
+      const errorBody = await response.text();
+      throw new Error(`Failed to save survey (${response.status}): ${errorBody || response.statusText}`);
     }
 
     return response.json();

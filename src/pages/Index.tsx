@@ -3,7 +3,7 @@ import ShowcaseCard from "@/components/ShowcaseCard";
 import Navigation from "@/components/Navigation";
 import RoadmapsSection from "@/components/RoadmapsSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
+import { ThreeDMarqueeDemoSecond } from "@/components/3d-marquee-demo-2";
 import FAQSection from "@/components/FAQSection";
 import Footer from "@/components/Footer";
 import BackToTopButton from "@/components/BackToTopButton";
@@ -18,7 +18,7 @@ const Index = () => {
       <ShowcaseCard imageSrc={dashboardPreview} />
       <RoadmapsSection />
       <HowItWorksSection />
-      <TestimonialsSection />
+      <ThreeDMarqueeDemoSecond />
       <FAQSection />
       <Footer />
     </div>

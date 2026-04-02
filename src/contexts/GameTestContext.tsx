@@ -5,6 +5,8 @@ import { initializeTestUserGameData, updateTestStreak } from '@/lib/ratingSystem
 import { processBadges } from '@/lib/testSystem';
 import { activityLogger } from '@/services/activityLogger';
 import { roadmaps } from '@/data/roadmaps';
+import { scoreFeatureFlags } from '@/config/featureFlags';
+import { scoreV2ApiService } from '@/services/scoreV2ApiService';
 // import { userProgressService } from '@/services/userProgressService';
 
 interface GameTestState {
@@ -20,6 +22,7 @@ type GameTestAction =
   | { type: 'DISMISS_BADGE'; payload: { badgeId: string } }
   | { type: 'HIDE_RATING_ANIMATION' }
   | { type: 'LOAD_USER_DATA'; payload: UserGameData }
+  | { type: 'APPLY_SCORE_V2_SUMMARY'; payload: { totalScore: number; totalStars: number } }
   | { type: 'RESET_GAME_DATA' };
 
 const GameTestContext = createContext<{
@@ -197,6 +200,21 @@ const gameTestReducer = (state: GameTestState, action: GameTestAction): GameTest
       };
     }
 
+    case 'APPLY_SCORE_V2_SUMMARY': {
+      const updatedUserData = {
+        ...state.userData,
+        totalScore: Math.max(0, action.payload.totalScore),
+        totalStars: Math.max(0, action.payload.totalStars),
+      };
+
+      localStorage.setItem('arcade-learn-test-data', JSON.stringify(updatedUserData));
+
+      return {
+        ...state,
+        userData: updatedUserData,
+      };
+    }
+
     case 'RESET_GAME_DATA': {
       const freshUserData = initializeTestUserGameData();
       localStorage.setItem('arcade-learn-test-data', JSON.stringify(freshUserData));
@@ -230,23 +248,118 @@ export const GameTestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Wrapper function to include userId when completing test
   const completeTest = (result: TestResult) => {
+    const componentKey = `${result.roadmapId}-${result.componentId}`;
+    const wasPreviouslyCompleted = state.userData.completedComponents.includes(componentKey);
+
     dispatch({ 
       type: 'COMPLETE_TEST', 
       payload: { result, userId: user?.id } 
     });
+
+    if (!user?.id || !scoreFeatureFlags.scoreV2WriteEnabled) {
+      return;
+    }
+
+    const completedAtIso = new Date(result.completedAt).toISOString();
+    const attemptId = scoreV2ApiService.createAttemptId({
+      userId: user.id,
+      roadmapId: result.roadmapId,
+      moduleId: result.componentId,
+      nodeId: result.testId,
+      attemptCount: result.attemptCount,
+      completedAtIso,
+    });
+
+    void (async () => {
+      try {
+        await scoreV2ApiService.submitAttempt(user.id, {
+          attemptId,
+          userId: user.id,
+          roadmapId: result.roadmapId,
+          moduleId: result.componentId,
+          nodeId: result.testId,
+          nodeDepth: 'submodule',
+          quizScore: Math.max(0, Math.min(100, Math.round(result.score))),
+          submittedAt: completedAtIso,
+          scoringVersion: 'v1',
+          metadata: {
+            source: 'component-test',
+            componentId: result.componentId,
+            testId: result.testId,
+            attemptCount: result.attemptCount,
+            passed: result.passed,
+          },
+        });
+
+        if (result.passed && !wasPreviouslyCompleted) {
+          await scoreV2ApiService.awardModuleBonus(user.id, {
+            userId: user.id,
+            roadmapId: result.roadmapId,
+            moduleId: result.componentId,
+            completedAt: completedAtIso,
+            scoringVersion: 'v1',
+          });
+        }
+
+        if (scoreFeatureFlags.scoreV2ReadEnabled) {
+          const summary = await scoreV2ApiService.getUserScoreSummary(user.id);
+          if (summary) {
+            dispatch({
+              type: 'APPLY_SCORE_V2_SUMMARY',
+              payload: {
+                totalScore: Number(summary.totalScore) || 0,
+                totalStars: Number(summary.totalStars) || 0,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.warn('Score V2 write sync failed:', error);
+      }
+    })();
   };
   
   // Load user data from backend when user is authenticated
   useEffect(() => {
     if (user) {
-      // For now, we're using local storage, but in a real app, we would load from the backend
-      // userProgressService.getUserProgress(user.id)
-      //   .then(data => {
-      //     if (data) {
-      //       dispatch({ type: 'LOAD_USER_DATA', payload: data });
-      //     }
-      //   })
-      //   .catch(err => console.error('Error loading user progress:', err));
+      if (!scoreFeatureFlags.scoreV2ReadEnabled) {
+        return;
+      }
+
+      let isMounted = true;
+
+      const syncScoreSummary = () => {
+        scoreV2ApiService
+          .getUserScoreSummary(user.id)
+          .then((summary) => {
+            if (!isMounted || !summary) {
+              return;
+            }
+
+            dispatch({
+              type: 'APPLY_SCORE_V2_SUMMARY',
+              payload: {
+                totalScore: Number(summary.totalScore) || 0,
+                totalStars: Number(summary.totalStars) || 0,
+              },
+            });
+          })
+          .catch((err) => {
+            console.error('Error loading Score V2 summary:', err);
+          });
+      };
+
+      syncScoreSummary();
+
+      const pollTimer = window.setInterval(syncScoreSummary, 10000);
+      const handleWindowFocus = () => syncScoreSummary();
+      window.addEventListener('focus', handleWindowFocus);
+
+      return () => {
+        isMounted = false;
+        window.clearInterval(pollTimer);
+        window.removeEventListener('focus', handleWindowFocus);
+      };
     }
   }, [user]);
   

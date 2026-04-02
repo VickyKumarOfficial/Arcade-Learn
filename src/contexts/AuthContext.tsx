@@ -52,6 +52,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     session: null,
   });
 
+  const normalizeAuthErrorMessage = useCallback((error: any, fallback: string) => {
+    const raw = String(error?.message || '').toLowerCase();
+    const status = Number(error?.status || error?.statusCode || 0);
+
+    if (
+      status === 429 ||
+      raw.includes('rate limit') ||
+      raw.includes('too many requests') ||
+      raw.includes('email rate limit exceeded')
+    ) {
+      return 'Too many authentication attempts. Please wait about 60 seconds and try again.';
+    }
+
+    return error?.message || fallback;
+  }, []);
+
   const commitAuthState = useCallback((nextState: AuthState) => {
     setAuthState((prev) => {
       const sameState =
@@ -64,6 +80,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return sameState ? prev : nextState;
     });
   }, []);
+
+  const ensureProfileExistsForUser = useCallback(
+    async (
+      supabaseUser: SupabaseUser,
+      overrides?: {
+        firstName?: string;
+        lastName?: string;
+        phone?: string;
+      },
+    ) => {
+      const email = supabaseUser.email || '';
+      const firstName =
+        overrides?.firstName ||
+        supabaseUser.user_metadata?.first_name ||
+        supabaseUser.user_metadata?.full_name?.split(' ')[0] ||
+        email.split('@')[0] ||
+        'User';
+      const lastName =
+        overrides?.lastName ??
+        supabaseUser.user_metadata?.last_name ??
+        (supabaseUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || null);
+      const phone = overrides?.phone ?? supabaseUser.user_metadata?.phone ?? null;
+      const avatarUrl =
+        supabaseUser.user_metadata?.avatar_url ||
+        supabaseUser.user_metadata?.picture ||
+        null;
+
+      const { error } = await supabase.from('profiles').upsert(
+        {
+          id: supabaseUser.id,
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+          avatar_url: avatarUrl,
+        },
+        { onConflict: 'id' },
+      );
+
+      if (error) {
+        throw error;
+      }
+    },
+    [],
+  );
 
   // Helper function to convert Supabase user to our User type
   const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User> => {
@@ -109,6 +170,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         if (session?.user) {
+          ensureProfileExistsForUser(session.user).catch((err) => {
+            console.warn('Failed to ensure profile exists from getSession:', err);
+          });
+
           const user = await convertSupabaseUser(session.user);
           commitAuthState({
             user,
@@ -158,6 +223,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 session,
               });
 
+              // Ensure profile exists for users authenticated via email verification or OAuth callbacks.
+              ensureProfileExistsForUser(session.user).catch((err) => {
+                console.warn('Failed to ensure profile exists after sign-in:', err);
+              });
+
               // Log login activity (only for SIGNED_IN event to avoid duplicates)
               if (event === 'SIGNED_IN' && user.id) {
                 const currentToken = session.access_token ?? `${user.id}:${Date.now()}`;
@@ -196,7 +266,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         subscription.unsubscribe();
       }
     };
-  }, [authDebug, commitAuthState]);
+  }, [authDebug, commitAuthState, ensureProfileExistsForUser]);
 
   const login = async (email: string, password: string) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
@@ -214,6 +284,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) throw error;
 
+      if (data?.user) {
+        ensureProfileExistsForUser(data.user).catch((err) => {
+          console.warn('Failed to ensure profile exists after login:', err);
+        });
+      }
+
       // Reset loading state immediately after successful authentication
       setAuthState(prev => ({ ...prev, isLoading: false }));
       
@@ -221,7 +297,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
     } catch (error: any) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      throw new Error(error.message || 'Login failed');
+      throw new Error(normalizeAuthErrorMessage(error, 'Login failed'));
     }
   };
 
@@ -250,50 +326,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('User creation failed');
 
-      // 2. Create profile immediately
-      console.log('Attempting to create profile for user:', authData.user.id);
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            email: userData.email,
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            phone: userData.phone
-          }
-        ])
-        .select()
-        .single();
-
-      if (profileError) {
-        console.error('Profile creation error details:', {
-          code: profileError.code,
-          message: profileError.message,
-          details: profileError.details,
-          hint: profileError.hint
-        });
-        
-        // Check if profile already exists
-        const { data: existingProfile, error: checkError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .single();
-          
-        if (existingProfile) {
-          console.log('Profile already exists:', existingProfile);
-          return; // Profile exists, we can continue
-        }
-
-        // If profile doesn't exist and we couldn't create it, cleanup and throw error
-        console.error('Cleaning up auth user due to profile creation failure');
+      // 2. If signup has an active session, create/upsert profile immediately.
+      // If email verification is enabled, session is usually null here and profile
+      // will be created after first verified sign-in via ensureProfileExistsForUser.
+      if (authData.session) {
+        console.log('Attempting to create profile for user:', authData.user.id);
         try {
-          await supabase.auth.admin.deleteUser(authData.user.id);
-        } catch (deleteError) {
-          console.error('Failed to cleanup auth user:', deleteError);
+          await ensureProfileExistsForUser(authData.user, {
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            phone: userData.phone,
+          });
+        } catch (profileError: any) {
+          console.error('Profile creation error details:', {
+            code: profileError?.code,
+            message: profileError?.message,
+            details: profileError?.details,
+            hint: profileError?.hint,
+          });
+          throw new Error(`Failed to create user profile: ${profileError.message}`);
         }
-        throw new Error(`Failed to create user profile: ${profileError.message}`);
+      }
+
+      if (!authData.session) {
+        // Keep account created, but require verification before sign-in.
+        throw new Error('Email not confirmed. Please check your email and verify your account before signing in.');
       }
 
       // 3. Clear loading state and update auth state
@@ -313,7 +370,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
     } catch (error: any) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      throw new Error(error.message || 'Registration failed');
+      throw new Error(normalizeAuthErrorMessage(error, 'Registration failed'));
     }
   };
 
@@ -326,7 +383,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
       return;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to resend verification email');
+      throw new Error(normalizeAuthErrorMessage(error, 'Failed to resend verification email'));
     }
   };
 

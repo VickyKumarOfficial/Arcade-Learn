@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase.js';
+import { supabaseAdmin } from '../lib/supabase.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const surveyService = {
@@ -9,7 +9,7 @@ export const surveyService = {
    */
   async getUserSurvey(userId) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('user_survey_responses')
         .select('*')
         .eq('user_id', userId)
@@ -84,13 +84,13 @@ export const surveyService = {
       };
 
       // First, mark any existing responses as not latest
-      await supabase
+      await supabaseAdmin
         .from('user_survey_responses')
         .update({ is_latest: false })
         .eq('user_id', userId);
 
       // Insert new response
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('user_survey_responses')
         .insert(surveyRecord)
         .select()
@@ -118,7 +118,7 @@ export const surveyService = {
    */
   async isSurveyCompleted(userId) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('user_survey_responses')
         .select('id, completed_at')
         .eq('user_id', userId)
@@ -146,7 +146,7 @@ export const surveyService = {
    */
   async getSurveyAnalytics() {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('user_survey_responses')
         .select(`
           responses,
@@ -256,7 +256,7 @@ export const surveyService = {
       }
       
       // Save recommendation to database
-      const { data: recommendation, error: saveError } = await supabase
+      const { data: recommendation, error: saveError } = await supabaseAdmin
         .from('user_recommendations')
         .insert({
           user_id: userId,
@@ -295,7 +295,7 @@ export const surveyService = {
    */
   async getUserRecommendations(userId) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('user_recommendations')
         .select('*')
         .eq('user_id', userId)

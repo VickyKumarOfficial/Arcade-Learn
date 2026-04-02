@@ -35,7 +35,7 @@ const RoadmapDetail = () => {
   } | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [showRatingAnimation, setShowRatingAnimation] = useState<boolean>(false);
-  const { state, dispatch } = useGameTest();
+  const { state, completeTest } = useGameTest();
 
   // Move useEffect before any conditional returns to follow Rules of Hooks
   useEffect(() => {
@@ -131,6 +131,8 @@ const RoadmapDetail = () => {
   };
 
   const handleTestComplete = (result: TestResult) => {
+    completeTest(result);
+
     // Store the test result for display
     setTestResult(result);
     setActiveTest(null);
@@ -141,12 +143,6 @@ const RoadmapDetail = () => {
     // In our actual implementation, we'd use the GameContext to update the state
     const component = roadmap.components.find(c => c.id === result.componentId);
     if (component) {
-      // This is where we would dispatch to our updated GameContext
-      // dispatch({ 
-      //   type: 'COMPLETE_TEST', 
-      //   payload: { testResult: result, component, roadmapId: roadmap.id } 
-      // });
-
       // For demo purposes, we'll update the UI directly
       const updatedRoadmap = { ...roadmap };
       const componentToUpdate = updatedRoadmap.components.find(c => c.id === result.componentId);

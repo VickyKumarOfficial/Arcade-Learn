@@ -1,15 +1,20 @@
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Star, Medal, Award } from "lucide-react";
 import { UserGameData } from "@/types";
+import { scoreFeatureFlags } from "@/config/featureFlags";
+import { scoreV2ApiService } from "@/services/scoreV2ApiService";
+import { LeaderboardEntry as ScoreV2LeaderboardEntry } from "@/types/scoreContract";
 
 interface LeaderboardEntry {
   id: string;
   name: string;
   level: number;
-  totalXP: number;
+  totalScore: number;
   completedRoadmaps: number;
   avatar: string;
+  rank?: number;
 }
 
 // Mock leaderboard data
@@ -18,7 +23,7 @@ const mockLeaderboard: LeaderboardEntry[] = [
     id: "1",
     name: "Alex Chen",
     level: 15,
-    totalXP: 22500,
+    totalScore: 22500,
     completedRoadmaps: 3,
     avatar: "👨‍💻"
   },
@@ -26,7 +31,7 @@ const mockLeaderboard: LeaderboardEntry[] = [
     id: "2", 
     name: "Sarah Johnson",
     level: 12,
-    totalXP: 14400,
+    totalScore: 14400,
     completedRoadmaps: 2,
     avatar: "👩‍💻"
   },
@@ -34,7 +39,7 @@ const mockLeaderboard: LeaderboardEntry[] = [
     id: "3",
     name: "Mike Rodriguez",
     level: 10,
-    totalXP: 10000,
+    totalScore: 10000,
     completedRoadmaps: 2,
     avatar: "🧑‍💻"
   },
@@ -42,7 +47,7 @@ const mockLeaderboard: LeaderboardEntry[] = [
     id: "4",
     name: "Emily Wang",
     level: 9,
-    totalXP: 8100,
+    totalScore: 8100,
     completedRoadmaps: 1,
     avatar: "👩‍🎓"
   },
@@ -50,7 +55,7 @@ const mockLeaderboard: LeaderboardEntry[] = [
     id: "5",
     name: "David Kim",
     level: 8,
-    totalXP: 6400,
+    totalScore: 6400,
     completedRoadmaps: 1,
     avatar: "👨‍🎓"
   }
@@ -58,10 +63,31 @@ const mockLeaderboard: LeaderboardEntry[] = [
 
 interface LeaderboardProps {
   userData: UserGameData;
+  currentUserId?: string;
   onClose?: () => void;
 }
 
-export const Leaderboard = ({ userData, onClose }: LeaderboardProps) => {
+export const Leaderboard = ({ userData, currentUserId, onClose }: LeaderboardProps) => {
+  const [remoteEntries, setRemoteEntries] = useState<ScoreV2LeaderboardEntry[] | null>(null);
+
+  useEffect(() => {
+    if (!scoreFeatureFlags.scoreV2LeaderboardEnabled) {
+      return;
+    }
+
+    let isMounted = true;
+    scoreV2ApiService.getGlobalLeaderboard(25).then((rows) => {
+      if (!isMounted) {
+        return;
+      }
+      setRemoteEntries(rows || null);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const getRankIcon = (position: number) => {
     switch (position) {
       case 1:
@@ -88,18 +114,51 @@ export const Leaderboard = ({ userData, onClose }: LeaderboardProps) => {
     }
   };
 
-  // Add current user to leaderboard for demo
-  const currentUserEntry: LeaderboardEntry = {
-    id: "current",
-    name: "You",
-    level: Math.floor(userData.totalRating / 100), // Calculate level from rating
-    totalXP: userData.totalRating, // Use total rating as XP equivalent
-    completedRoadmaps: userData.completedRoadmaps.length,
-    avatar: "🎯"
-  };
+  const allEntries = useMemo(() => {
+    if (scoreFeatureFlags.scoreV2LeaderboardEnabled && remoteEntries && remoteEntries.length > 0) {
+      const mapped = remoteEntries.map((entry) => ({
+        id: entry.userId,
+        name: entry.displayName,
+        level: Math.max(1, Math.floor(entry.totalScore / 100)),
+        totalScore: entry.totalScore,
+        completedRoadmaps: 0,
+        avatar: "👤",
+        rank: entry.rank,
+      }));
 
-  const allEntries = [...mockLeaderboard, currentUserEntry].sort((a, b) => b.totalXP - a.totalXP);
-  const userRank = allEntries.findIndex(entry => entry.id === "current") + 1;
+      const hasCurrentUser = currentUserId
+        ? mapped.some((entry) => entry.id === currentUserId)
+        : false;
+
+      if (!hasCurrentUser && currentUserId) {
+        mapped.push({
+          id: currentUserId,
+          name: "You",
+          level: Math.max(1, Math.floor(userData.totalScore / 100)),
+          totalScore: userData.totalScore,
+          completedRoadmaps: userData.completedRoadmaps.length,
+          avatar: "🎯",
+        });
+      }
+
+      return mapped
+        .sort((a, b) => b.totalScore - a.totalScore)
+        .map((entry, index) => ({ ...entry, rank: entry.rank || index + 1 }));
+    }
+
+    const currentUserEntry: LeaderboardEntry = {
+      id: currentUserId || "current",
+      name: "You",
+      level: Math.max(1, Math.floor(userData.totalScore / 100)),
+      totalScore: userData.totalScore,
+      completedRoadmaps: userData.completedRoadmaps.length,
+      avatar: "🎯",
+    };
+
+    return [...mockLeaderboard, currentUserEntry].sort((a, b) => b.totalScore - a.totalScore);
+  }, [currentUserId, remoteEntries, userData.completedRoadmaps.length, userData.totalScore]);
+
+  const userRank = allEntries.findIndex((entry) => entry.id === (currentUserId || "current")) + 1;
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -128,8 +187,8 @@ export const Leaderboard = ({ userData, onClose }: LeaderboardProps) => {
       <CardContent>
         <div className="space-y-3">
           {allEntries.slice(0, 10).map((entry, index) => {
-            const position = index + 1;
-            const isCurrentUser = entry.id === "current";
+            const position = entry.rank || index + 1;
+            const isCurrentUser = currentUserId ? entry.id === currentUserId : entry.id === "current";
             
             return (
               <div 
@@ -165,7 +224,7 @@ export const Leaderboard = ({ userData, onClose }: LeaderboardProps) => {
                       <span>Level {entry.level}</span>
                     </div>
                     <div>
-                      <span>{entry.totalXP.toLocaleString()} Rating</span>
+                      <span>{entry.totalScore.toLocaleString()} Score</span>
                     </div>
                     <div>
                       <span>{entry.completedRoadmaps} roadmaps</span>

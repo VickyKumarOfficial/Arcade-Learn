@@ -36,7 +36,7 @@ const RoadmapDetail = () => {
     roadmapId: string;
   } | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const { state, dispatch } = useGameTest();
+  const { state, completeTest } = useGameTest();
 
   // Get detailed career recommendations with matching tags and scores
   const careerRecommendations = useDetailedCareerRecommendations(roadmap || {} as Roadmap);
@@ -143,6 +143,8 @@ const RoadmapDetail = () => {
   
   // Handle test completion
   const handleTestComplete = (result: TestResult) => {
+    completeTest(result);
+
     setTestResult(result);
     setActiveTest(null);
     
@@ -159,12 +161,6 @@ const RoadmapDetail = () => {
         componentToUpdate.testResult = result;
         updatedRoadmap.completedComponents++;
         setRoadmap(updatedRoadmap);
-        
-        // TODO: In a real implementation, we would update the GameContext
-        // dispatch({ 
-        //   type: 'COMPLETE_TEST', 
-        //   payload: { result, component: componentToUpdate, roadmapId: result.roadmapId } 
-        // });
         
         // Check if roadmap is now complete
         if (updatedRoadmap.completedComponents === updatedRoadmap.components.length) {

@@ -13,10 +13,13 @@ import { resumeService } from './services/resumeService.js';
 import { jobRecommendationService } from './services/jobRecommendationService.js';
 import { roadmapJobMatchService } from './services/roadmapJobMatchService.js';
 import { userActivityService } from './services/userActivityService.js';
+import { scoreV2Service } from './services/scoreV2Service.js';
+import { getScoreFeatureFlags } from './config/featureFlags.js';
+import { supabaseAdmin } from './lib/supabase.js';
 import pdfService from './services/pdfService.js';
 import { invokeMcpTool } from './mcpServer.js';
 import { getRegisteredMcpTools } from './mcpServer.js';
-import { aiOrchestratorService } from './services/aiOrchestratorService.js';
+import { aiOrchestratorService } from './services/aiOrchestratorService.fallback.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -43,6 +46,28 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+function buildScoreV2FlagsPayload() {
+  return getScoreFeatureFlags();
+}
+
+function requireScoreFlag(flagName) {
+  const flags = getScoreFeatureFlags();
+  if (!flags[flagName]) {
+    return {
+      allowed: false,
+      response: {
+        error: `Score V2 ${flagName} is disabled`,
+        flags,
+      },
+    };
+  }
+
+  return {
+    allowed: true,
+    response: null,
+  };
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -226,6 +251,128 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
+// Score V2 Routes (feature-flagged)
+app.post('/api/v2/user/:userId/score/attempt', async (req, res) => {
+  const gate = requireScoreFlag('scoreV2WriteEnabled');
+  if (!gate.allowed) {
+    return res.status(503).json(gate.response);
+  }
+
+  try {
+    const { userId } = req.params;
+    const {
+      attemptId,
+      roadmapId,
+      moduleId,
+      nodeId,
+      nodeDepth,
+      quizScore,
+      metadata,
+      submittedAt,
+      scoringVersion,
+    } = req.body ?? {};
+
+    if (!attemptId || !roadmapId || !moduleId || !nodeId || !nodeDepth || typeof quizScore !== 'number') {
+      return res.status(400).json({
+        error: 'Missing required fields: attemptId, roadmapId, moduleId, nodeId, nodeDepth, quizScore',
+      });
+    }
+
+    const result = await scoreV2Service.submitAttempt(userId, {
+      attemptId,
+      roadmapId,
+      moduleId,
+      nodeId,
+      nodeDepth,
+      quizScore,
+      metadata,
+      submittedAt: submittedAt || new Date().toISOString(),
+      scoringVersion,
+    });
+
+    return res.json({
+      success: true,
+      data: result,
+      flags: buildScoreV2FlagsPayload(),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/v2/user/:userId/score/module-bonus', async (req, res) => {
+  const gate = requireScoreFlag('scoreV2WriteEnabled');
+  if (!gate.allowed) {
+    return res.status(503).json(gate.response);
+  }
+
+  try {
+    const { userId } = req.params;
+    const { roadmapId, moduleId, completedAt, scoringVersion } = req.body ?? {};
+
+    if (!roadmapId || !moduleId) {
+      return res.status(400).json({
+        error: 'Missing required fields: roadmapId, moduleId',
+      });
+    }
+
+    const result = await scoreV2Service.awardModuleBonus(userId, {
+      roadmapId,
+      moduleId,
+      completedAt: completedAt || new Date().toISOString(),
+      scoringVersion,
+    });
+
+    return res.json({
+      success: true,
+      data: result,
+      flags: buildScoreV2FlagsPayload(),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/v2/user/:userId/score-summary', async (req, res) => {
+  const gate = requireScoreFlag('scoreV2ReadEnabled');
+  if (!gate.allowed) {
+    return res.status(503).json(gate.response);
+  }
+
+  try {
+    const { userId } = req.params;
+    const summary = await scoreV2Service.getUserSummary(userId);
+
+    return res.json({
+      success: true,
+      data: summary,
+      flags: buildScoreV2FlagsPayload(),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/v2/leaderboard', async (req, res) => {
+  const gate = requireScoreFlag('scoreV2LeaderboardEnabled');
+  if (!gate.allowed) {
+    return res.status(503).json(gate.response);
+  }
+
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+    const leaderboard = await scoreV2Service.getGlobalLeaderboard(limit);
+
+    return res.json({
+      success: true,
+      data: leaderboard,
+      flags: buildScoreV2FlagsPayload(),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // Subscription Routes
 app.get('/api/user/:userId/subscription', async (req, res) => {
   try {
@@ -359,7 +506,7 @@ app.get('/api/user/:userId/survey/status', async (req, res) => {
     
     if (result.success) {
       // Check if user is new by checking when they were created
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
       const isNewUser = userData?.user && new Date() - new Date(userData.user.created_at) < 24 * 60 * 60 * 1000; // New if created within 24 hours
       
       res.json({ 

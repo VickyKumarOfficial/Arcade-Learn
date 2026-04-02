@@ -22,7 +22,7 @@ const Hero = () => {
   const [mousePos, setMousePos] = useState<MousePosition>({ x: 0, y: 0 });
   const sectionRef = useRef<HTMLElement>(null);
   const { state } = useGameTest();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   // Track mouse position for interactive particles
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
@@ -324,6 +324,7 @@ const Hero = () => {
         <div className="fixed inset-0 z-50 bg-background/90 flex items-center justify-center p-4">
           <Leaderboard
             userData={state.userData}
+            currentUserId={user?.id}
             onClose={() => setShowLeaderboard(false)}
           />
         </div>

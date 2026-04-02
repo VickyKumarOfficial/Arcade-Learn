@@ -144,7 +144,7 @@ const AIChatPage = () => {
           // Update chat history
           setChatHistory(prev => [
             { ...newChat, lastMessage: message },
-            ...prev
+            ...prev.filter(chat => chat.id !== newChat.id)
           ]);
         }
       } else {

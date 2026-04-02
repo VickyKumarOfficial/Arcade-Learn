@@ -49,7 +49,7 @@ const App = () => (
         <SurveyProvider>
           <GameTestProvider>
               <TooltipProvider>
-                {/* <DevelopmentBanner /> - Removed to utilize space, uncomment if needed in future */}
+               {/* <DevelopmentBanner /> - Removed to utilize space, uncomment if needed in future */}
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>

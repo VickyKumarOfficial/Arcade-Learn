@@ -32,6 +32,16 @@ export interface CreateMessageData {
 }
 
 class AIChatService {
+  private mapChat(chat: any): AIChat {
+    return {
+      id: chat.id,
+      userId: chat.user_id,
+      title: chat.title,
+      createdAt: new Date(chat.created_at),
+      updatedAt: new Date(chat.updated_at),
+    };
+  }
+
   // Create a new chat with optional first message
   async createChat(userId: string, data: CreateChatData): Promise<AIChat | null> {
     try {
@@ -59,13 +69,7 @@ class AIChatService {
         });
       }
 
-      return {
-        id: chat.id,
-        userId: chat.user_id,
-        title: chat.title,
-        createdAt: new Date(chat.created_at),
-        updatedAt: new Date(chat.updated_at),
-      };
+      return this.mapChat(chat);
     } catch (error) {
       console.error('Error in createChat:', error);
       return null;
@@ -123,13 +127,7 @@ class AIChatService {
         return [];
       }
 
-      return chats.map(chat => ({
-        id: chat.id,
-        userId: chat.user_id,
-        title: chat.title,
-        createdAt: new Date(chat.created_at),
-        updatedAt: new Date(chat.updated_at),
-      }));
+      return chats.map(chat => this.mapChat(chat));
     } catch (error) {
       console.error('Error in getUserChats:', error);
       return [];

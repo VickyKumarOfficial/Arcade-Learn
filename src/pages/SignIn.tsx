@@ -23,6 +23,7 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
   const [loading, setLoading] = useState(false);
   const [showResendButton, setShowResendButton] = useState(false);
   const [resendEmailSuccess, setResendEmailSuccess] = useState(false);
+  const [registerRetryAfterMs, setRegisterRetryAfterMs] = useState<number>(0);
 
   // Check for OAuth errors in URL parameters
   useEffect(() => {
@@ -56,6 +57,13 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
     
     if (!form.email.trim() || !form.password.trim()) {
       setError("Email and password are required");
+      setLoading(false);
+      return;
+    }
+
+    if (isRegister && registerRetryAfterMs > Date.now()) {
+      const waitSeconds = Math.ceil((registerRetryAfterMs - Date.now()) / 1000);
+      setError(`Too many attempts. Please wait ${waitSeconds}s and try signing up again.`);
       setLoading(false);
       return;
     }
@@ -101,6 +109,13 @@ const SignIn: React.FC<SignInProps> = ({ initialMode = "login" }) => {
         setShowResendButton(true);
       } else if (err.message?.toLowerCase().includes('invalid credentials')) {
         setError("Invalid email or password. Please try again.");
+      } else if (
+        err.message?.toLowerCase().includes('rate limit') ||
+        err.message?.toLowerCase().includes('too many requests')
+      ) {
+        const retryAfter = Date.now() + 60 * 1000;
+        setRegisterRetryAfterMs(retryAfter);
+        setError("Too many auth attempts right now. Please wait about 60 seconds and try again.");
       } else if (err.message?.toLowerCase().includes('timeout')) {
         setError("Request timed out. Please check your internet connection and try again.");
       } else {

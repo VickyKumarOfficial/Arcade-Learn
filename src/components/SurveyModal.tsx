@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,8 @@ import { useSurvey } from '@/contexts/SurveyContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const SurveyModal: React.FC = () => {
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { isAuthenticated, user } = useAuth();
   const {
     state,
@@ -69,9 +71,18 @@ export const SurveyModal: React.FC = () => {
     return false;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    setSubmitError('');
+
     if (isLastQuestion()) {
-      completeSurvey();
+      setIsSubmitting(true);
+      try {
+        await completeSurvey();
+      } catch (error: any) {
+        setSubmitError(error?.message || 'Failed to save survey. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     } else {
       nextQuestion();
     }
@@ -251,13 +262,18 @@ export const SurveyModal: React.FC = () => {
               
               <Button
                 onClick={handleNext}
-                disabled={!canProceed()}
+                disabled={!canProceed() || isSubmitting}
                 className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground border-0 text-xs sm:text-sm px-4 sm:px-6 h-9 w-full sm:w-auto"
               >
-                {isLastQuestion() ? 'Complete' : 'Next'}
+                {isLastQuestion() ? (isSubmitting ? 'Saving...' : 'Complete') : 'Next'}
                 {!isLastQuestion() && <ChevronRight className="w-3.5 h-3.5" />}
               </Button>
             </CardFooter>
+            {submitError && (
+              <div className="px-4 pb-3 text-xs text-red-400 text-center">
+                {submitError}
+              </div>
+            )}
           </Card>
         </motion.div>
       </motion.div>
