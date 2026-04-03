@@ -36,14 +36,14 @@ const FormattedText: React.FC<FormattedTextProps> = ({ content, className = '' }
       
       elements.push(
         <div key={`code-${elements.length}`} className="my-4 first:mt-0 last:mb-0">
-          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className="bg-slate-900/80 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
             {language && (
-              <div className="bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-mono text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
+              <div className="bg-slate-800/90 px-4 py-2 text-xs font-mono tracking-wide uppercase text-slate-300 border-b border-slate-700">
                 {language}
               </div>
             )}
-            <pre className="p-4 overflow-x-auto">
-              <code className="text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+            <pre className="p-4 overflow-x-auto bg-slate-950/70">
+              <code className="text-sm md:text-[0.95rem] font-mono text-slate-100 whitespace-pre">
                 {code}
               </code>
             </pre>
@@ -75,7 +75,7 @@ const FormattedText: React.FC<FormattedTextProps> = ({ content, className = '' }
         const paragraphText = currentParagraph.join(' ').trim();
         if (paragraphText) {
           elements.push(
-            <p key={`p-${startIndex}-${elements.length}`} className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">
+            <p key={`p-${startIndex}-${elements.length}`} className="mb-4 text-[15px] md:text-base leading-8 text-slate-100">
               {formatInlineText(paragraphText)}
             </p>
           );
@@ -88,13 +88,13 @@ const FormattedText: React.FC<FormattedTextProps> = ({ content, className = '' }
       if (listItems && listItems.items.length > 0) {
         const ListComponent = listItems.type === 'ol' ? 'ol' : 'ul';
         const listClass = listItems.type === 'ol' 
-          ? "list-decimal list-inside space-y-2 my-4 first:mt-0 last:mb-0 pl-4"
-          : "list-disc list-inside space-y-2 my-4 first:mt-0 last:mb-0 pl-4";
+          ? "list-decimal list-inside space-y-2 my-4 first:mt-0 last:mb-0 pl-4 text-[15px] md:text-base text-slate-100"
+          : "list-disc list-inside space-y-2 my-4 first:mt-0 last:mb-0 pl-4 text-[15px] md:text-base text-slate-100";
         
         elements.push(
           <ListComponent key={`list-${startIndex}-${elements.length}`} className={listClass}>
             {listItems.items.map((item, idx) => (
-              <li key={idx} className="mb-2">
+              <li key={idx} className="mb-2 leading-8">
                 {formatInlineText(item)}
               </li>
             ))}
@@ -125,10 +125,10 @@ const FormattedText: React.FC<FormattedTextProps> = ({ content, className = '' }
           const text = headerMatch[2];
           const HeaderTag = `h${level}` as keyof JSX.IntrinsicElements;
           const headerClasses = {
-            1: "text-3xl font-bold text-gray-900 dark:text-white mt-6 mb-5 first:mt-0",
-            2: "text-2xl font-bold text-gray-900 dark:text-white mt-6 mb-4 first:mt-0",
-            3: "text-xl font-bold text-gray-900 dark:text-white mt-6 mb-4 first:mt-0",
-            4: "text-lg font-bold text-gray-900 dark:text-white mt-6 mb-3 first:mt-0"
+            1: "text-3xl md:text-4xl font-bold text-slate-50 mt-7 mb-5 first:mt-0",
+            2: "text-2xl md:text-3xl font-bold text-slate-50 mt-7 mb-4 first:mt-0",
+            3: "text-xl md:text-2xl font-bold text-slate-100 mt-6 mb-4 first:mt-0",
+            4: "text-lg md:text-xl font-semibold text-slate-100 mt-6 mb-3 first:mt-0"
           };
           
           elements.push(
@@ -207,21 +207,21 @@ const FormattedText: React.FC<FormattedTextProps> = ({ content, className = '' }
       if (token.startsWith('__INLINE_CODE_')) {
         const code = token.replace('__INLINE_CODE_', '').replace('__', '');
         return (
-          <code key={`code-${index}`} className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm font-mono text-blue-600 dark:text-blue-400">
+          <code key={`code-${index}`} className="bg-slate-800/90 border border-slate-700 px-2 py-1 rounded text-[0.9em] font-mono text-blue-300">
             {code}
           </code>
         );
       } else if (token.startsWith('__BOLD_')) {
         const text = token.replace('__BOLD_', '').replace('__', '');
         return (
-          <strong key={`bold-${index}`} className="font-semibold text-gray-900 dark:text-white">
+          <strong key={`bold-${index}`} className="font-bold text-slate-50">
             {text}
           </strong>
         );
       } else if (token.startsWith('__ITALIC_')) {
         const text = token.replace('__ITALIC_', '').replace('__', '');
         return (
-          <em key={`italic-${index}`} className="italic">
+          <em key={`italic-${index}`} className="italic text-slate-200">
             {text}
           </em>
         );
@@ -233,7 +233,7 @@ const FormattedText: React.FC<FormattedTextProps> = ({ content, className = '' }
   const processedContent = formatContent(content);
 
   return (
-    <div className={`prose prose-sm max-w-none ${className}`}>
+    <div className={`max-w-none ${className}`}>
       {processedContent}
     </div>
   );

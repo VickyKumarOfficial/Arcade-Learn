@@ -1,8 +1,10 @@
 // Backend URL from environment (e.g., http://localhost:8081)
+import { supabase } from '@/lib/supabase';
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
 
 export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
+  role: 'user' | 'assistant';
   content: string;
 }
 
@@ -12,7 +14,47 @@ export interface ChatCompletionResponse {
   error?: string;
 }
 
+export type AIFeedbackScope = 'message' | 'overall';
+export type AIMessageFeedbackValue = 'like' | 'dislike';
+
+export interface AISubmitFeedbackPayload {
+  feedbackScope: AIFeedbackScope;
+  chatId?: string | null;
+  messageId?: string | null;
+  feedbackValue?: AIMessageFeedbackValue | null;
+  reason?: string | null;
+  reasons?: string[];
+  details?: string | null;
+  rating?: number | null;
+}
+
+export interface AISubmitFeedbackResponse {
+  success: boolean;
+  feedbackId?: string;
+  error?: string;
+}
+
 class AIService {
+  private async buildAuthHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+    } catch (error) {
+      console.warn('Unable to read auth session for AI request:', error);
+    }
+
+    return headers;
+  }
+
   /**
    * Clean up AI response for better formatting
    */
@@ -38,10 +80,12 @@ class AIService {
    */
   async getChatCompletion(messages: ChatMessage[]): Promise<ChatCompletionResponse> {
     try {
+      const headers = await this.buildAuthHeaders();
+
       // Call the backend API endpoint
       const response = await fetch(`${backendUrl}/api/ai/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ messages }),
       });
 
@@ -120,6 +164,44 @@ class AIService {
     ];
 
     return this.getChatCompletion(messages);
+  }
+
+  /**
+   * Submit message-level or overall AI feedback.
+   */
+  async submitFeedback(payload: AISubmitFeedbackPayload): Promise<AISubmitFeedbackResponse> {
+    try {
+      const headers = await this.buildAuthHeaders();
+
+      const response = await fetch(`${backendUrl}/api/ai/feedback`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json().catch(() => ({
+        success: false,
+        error: 'Invalid server response.',
+      }));
+
+      if (!response.ok || !result?.success) {
+        return {
+          success: false,
+          error: result?.error || `Feedback request failed with status ${response.status}.`,
+        };
+      }
+
+      return {
+        success: true,
+        feedbackId: result.feedbackId,
+      };
+    } catch (error: any) {
+      console.error('Error submitting AI feedback:', error);
+      return {
+        success: false,
+        error: 'Failed to submit feedback. Please try again.',
+      };
+    }
   }
 
   /**

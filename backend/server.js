@@ -69,6 +69,228 @@ function requireScoreFlag(flagName) {
   };
 }
 
+function extractBearerToken(authorizationHeader) {
+  if (typeof authorizationHeader !== 'string') {
+    return null;
+  }
+
+  const [scheme, token] = authorizationHeader.split(' ');
+  if (!scheme || !token || scheme.toLowerCase() !== 'bearer') {
+    return null;
+  }
+
+  return token.trim();
+}
+
+async function getAuthenticatedUserFromRequest(req) {
+  const token = extractBearerToken(req.headers.authorization);
+  if (!token) {
+    return {
+      success: false,
+      statusCode: 401,
+      error: 'Authorization token is required.',
+    };
+  }
+
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data?.user?.id) {
+    return {
+      success: false,
+      statusCode: 401,
+      error: 'Invalid or expired authentication token.',
+    };
+  }
+
+  return {
+    success: true,
+    user: data.user,
+  };
+}
+
+function normalizeOptionalText(value, maxLength = 2000) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed.slice(0, maxLength);
+}
+
+function normalizeFeedbackReasons(value, maxItems = 8, itemMaxLength = 120) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set();
+  const normalized = [];
+
+  for (const item of value) {
+    if (typeof item !== 'string') {
+      continue;
+    }
+
+    const sanitized = item.replace(/\s+/g, ' ').trim().slice(0, itemMaxLength);
+    if (!sanitized || seen.has(sanitized)) {
+      continue;
+    }
+
+    seen.add(sanitized);
+    normalized.push(sanitized);
+
+    if (normalized.length >= maxItems) {
+      break;
+    }
+  }
+
+  return normalized;
+}
+
+function normalizeRoadmapRecommendations(rows) {
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+
+  return rows
+    .slice(0, 5)
+    .map((item) => {
+      if (typeof item === 'string') {
+        return item;
+      }
+
+      if (item && typeof item === 'object') {
+        return item.title || item.name || item.roadmap_id || JSON.stringify(item);
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+}
+
+async function buildSecureUserContext(userId) {
+  const [progressResult, activityResult, roadmapResult] = await Promise.all([
+    invokeMcpTool('get_user_progress', { userId }),
+    invokeMcpTool('get_user_activity_stats', { userId, days: 30 }),
+    invokeMcpTool('get_recommended_roadmaps', { userId, limit: 3 }),
+  ]);
+
+  const progress = progressResult?.success ? progressResult?.data?.progress : null;
+  const achievements = progressResult?.success ? progressResult?.data?.achievements || [] : [];
+  const stats = activityResult?.success ? activityResult?.data?.stats : null;
+  const recommendations = roadmapResult?.success ? roadmapResult?.data?.recommendations || [] : [];
+  const recommendationReason = roadmapResult?.success
+    ? roadmapResult?.data?.recommendationReason || null
+    : null;
+  const recommendationConfidence = roadmapResult?.success
+    ? roadmapResult?.data?.aiConfidenceScore ?? null
+    : null;
+  const recommendationGeneratedAt = roadmapResult?.success
+    ? roadmapResult?.data?.generatedAt || null
+    : null;
+  const normalizedRecommendationReason =
+    typeof recommendationReason === 'string'
+      ? recommendationReason
+      : (recommendationReason && typeof recommendationReason === 'object'
+        ? (recommendationReason.summary ||
+          (Array.isArray(recommendationReason.details)
+            ? recommendationReason.details.slice(0, 2).join(' ')
+            : null))
+        : null);
+
+  const hasTotalScore = Number.isFinite(Number(progress?.total_score));
+  const hasTotalXP = Number.isFinite(Number(progress?.total_xp));
+  const currentPoints = hasTotalScore
+    ? Number(progress.total_score)
+    : (hasTotalXP ? Number(progress.total_xp) : null);
+
+  return {
+    userId,
+    points: {
+      currentTotal: currentPoints,
+      source: hasTotalScore ? 'score_v2_total_score' : (hasTotalXP ? 'legacy_total_xp' : 'unavailable'),
+    },
+    progress: progress
+      ? {
+          totalScore: progress.total_score ?? null,
+          totalStars: progress.total_stars ?? null,
+          totalXP: progress.total_xp ?? null,
+          level: progress.level ?? null,
+          currentStreak: progress.current_streak ?? null,
+          longestStreak: progress.longest_streak ?? null,
+          totalComponentsCompleted: progress.total_components_completed ?? null,
+          completedRoadmaps: Array.isArray(progress.completed_roadmaps)
+            ? progress.completed_roadmaps.slice(0, 20)
+            : [],
+        }
+      : null,
+    achievements: achievements
+      .slice(0, 10)
+      .map((item) => item?.achievement_id)
+      .filter(Boolean),
+    activity: stats
+      ? {
+          totalActivities: stats.totalActivities ?? null,
+          activeDays: stats.activeDays ?? null,
+          currentStreak: stats.currentStreak ?? null,
+          longestStreak: stats.longestStreak ?? null,
+        }
+      : null,
+    recommendedRoadmaps: normalizeRoadmapRecommendations(recommendations),
+    roadmapRecommendationMeta: {
+      reason: normalizedRecommendationReason,
+      confidenceScore: recommendationConfidence,
+      generatedAt: recommendationGeneratedAt,
+    },
+  };
+}
+
+function buildUserGroundingMessage(context) {
+  const pointsText = context?.points?.currentTotal ?? 'unavailable';
+  const pointsSourceText = context?.points?.source || 'unavailable';
+  const starsText = context?.progress?.totalStars ?? 'unavailable';
+  const totalXPText = context?.progress?.totalXP ?? 'unavailable';
+  const levelText = context?.progress?.level ?? 'unavailable';
+  const streakText = context?.progress?.currentStreak ?? 'unavailable';
+  const componentsText = context?.progress?.totalComponentsCompleted ?? 'unavailable';
+  const achievementsText = Array.isArray(context?.achievements) && context.achievements.length > 0
+    ? context.achievements.join(', ')
+    : 'none yet';
+  const recommendedRoadmapsText = Array.isArray(context?.recommendedRoadmaps) && context.recommendedRoadmaps.length > 0
+    ? context.recommendedRoadmaps.join(', ')
+    : 'not available';
+  const recommendationReasonText = context?.roadmapRecommendationMeta?.reason || 'not available';
+  const recommendationConfidenceText = context?.roadmapRecommendationMeta?.confidenceScore ?? 'not available';
+  const recommendationGeneratedAtText = context?.roadmapRecommendationMeta?.generatedAt || 'not available';
+
+  return `You are assisting the currently authenticated ArcadeLearn user.
+Use ONLY this backend-verified user context when answering questions about progress, XP, streaks, achievements, and roadmap next steps.
+If a requested value is missing, clearly say data is unavailable instead of guessing.
+Do not mention internal tool names, internal IDs, JSON keys, or raw JSON unless the user explicitly asks.
+
+Authoritative user context:
+- Current points (use this for "points" or "score" questions): ${pointsText}
+- Points source: ${pointsSourceText}
+- Total stars: ${starsText}
+- Legacy total XP: ${totalXPText}
+- Level: ${levelText}
+- Current streak: ${streakText}
+- Completed components: ${componentsText}
+- Achievements: ${achievementsText}
+- Recommended roadmaps: ${recommendedRoadmapsText}
+- Recommendation reason: ${recommendationReasonText}
+- Recommendation confidence score: ${recommendationConfidenceText}
+- Recommendation generated at: ${recommendationGeneratedAtText}
+
+Response behavior requirements:
+- If the user asks "how many points" or similar, answer from Current points.
+- If the user asks about stars, answer from Total stars.
+- If the user asks why roadmaps were recommended, explain using recommendation reason and confidence score.
+- If recommendation reason is unavailable, say the recommendations are fetched from latest saved AI recommendation results and criteria detail is unavailable.`;
+}
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -158,7 +380,7 @@ app.post('/api/ai/chat', async (req, res) => {
     const hasInvalidMessage = messages.some(
       (message) =>
         !message ||
-        (message.role !== 'user' && message.role !== 'assistant' && message.role !== 'system') ||
+        (message.role !== 'user' && message.role !== 'assistant') ||
         typeof message.content !== 'string' ||
         message.content.trim().length === 0 ||
         message.content.length > 6000
@@ -171,7 +393,30 @@ app.post('/api/ai/chat', async (req, res) => {
       });
     }
 
-    const result = await aiOrchestratorService.getChatCompletion({ messages });
+    const authResult = await getAuthenticatedUserFromRequest(req);
+    if (!authResult.success) {
+      return res.status(authResult.statusCode).json({
+        success: false,
+        error: authResult.error,
+      });
+    }
+
+    let secureUserContext = { userId: authResult.user.id, contextStatus: 'unavailable' };
+    try {
+      secureUserContext = await buildSecureUserContext(authResult.user.id);
+    } catch (contextError) {
+      console.warn('Failed to load secure MCP context for chat:', contextError?.message || contextError);
+    }
+
+    const groundedMessages = [
+      {
+        role: 'system',
+        content: buildUserGroundingMessage(secureUserContext),
+      },
+      ...messages,
+    ];
+
+    const result = await aiOrchestratorService.getChatCompletion({ messages: groundedMessages });
     if (!result.success) {
       const status = Number.isInteger(result.statusCode) ? result.statusCode : 500;
       return res.status(status).json(result);
@@ -183,6 +428,238 @@ app.post('/api/ai/chat', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to process AI chat request.',
+    });
+  }
+});
+
+app.post('/api/ai/feedback', async (req, res) => {
+  try {
+    const {
+      feedbackScope,
+      chatId,
+      messageId,
+      feedbackValue,
+      reason,
+      reasons,
+      details,
+      rating,
+    } = req.body ?? {};
+
+    const normalizedScope = typeof feedbackScope === 'string' ? feedbackScope.trim().toLowerCase() : null;
+    const normalizedChatId = typeof chatId === 'string' && chatId.trim().length > 0 ? chatId.trim() : null;
+    const normalizedMessageId = typeof messageId === 'string' && messageId.trim().length > 0 ? messageId.trim() : null;
+    const normalizedFeedbackValue = typeof feedbackValue === 'string' ? feedbackValue.trim().toLowerCase() : null;
+    const normalizedReason = normalizeOptionalText(reason, 240);
+    const normalizedReasons = normalizeFeedbackReasons(reasons, 8, 120);
+    const normalizedDetails = normalizeOptionalText(details, 4000);
+    const normalizedRating = Number.isInteger(Number(rating)) ? Number(rating) : null;
+
+    if (normalizedScope !== 'message' && normalizedScope !== 'overall') {
+      return res.status(400).json({
+        success: false,
+        error: 'feedbackScope must be either "message" or "overall".',
+      });
+    }
+
+    const authResult = await getAuthenticatedUserFromRequest(req);
+    if (!authResult.success) {
+      return res.status(authResult.statusCode).json({
+        success: false,
+        error: authResult.error,
+      });
+    }
+
+    const userId = authResult.user.id;
+
+    if (normalizedScope === 'message') {
+      if (!normalizedMessageId) {
+        return res.status(400).json({
+          success: false,
+          error: 'messageId is required for message feedback.',
+        });
+      }
+
+      if (normalizedFeedbackValue !== 'like' && normalizedFeedbackValue !== 'dislike') {
+        return res.status(400).json({
+          success: false,
+          error: 'feedbackValue must be "like" or "dislike" for message feedback.',
+        });
+      }
+
+      const { data: messageRow, error: messageError } = await supabaseAdmin
+        .from('ai_messages')
+        .select('id, chat_id, type, content')
+        .eq('id', normalizedMessageId)
+        .maybeSingle();
+
+      if (messageError) {
+        console.error('Failed to load AI message for feedback:', messageError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to validate message feedback target.',
+        });
+      }
+
+      if (!messageRow) {
+        return res.status(404).json({
+          success: false,
+          error: 'Target message not found.',
+        });
+      }
+
+      if (messageRow.type !== 'ai') {
+        return res.status(400).json({
+          success: false,
+          error: 'Feedback is only supported for AI responses.',
+        });
+      }
+
+      const { data: chatRow, error: chatError } = await supabaseAdmin
+        .from('ai_chats')
+        .select('id, user_id')
+        .eq('id', messageRow.chat_id)
+        .maybeSingle();
+
+      if (chatError) {
+        console.error('Failed to load AI chat for message feedback:', chatError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to validate message ownership.',
+        });
+      }
+
+      if (!chatRow || chatRow.user_id !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'You do not have access to this message.',
+        });
+      }
+
+      if (normalizedChatId && normalizedChatId !== messageRow.chat_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'chatId does not match the provided messageId.',
+        });
+      }
+
+      const feedbackRow = {
+        user_id: userId,
+        feedback_scope: 'message',
+        chat_id: messageRow.chat_id,
+        message_id: messageRow.id,
+        feedback_value: normalizedFeedbackValue,
+        reason: normalizedReason,
+        reasons: normalizedReasons.length > 0 ? normalizedReasons : null,
+        details: normalizedDetails,
+        llm_response: typeof messageRow.content === 'string'
+          ? messageRow.content.slice(0, 12000)
+          : null,
+        rating: null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: savedFeedback, error: saveError } = await supabaseAdmin
+        .from('ai_feedback')
+        .upsert(feedbackRow, {
+          onConflict: 'user_id,message_id,feedback_scope',
+        })
+        .select('id')
+        .single();
+
+      if (saveError) {
+        console.error('Failed to save message feedback:', saveError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to save message feedback.',
+        });
+      }
+
+      return res.json({
+        success: true,
+        feedbackId: savedFeedback.id,
+      });
+    }
+
+    if (normalizedRating === null || normalizedRating < 1 || normalizedRating > 5) {
+      return res.status(400).json({
+        success: false,
+        error: 'rating must be an integer between 1 and 5 for overall feedback.',
+      });
+    }
+
+    if (normalizedMessageId) {
+      return res.status(400).json({
+        success: false,
+        error: 'messageId is not allowed for overall feedback.',
+      });
+    }
+
+    if (normalizedFeedbackValue) {
+      return res.status(400).json({
+        success: false,
+        error: 'feedbackValue is only allowed for message feedback.',
+      });
+    }
+
+    if (normalizedChatId) {
+      const { data: chatRow, error: chatError } = await supabaseAdmin
+        .from('ai_chats')
+        .select('id, user_id')
+        .eq('id', normalizedChatId)
+        .maybeSingle();
+
+      if (chatError) {
+        console.error('Failed to validate chat for overall feedback:', chatError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to validate chat ownership.',
+        });
+      }
+
+      if (!chatRow || chatRow.user_id !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'You do not have access to this chat.',
+        });
+      }
+    }
+
+    const feedbackRow = {
+      user_id: userId,
+      feedback_scope: 'overall',
+      chat_id: normalizedChatId,
+      message_id: null,
+      feedback_value: null,
+      reason: normalizedReason || normalizedReasons[0] || null,
+      reasons: normalizedReasons.length > 0 ? normalizedReasons : null,
+      details: normalizedDetails,
+      llm_response: null,
+      rating: normalizedRating,
+    };
+
+    const { data: savedFeedback, error: saveError } = await supabaseAdmin
+      .from('ai_feedback')
+      .insert(feedbackRow)
+      .select('id')
+      .single();
+
+    if (saveError) {
+      console.error('Failed to save overall feedback:', saveError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to save overall feedback.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      feedbackId: savedFeedback.id,
+    });
+  } catch (error) {
+    console.error('AI feedback error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to submit feedback.',
     });
   }
 });
@@ -876,8 +1353,25 @@ app.get('/api/jobs/roadmap-matches', async (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  const isMalformedJson =
+    err instanceof SyntaxError &&
+    err.status === 400 &&
+    Object.prototype.hasOwnProperty.call(err, 'body');
+
+  if (isMalformedJson) {
+    return res.status(400).json({ error: 'Invalid JSON payload.' });
+  }
+
+  const status = Number.isInteger(err?.status) && err.status >= 400 && err.status < 600
+    ? err.status
+    : 500;
+
+  if (status >= 500) {
+    console.error(err?.stack || err);
+    return res.status(500).json({ error: 'Something went wrong!' });
+  }
+
+  return res.status(status).json({ error: err?.message || 'Request failed.' });
 });
 
 // ============================================================================

@@ -1,14 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
+import { TypewriterEffectSmooth } from '@/components/ui/typewriter-effect';
 import FormattedText from '@/components/FormattedText';
 import { 
   Menu, 
   X, 
-  Send, 
   Plus, 
   MessageCircle, 
   Search,
@@ -19,11 +20,19 @@ import {
   User,
   Bot,
   Trash2,
-  ArrowLeft
+  ArrowLeft,
+  Copy,
+  Check,
+  ThumbsUp,
+  ThumbsDown,
+  RotateCcw,
+  Star,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { aiChatService, type AIChat, type AIChatMessage } from '@/services/aiChatService';
 import { aiService } from '@/services/aiService';
+import { toast } from '@/components/ui/sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +60,56 @@ interface ChatHistory {
   messages: ChatMessage[];
 }
 
+const DISLIKE_FEEDBACK_OPTIONS = [
+  'Incorrect or incomplete',
+  'Not what I asked for',
+  'Slow or buggy',
+  'Style or tone',
+  'Safety or legal concern',
+  'Other',
+] as const;
+
+const OVERALL_FEEDBACK_OPTIONS = [
+  'Helpful responses',
+  'Response quality needs work',
+  'Faster answers needed',
+  'Better code examples',
+  'Cleaner UI experience',
+  'More personalized guidance',
+] as const;
+
+const OVERALL_FEEDBACK_RATING_LABELS = [
+  'Very poor',
+  'Poor',
+  'Okay',
+  'Good',
+  'Excellent',
+] as const;
+
+const AI_CHAT_INPUT_PLACEHOLDERS = [
+  'Ask me anything about coding...',
+  'Debug this React error for me',
+  'Explain closures in JavaScript',
+  'Write a TypeScript utility function',
+  'How do I optimize this API call?',
+] as const;
+
+const GREETING_QUESTION_OPTIONS = [
+  'What should we tackle today?',
+  'Want to ship something quickly?',
+  'Which bug should we solve first?',
+  'Ready to plan your next feature?',
+  'Need a clean refactor strategy?',
+] as const;
+
+const TYPEWRITER_PROMPT_OPTIONS = [
+  ['Map out a clean API strategy.'],
+  ['Design a scalable React state flow.'],
+  ['Refactor this feature with confidence.'],
+  ['Ship the next improvement step by step.'],
+  ['Break down this bug in minutes.'],
+] as const;
+
 const AIChatPage = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -64,9 +123,27 @@ const AIChatPage = () => {
   const [aiConnected, setAiConnected] = useState<boolean | null>(null);
   const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
   const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
+  const [animatingAiMessageId, setAnimatingAiMessageId] = useState<string | null>(null);
+  const [animatedAiContent, setAnimatedAiContent] = useState('');
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [aiFeedbackByMessageId, setAiFeedbackByMessageId] = useState<Record<string, 'like' | 'dislike' | null>>({});
+  const [isDislikeFeedbackOpen, setIsDislikeFeedbackOpen] = useState(false);
+  const [feedbackTargetMessageId, setFeedbackTargetMessageId] = useState<string | null>(null);
+  const [selectedDislikeReason, setSelectedDislikeReason] = useState<string | null>(null);
+  const [dislikeDetails, setDislikeDetails] = useState('');
+  const [isSubmittingDislikeFeedback, setIsSubmittingDislikeFeedback] = useState(false);
+  const [dislikeFeedbackError, setDislikeFeedbackError] = useState<string | null>(null);
+  const [isOverallFeedbackOpen, setIsOverallFeedbackOpen] = useState(false);
+  const [overallFeedbackRating, setOverallFeedbackRating] = useState<number>(0);
+  const [overallFeedbackReasons, setOverallFeedbackReasons] = useState<string[]>([]);
+  const [overallFeedbackDetails, setOverallFeedbackDetails] = useState('');
+  const [isSubmittingOverallFeedback, setIsSubmittingOverallFeedback] = useState(false);
+  const [overallFeedbackError, setOverallFeedbackError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const animationIntervalRef = useRef<number | null>(null);
+  const copyIndicatorTimeoutRef = useRef<number | null>(null);
 
   // Test AI connection on mount (only once)
   useEffect(() => {
@@ -104,13 +181,267 @@ const AIChatPage = () => {
     loadUserChats();
   }, [isAuthenticated, user?.id]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
+
+  const clearWordByWordAnimation = useCallback((resetState = false) => {
+    if (animationIntervalRef.current !== null) {
+      window.clearInterval(animationIntervalRef.current);
+      animationIntervalRef.current = null;
+    }
+
+    if (resetState) {
+      setAnimatingAiMessageId(null);
+      setAnimatedAiContent('');
+    }
+  }, []);
+
+  const startWordByWordAnimation = useCallback((messageId: string, content: string) => {
+    clearWordByWordAnimation(true);
+
+    const shouldReduceMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (shouldReduceMotion || !content.trim()) {
+      return;
+    }
+
+    const tokens = content.split(/(\s+)/).filter(Boolean);
+    if (tokens.length === 0) {
+      return;
+    }
+
+    const batchSize =
+      tokens.length > 320 ? 4 :
+      tokens.length > 200 ? 3 :
+      tokens.length > 120 ? 2 : 1;
+    const intervalMs =
+      tokens.length > 320 ? 14 :
+      tokens.length > 200 ? 16 : 20;
+
+    let cursor = 0;
+    setAnimatingAiMessageId(messageId);
+    setAnimatedAiContent('');
+
+    animationIntervalRef.current = window.setInterval(() => {
+      cursor = Math.min(tokens.length, cursor + batchSize);
+      setAnimatedAiContent(tokens.slice(0, cursor).join(''));
+
+      if (cursor >= tokens.length) {
+        clearWordByWordAnimation(true);
+      }
+    }, intervalMs);
+  }, [clearWordByWordAnimation]);
+
+  const setCopiedIndicator = useCallback((messageId: string) => {
+    setCopiedMessageId(messageId);
+
+    if (copyIndicatorTimeoutRef.current !== null) {
+      window.clearTimeout(copyIndicatorTimeoutRef.current);
+    }
+
+    copyIndicatorTimeoutRef.current = window.setTimeout(() => {
+      setCopiedMessageId(null);
+    }, 1300);
+  }, []);
+
+  const handleCopyMessage = useCallback(async (text: string, messageId: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+
+      setCopiedIndicator(messageId);
+    } catch (error) {
+      console.error('Failed to copy message:', error);
+    }
+  }, [setCopiedIndicator]);
+
+  const handleAiFeedback = useCallback((messageId: string, feedback: 'like' | 'dislike') => {
+    setAiFeedbackByMessageId((prev) => {
+      const current = prev[messageId] || null;
+      return {
+        ...prev,
+        [messageId]: current === feedback ? null : feedback,
+      };
+    });
+  }, []);
+
+  const closeDislikeFeedbackPopup = useCallback(() => {
+    setIsDislikeFeedbackOpen(false);
+    setFeedbackTargetMessageId(null);
+    setSelectedDislikeReason(null);
+    setDislikeDetails('');
+    setDislikeFeedbackError(null);
+  }, []);
+
+  const openDislikeFeedbackPopup = useCallback((messageId: string) => {
+    setFeedbackTargetMessageId(messageId);
+    setSelectedDislikeReason(null);
+    setDislikeDetails('');
+    setDislikeFeedbackError(null);
+    setIsDislikeFeedbackOpen(true);
+  }, []);
+
+  const handleDislikeClick = useCallback((messageId: string) => {
+    const isAlreadyDisliked = aiFeedbackByMessageId[messageId] === 'dislike';
+
+    handleAiFeedback(messageId, 'dislike');
+
+    if (!isAlreadyDisliked) {
+      openDislikeFeedbackPopup(messageId);
+      return;
+    }
+
+    if (feedbackTargetMessageId === messageId) {
+      closeDislikeFeedbackPopup();
+    }
+  }, [aiFeedbackByMessageId, closeDislikeFeedbackPopup, feedbackTargetMessageId, handleAiFeedback, openDislikeFeedbackPopup]);
+
+  const submitDislikeFeedback = useCallback(async () => {
+    if (!feedbackTargetMessageId || !selectedDislikeReason) {
+      return;
+    }
+
+    setDislikeFeedbackError(null);
+    setIsSubmittingDislikeFeedback(true);
+
+    try {
+      const result = await aiService.submitFeedback({
+        feedbackScope: 'message',
+        chatId: currentChat?.id || null,
+        messageId: feedbackTargetMessageId,
+        feedbackValue: 'dislike',
+        reason: selectedDislikeReason,
+        details: dislikeDetails.trim() || null,
+      });
+
+      if (!result.success) {
+        const errorMessage = result.error || 'Could not submit feedback. Please try again.';
+        setDislikeFeedbackError(errorMessage);
+        toast.error('Feedback not submitted', {
+          description: errorMessage,
+        });
+        return;
+      }
+
+      toast.success('Feedback submitted', {
+        description: 'Thanks for helping us improve Nova responses.',
+      });
+
+      closeDislikeFeedbackPopup();
+    } catch (error) {
+      console.error('Unexpected dislike feedback submit error:', error);
+      setDislikeFeedbackError('Could not submit feedback. Please try again.');
+      toast.error('Feedback not submitted', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+      setIsSubmittingDislikeFeedback(false);
+    }
+  }, [closeDislikeFeedbackPopup, currentChat?.id, dislikeDetails, feedbackTargetMessageId, selectedDislikeReason]);
+
+  const closeOverallFeedbackPopup = useCallback(() => {
+    setIsOverallFeedbackOpen(false);
+    setOverallFeedbackRating(0);
+    setOverallFeedbackReasons([]);
+    setOverallFeedbackDetails('');
+    setOverallFeedbackError(null);
+  }, []);
+
+  const openOverallFeedbackPopup = useCallback(() => {
+    setOverallFeedbackError(null);
+    setIsOverallFeedbackOpen(true);
+  }, []);
+
+  const toggleOverallFeedbackReason = useCallback((reason: string) => {
+    setOverallFeedbackReasons((prev) => {
+      if (prev.includes(reason)) {
+        return prev.filter((item) => item !== reason);
+      }
+      return [...prev, reason];
+    });
+  }, []);
+
+  const submitOverallFeedback = useCallback(async () => {
+    if (!overallFeedbackRating) {
+      return;
+    }
+
+    setOverallFeedbackError(null);
+    setIsSubmittingOverallFeedback(true);
+
+    try {
+      const result = await aiService.submitFeedback({
+        feedbackScope: 'overall',
+        chatId: currentChat?.id || null,
+        rating: overallFeedbackRating,
+        reason: overallFeedbackReasons[0] || null,
+        reasons: overallFeedbackReasons,
+        details: overallFeedbackDetails.trim() || null,
+      });
+
+      if (!result.success) {
+        const errorMessage = result.error || 'Could not submit overall feedback. Please try again.';
+        setOverallFeedbackError(errorMessage);
+        toast.error('Feedback not submitted', {
+          description: errorMessage,
+        });
+        return;
+      }
+
+      toast.success('Feedback submitted', {
+        description: 'Thanks for rating your Nova experience.',
+      });
+
+      closeOverallFeedbackPopup();
+    } catch (error) {
+      console.error('Unexpected overall feedback submit error:', error);
+      setOverallFeedbackError('Could not submit overall feedback. Please try again.');
+      toast.error('Feedback not submitted', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+      setIsSubmittingOverallFeedback(false);
+    }
+  }, [closeOverallFeedbackPopup, currentChat?.id, overallFeedbackDetails, overallFeedbackRating, overallFeedbackReasons]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [currentChat?.messages]);
+  }, [currentChat?.messages, scrollToBottom]);
+
+  useEffect(() => {
+    if (animatingAiMessageId) {
+      scrollToBottom();
+    }
+  }, [animatingAiMessageId, animatedAiContent, scrollToBottom]);
+
+  useEffect(() => {
+    clearWordByWordAnimation(true);
+  }, [currentChat?.id, clearWordByWordAnimation]);
+
+  useEffect(() => {
+    return () => {
+      clearWordByWordAnimation(true);
+
+      if (copyIndicatorTimeoutRef.current !== null) {
+        window.clearTimeout(copyIndicatorTimeoutRef.current);
+      }
+    };
+  }, [clearWordByWordAnimation]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !isAuthenticated || !user?.id) return;
@@ -233,6 +564,8 @@ const AIChatPage = () => {
               ? { ...chat, lastMessage: aiResponseContent, updatedAt: new Date() }
               : chat
           ));
+
+          startWordByWordAnimation(aiMessage.id, aiResponseContent);
         }
 
         setIsTyping(false);
@@ -261,6 +594,7 @@ const AIChatPage = () => {
             ]
           };
           setCurrentChat(updatedChat);
+          startWordByWordAnimation(errorMessage.id, errorMessage.content);
         }
 
         setIsTyping(false);
@@ -271,9 +605,98 @@ const AIChatPage = () => {
     }
   };
 
+  const handleVanishInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+  }, []);
+
+  const handleVanishInputSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!aiConnected || isTyping) {
+      return;
+    }
+    handleSendMessage();
+  }, [aiConnected, isTyping, handleSendMessage]);
+
   const startNewChat = () => {
     setCurrentChat(null);
-    inputRef.current?.focus();
+    window.setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
+
+  const handleRetryFromAiMessage = async (aiMessageId: string) => {
+    if (!currentChat || isTyping) return;
+
+    const chatMessages = currentChat.messages || [];
+    const aiMessageIndex = chatMessages.findIndex(
+      (item) => item.id === aiMessageId && item.type === 'ai',
+    );
+
+    if (aiMessageIndex < 0) {
+      return;
+    }
+
+    const sourceUserMessage = [...chatMessages.slice(0, aiMessageIndex)]
+      .reverse()
+      .find((item) => item.type === 'user');
+
+    if (!sourceUserMessage) {
+      return;
+    }
+
+    setIsTyping(true);
+
+    try {
+      const conversationHistory = chatMessages.slice(0, aiMessageIndex).map((item) => ({
+        role: item.type === 'user' ? 'user' as const : 'assistant' as const,
+        content: item.content,
+      }));
+
+      const aiResponse = await aiService.getContextualResponse(sourceUserMessage.content, conversationHistory);
+
+      if (!aiResponse.success) {
+        throw new Error(aiResponse.error || 'Failed to retry response');
+      }
+
+      const aiResponseContent = aiResponse.response || 'I could not generate a retry response. Please try again.';
+      const aiMessage = await aiChatService.addMessage({
+        chatId: currentChat.id,
+        type: 'ai',
+        content: aiResponseContent,
+      });
+
+      if (!aiMessage) {
+        throw new Error('Failed to persist retry response');
+      }
+
+      const updatedChat = {
+        ...currentChat,
+        messages: [
+          ...chatMessages,
+          {
+            id: aiMessage.id,
+            chatId: aiMessage.chatId,
+            type: aiMessage.type,
+            content: aiMessage.content,
+            createdAt: aiMessage.createdAt,
+          },
+        ],
+      };
+
+      setCurrentChat(updatedChat);
+      setChatHistory((prev) =>
+        prev.map((chat) =>
+          chat.id === currentChat.id
+            ? { ...chat, lastMessage: aiResponseContent, updatedAt: new Date() }
+            : chat,
+        ),
+      );
+      startWordByWordAnimation(aiMessage.id, aiResponseContent);
+    } catch (error) {
+      console.error('Retry response failed:', error);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleDeleteChat = async (chatId: string) => {
@@ -346,24 +769,67 @@ const AIChatPage = () => {
     );
   }
 
+  const chatInputPlaceholders = aiConnected === false
+    ? ['AI is offline - please try again later']
+    : [...AI_CHAT_INPUT_PLACEHOLDERS];
+
+  const randomTypewriterWords = useMemo(() => {
+    const prompt = TYPEWRITER_PROMPT_OPTIONS[
+      Math.floor(Math.random() * TYPEWRITER_PROMPT_OPTIONS.length)
+    ];
+
+    return prompt.map((text, index) => ({
+      text,
+      className: index === prompt.length - 1 ? 'text-blue-400 dark:text-blue-400' : undefined,
+    }));
+  }, [user?.id]);
+
+  const randomGreetingQuestion = useMemo(() => {
+    return GREETING_QUESTION_OPTIONS[
+      Math.floor(Math.random() * GREETING_QUESTION_OPTIONS.length)
+    ];
+  }, [user?.id]);
+
+  const chatInputPanel = (
+    <div className="mx-auto max-w-4xl pointer-events-auto">
+      {/* Container wrapper around the input field is temporarily disabled */}
+      {/* <div className="rounded-2xl border border-slate-700/90 bg-slate-900/95 px-3 pb-2 pt-3 shadow-[0_14px_40px_rgba(2,6,23,0.45)] backdrop-blur-md"> */}
+      <PlaceholdersAndVanishInput
+        placeholders={chatInputPlaceholders}
+        onChange={handleVanishInputChange}
+        onSubmit={handleVanishInputSubmit}
+        disabled={!aiConnected || isTyping}
+        inputElementRef={inputRef}
+        className="max-w-none bg-slate-950 border border-slate-700 shadow-none"
+        inputClassName="text-slate-100 dark:text-slate-100 disabled:cursor-not-allowed"
+        placeholderClassName="text-slate-500 dark:text-slate-500 pl-4 sm:pl-10"
+        buttonClassName="!bg-transparent dark:!bg-transparent disabled:!bg-transparent hover:!bg-transparent"
+      />
+      <p className="mt-2 text-center text-xs text-slate-500">
+        AI can make mistakes. Consider checking important information.
+      </p>
+      </div>
+    // </div>
+  );
+
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
+    <div className="h-screen bg-slate-900 text-slate-100 flex overflow-hidden">
       {/* Sidebar */}
       <div 
         className={`fixed top-0 bottom-0 left-0 z-50 transform transition-all duration-300 ease-in-out ${
           sidebarOpen || sidebarHovered ? 'w-80' : 'w-16'
-        } bg-card border-r border-border shadow-lg`}
+        } bg-slate-950 border-r border-slate-800 shadow-lg`}
         onMouseEnter={() => setSidebarHovered(true)}
         onMouseLeave={() => setSidebarHovered(false)}
       >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-slate-800">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-muted"
+              className="p-2 hover:bg-slate-800"
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -405,24 +871,24 @@ const AIChatPage = () => {
               >
                 {/* Search */}
                 <div className="relative mb-4 px-2">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
                   <Input
                     placeholder="Search chats..."
-                    className="pl-10 bg-muted border-0"
+                    className="pl-10 bg-slate-900 border-slate-800 text-slate-100 placeholder:text-slate-500"
                   />
                 </div>
 
                 {/* Recent Chats */}
                 <div className="space-y-1">
-                  <h3 className="text-xs font-semibold text-muted-foreground px-2 mb-2">
+                  <h3 className="text-xs font-semibold text-slate-400 px-2 mb-2">
                     Recent Chats
                   </h3>
                   {loading ? (
-                    <div className="px-2 py-4 text-center text-sm text-gray-500">
+                    <div className="px-2 py-4 text-center text-sm text-slate-400">
                       Loading chats...
                     </div>
                   ) : chatHistory.length === 0 ? (
-                    <div className="px-2 py-4 text-center text-sm text-gray-500">
+                    <div className="px-2 py-4 text-center text-sm text-slate-400">
                       No chats yet. Start a conversation!
                     </div>
                   ) : (
@@ -438,18 +904,18 @@ const AIChatPage = () => {
                           onClick={() => selectChat(chat)}
                           className={`w-full p-3 text-left justify-start h-auto relative overflow-hidden ${
                             currentChat?.id === chat.id 
-                              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' 
-                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                              ? 'bg-slate-800 border border-slate-700 text-slate-100' 
+                              : 'text-slate-300 hover:bg-slate-900 hover:text-slate-100'
                           }`}
                         >
                           {/* Chat Content */}
                           <div className="flex items-start space-x-3 w-full">
-                            <MessageCircle className="h-4 w-4 flex-shrink-0 mt-1 text-gray-400" />
+                            <MessageCircle className="h-4 w-4 flex-shrink-0 mt-1 text-slate-500" />
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium truncate">
                                 {chat.title}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              <div className="text-xs text-slate-400 truncate">
                                 {chat.lastMessage || 'No messages yet'}
                               </div>
                             </div>
@@ -524,7 +990,7 @@ const AIChatPage = () => {
         </div>
 
         {/* Sidebar Footer */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+        <div className="border-t border-slate-800 p-4">
           <AnimatePresence>
             {(sidebarOpen || sidebarHovered) && (
               <motion.div
@@ -534,13 +1000,18 @@ const AIChatPage = () => {
                 transition={{ duration: 0.2 }}
                 className="space-y-2"
               >
-                <Button variant="ghost" size="sm" className="w-full justify-start">
+                <Button variant="ghost" size="sm" className="w-full justify-start text-slate-300 hover:bg-slate-800 hover:text-slate-100">
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={openOverallFeedbackPopup}
+                  className="w-full justify-start text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+                >
                   <HelpCircle className="h-4 w-4 mr-2" />
-                  Help & FAQ
+                  Give a Feedback
                 </Button>
               </motion.div>
             )}
@@ -551,9 +1022,9 @@ const AIChatPage = () => {
       {/* Main Chat Area */}
       <div className={`flex-1 transition-all duration-300 ${
         sidebarOpen || sidebarHovered ? 'ml-80' : 'ml-16'
-      }`}>
+      } bg-slate-900 relative flex flex-col`}>
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-slate-900 border-b border-slate-800 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               {/* Back Button */}
@@ -561,20 +1032,20 @@ const AIChatPage = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                className="p-2 hover:bg-slate-800 rounded-full"
                 title="Back to Home"
               >
-                <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                <ArrowLeft className="h-5 w-5 text-slate-300" />
               </Button>
               
               <div className="bg-gradient-to-r from-blue-500 to-blue-800 p-2 rounded-full">
                 <Brain className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h1 className="text-xl font-semibold text-slate-100">
                   Hello, {user?.firstName || 'User'}
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-slate-400">
                   AI-Powered Coding Assistant
                 </p>
               </div>
@@ -601,34 +1072,34 @@ const AIChatPage = () => {
         </div>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 h-[calc(100vh-160px)]">
+        <div className={`flex-1 overflow-y-auto p-6 space-y-6 ${currentChat ? 'pb-48' : 'pb-8'}`}>
           {!currentChat ? (
             // Welcome Screen
             <div className="flex items-center justify-center h-full">
-              <div className="text-center max-w-md">
-                <div className="bg-primary p-6 rounded-full inline-block mb-6">
-                  <Brain className="h-12 w-12 text-primary-foreground" />
+              <div className="w-full max-w-5xl text-center">
+                <div className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
+                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-slate-100">
+                    Hey, {user?.firstName || 'there'}
+                  </h2>
+                  <p className="text-base sm:text-lg lg:text-xl font-medium text-slate-300">
+                    {randomGreetingQuestion}
+                  </p>
                 </div>
-                <h2 className="text-2xl font-bold text-foreground mb-4">
-                  Welcome to AI Assistant
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Ask me anything about coding, programming concepts, or get help with your projects.
-                </p>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>💡 Explain programming concepts and algorithms</p>
-                  <p>🐛 Debug code and fix errors</p>
-                  <p>📚 Learn new languages and frameworks</p>
-                  <p>🚀 Get architecture and best practice advice</p>
-                  <p>⚡ Fast responses by AI</p>
+                <div className="mt-6 flex justify-center">
+                  <TypewriterEffectSmooth
+                    words={randomTypewriterWords}
+                    className="my-0 justify-center"
+                    cursorClassName="bg-blue-400 h-4 sm:h-5"
+                  />
                 </div>
-                {!aiConnected && (
-                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                      ⚠️ AI service is currently unavailable. Please check your connection.
-                    </p>
-                  </div>
-                )}
+                <motion.div
+                  initial={{ opacity: 0, y: -18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.32, ease: 'easeInOut' }}
+                  className="mt-8 px-4 sm:px-6"
+                >
+                  {chatInputPanel}
+                </motion.div>
               </div>
             </div>
           ) : (
@@ -637,10 +1108,10 @@ const AIChatPage = () => {
               {currentChat.messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} group`}
+                  className={`flex w-full ${msg.type === 'user' ? 'justify-end' : 'justify-start'} group`}
                 >
-                  <div className={`flex items-start space-x-3 max-w-3xl relative ${
-                    msg.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                  <div className={`flex items-start space-x-3 relative w-full ${
+                    msg.type === 'user' ? 'flex-row-reverse space-x-reverse md:w-1/2' : 'border-b border-slate-800/80 pb-5'
                   }`}>
                     <div className={`p-2 rounded-full ${
                       msg.type === 'user' 
@@ -653,43 +1124,133 @@ const AIChatPage = () => {
                         <Bot className="h-4 w-4 text-white" />
                       )}
                     </div>
-                    <div className={`p-4 rounded-2xl ${
+                    <div className={`flex-1 ${
                       msg.type === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                        ? 'p-4 rounded-2xl bg-blue-600 text-white'
+                        : 'min-w-0 pr-2'
                     }`}>
                       {msg.type === 'user' ? (
                         <p className="text-sm leading-relaxed">{msg.content}</p>
+                      ) : animatingAiMessageId === msg.id ? (
+                        <motion.p
+                          initial={{ opacity: 0.7 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.2 }}
+                          className="text-[15px] md:text-base leading-8 whitespace-pre-wrap text-slate-100 font-medium"
+                        >
+                          {animatedAiContent}
+                          <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-blue-500 align-middle" />
+                        </motion.p>
                       ) : (
                         <FormattedText 
                           content={msg.content} 
-                          className="text-sm leading-relaxed"
+                          className="text-[15px] md:text-base leading-8"
                         />
                       )}
                       <p className={`text-xs mt-2 ${
-                        msg.type === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+                        msg.type === 'user' ? 'text-blue-100' : 'text-slate-500'
                       }`}>
                         {msg.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
+
+                      {msg.type === 'user' && (
+                        <div className="mt-1 flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleCopyMessage(msg.content, msg.id)}
+                            className="h-6 w-6 p-0 bg-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 hover:bg-transparent"
+                            title="Copy your query"
+                            aria-label="Copy your query"
+                          >
+                            {copiedMessageId === msg.id ? (
+                              <Check className="h-3.5 w-3.5 text-blue-100" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5 text-blue-100/85" />
+                            )}
+                          </Button>
+                        </div>
+                      )}
+
+                      {msg.type === 'ai' && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleCopyMessage(msg.content, msg.id)}
+                            className="h-6 w-6 p-0 bg-transparent text-slate-500 hover:bg-transparent hover:text-slate-200"
+                            title="Copy response"
+                            aria-label="Copy response"
+                          >
+                            {copiedMessageId === msg.id ? (
+                              <Check className="h-4 w-4 text-emerald-400" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleAiFeedback(msg.id, 'like')}
+                            className={`h-6 w-6 p-0 bg-transparent hover:bg-transparent ${
+                              aiFeedbackByMessageId[msg.id] === 'like'
+                                ? 'text-emerald-400'
+                                : 'text-slate-500 hover:text-slate-200'
+                            }`}
+                            title="Like response"
+                            aria-label="Like response"
+                          >
+                            <ThumbsUp className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDislikeClick(msg.id)}
+                            className={`h-6 w-6 p-0 bg-transparent hover:bg-transparent ${
+                              aiFeedbackByMessageId[msg.id] === 'dislike'
+                                ? 'text-rose-400'
+                                : 'text-slate-500 hover:text-slate-200'
+                            }`}
+                            title="Dislike response"
+                            aria-label="Dislike response"
+                          >
+                            <ThumbsDown className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRetryFromAiMessage(msg.id)}
+                            disabled={isTyping}
+                            className="h-6 w-6 p-0 bg-transparent text-slate-500 hover:bg-transparent hover:text-slate-200 disabled:opacity-40"
+                            title="Try again"
+                            aria-label="Try again"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
               
               {isTyping && (
-                <div className="flex justify-start">
-                  <div className="flex items-start space-x-3 max-w-3xl">
+                <div className="flex justify-start w-full">
+                  <div className="flex items-start space-x-3 w-full border-b border-slate-800/80 pb-5">
                     <div className="p-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-600">
                       <Bot className="h-4 w-4 text-white" />
                     </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <div className="flex-1 pt-1">
                       <div className="flex items-center space-x-2">
                         <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                         </div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">AI is thinking...</span>
+                        <span className="text-[15px] text-slate-400 ml-2">AI is thinking...</span>
                       </div>
                     </div>
                   </div>
@@ -700,34 +1261,225 @@ const AIChatPage = () => {
           )}
         </div>
 
-        {/* Input Area */}
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-4 pt-2">
-          <div className="flex items-center space-x-3 max-w-4xl mx-auto mb-3">
-            <div className="flex-1 relative">
-              <Input
-                ref={inputRef}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder={aiConnected === false ? "AI is offline - please try again later" : "Ask me anything about coding..."}
-                className="pr-12 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                disabled={!aiConnected || isTyping}
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!message.trim() || !aiConnected || isTyping}
-                size="sm"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-800 disabled:opacity-50"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            AI can make mistakes. Consider checking important information.
-          </p>
-        </div>
+        {/* Floating Input Area */}
+        <AnimatePresence initial={false}>
+          {currentChat && (
+            <motion.div
+              key="floating-chat-input"
+              className="pointer-events-none absolute inset-x-0 bottom-5 z-20 px-4 sm:px-6"
+              initial={{ opacity: 0, y: -56 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 64 }}
+              transition={{ duration: 0.34, ease: 'easeInOut' }}
+            >
+              {chatInputPanel}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {isOverallFeedbackOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeOverallFeedbackPopup}
+          >
+            <motion.div
+              className="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl"
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-xl font-medium text-slate-100">Rate your Nova experience</h3>
+                <button
+                  type="button"
+                  onClick={closeOverallFeedbackPopup}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-600 text-slate-200 transition-colors hover:border-slate-400 hover:text-white"
+                  aria-label="Close overall feedback popup"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <p className="text-sm text-slate-300">How would you rate Nova overall?</p>
+              <div className="mt-3 flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((value) => {
+                  const selected = value <= overallFeedbackRating;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setOverallFeedbackRating(value)}
+                      className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+                        selected
+                          ? 'border-amber-300 bg-amber-400/20 text-amber-200'
+                          : 'border-slate-600 text-slate-300 hover:border-slate-400'
+                      }`}
+                      aria-label={`Set overall feedback rating to ${value}`}
+                    >
+                      <Star className={`h-5 w-5 ${selected ? 'fill-current' : ''}`} />
+                    </button>
+                  );
+                })}
+              </div>
+
+              {overallFeedbackRating > 0 && (
+                <p className="mt-2 text-xs text-slate-400">
+                  {OVERALL_FEEDBACK_RATING_LABELS[overallFeedbackRating - 1]}
+                </p>
+              )}
+
+              <div className="mb-4 mt-4 flex flex-wrap gap-2">
+                {OVERALL_FEEDBACK_OPTIONS.map((option) => {
+                  const selected = overallFeedbackReasons.includes(option);
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => toggleOverallFeedbackReason(option)}
+                      className={`rounded-full border px-3 py-2 text-sm transition-colors ${
+                        selected
+                          ? 'border-blue-400 bg-blue-500/20 text-blue-100'
+                          : 'border-slate-600 text-slate-200 hover:border-slate-400'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <textarea
+                value={overallFeedbackDetails}
+                onChange={(event) => setOverallFeedbackDetails(event.target.value)}
+                placeholder="What should Nova improve? (optional)"
+                rows={3}
+                className="w-full resize-none rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-blue-500"
+              />
+
+              <div className="mt-3 rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-300">
+                Your feedback helps us improve response quality, speed, and guidance.
+              </div>
+
+              {overallFeedbackError && (
+                <p className="mt-3 text-sm text-rose-300">{overallFeedbackError}</p>
+              )}
+
+              <div className="mt-4 flex justify-end">
+                <Button
+                  type="button"
+                  onClick={submitOverallFeedback}
+                  disabled={!overallFeedbackRating || isSubmittingOverallFeedback}
+                  className="rounded-full bg-slate-600 px-5 text-slate-100 hover:bg-slate-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                >
+                  {isSubmittingOverallFeedback ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting
+                    </span>
+                  ) : (
+                    'Submit'
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isDislikeFeedbackOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeDislikeFeedbackPopup}
+          >
+            <motion.div
+              className="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl"
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-xl font-medium text-slate-100">Share feedback</h3>
+                <button
+                  type="button"
+                  onClick={closeDislikeFeedbackPopup}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-600 text-slate-200 transition-colors hover:border-slate-400 hover:text-white"
+                  aria-label="Close feedback popup"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mb-4 flex flex-wrap gap-2">
+                {DISLIKE_FEEDBACK_OPTIONS.map((option) => {
+                  const selected = selectedDislikeReason === option;
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setSelectedDislikeReason(option)}
+                      className={`rounded-full border px-3 py-2 text-sm transition-colors ${
+                        selected
+                          ? 'border-blue-400 bg-blue-500/20 text-blue-100'
+                          : 'border-slate-600 text-slate-200 hover:border-slate-400'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <textarea
+                value={dislikeDetails}
+                onChange={(event) => setDislikeDetails(event.target.value)}
+                placeholder="Share details (optional)"
+                rows={3}
+                className="w-full resize-none rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-blue-500"
+              />
+
+              <div className="mt-3 rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-300">
+                Your conversation will be included with your feedback to help improve Nova.
+              </div>
+
+              {dislikeFeedbackError && (
+                <p className="mt-3 text-sm text-rose-300">{dislikeFeedbackError}</p>
+              )}
+
+              <div className="mt-4 flex justify-end">
+                <Button
+                  type="button"
+                  onClick={submitDislikeFeedback}
+                  disabled={!selectedDislikeReason || isSubmittingDislikeFeedback}
+                  className="rounded-full bg-slate-600 px-5 text-slate-100 hover:bg-slate-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                >
+                  {isSubmittingDislikeFeedback ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting
+                    </span>
+                  ) : (
+                    'Submit'
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

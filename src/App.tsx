@@ -51,7 +51,7 @@ const App = () => (
               <TooltipProvider>
                {/* <DevelopmentBanner /> - Removed to utilize space, uncomment if needed in future */}
                 <Toaster />
-                <Sonner />
+                <Sonner position="bottom-right" richColors duration={6500} />
                 <BrowserRouter>
                   <Suspense fallback={<RouteFallback />}>
                     <Routes>

@@ -19,7 +19,9 @@ function buildPrompt(messages) {
   let prompt = `${SYSTEM_PROMPT}\n\n`;
 
   for (const msg of messages) {
-    if (msg.role === 'user') {
+    if (msg.role === 'system') {
+      prompt += `System context: ${msg.content}\n\n`;
+    } else if (msg.role === 'user') {
       prompt += `User: ${msg.content}\n\n`;
     } else if (msg.role === 'assistant') {
       prompt += `Assistant: ${msg.content}\n\n`;

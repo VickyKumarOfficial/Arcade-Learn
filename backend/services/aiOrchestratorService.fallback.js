@@ -3,7 +3,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const DEFAULT_MODEL = 'gemini-2.0-flash-lite';
-const GROQ_MODEL = 'groq/compound'; // Use a supported GROQ model
+const GROQ_MODEL = process.env.GROQ_FALLBACK_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MAX_TOKENS = Number.isFinite(Number(process.env.GROQ_FALLBACK_MAX_TOKENS))
+  ? Math.max(256, Math.min(2000, Number(process.env.GROQ_FALLBACK_MAX_TOKENS)))
+  : 800;
 
 const SYSTEM_PROMPT = `You are Nova, a helpful AI coding assistant for ArcadeLearn.
 Your role is to help users learn programming concepts, debug issues, and suggest best practices.
@@ -29,7 +32,9 @@ function getGroqClient() {
 function buildPrompt(messages) {
   let prompt = `${SYSTEM_PROMPT}\n\n`;
   for (const msg of messages) {
-    if (msg.role === 'user') {
+    if (msg.role === 'system') {
+      prompt += `System context: ${msg.content}\n\n`;
+    } else if (msg.role === 'user') {
       prompt += `User: ${msg.content}\n\n`;
     } else if (msg.role === 'assistant') {
       prompt += `Assistant: ${msg.content}\n\n`;
@@ -101,7 +106,7 @@ export const aiOrchestratorService = {
             { role: 'system', content: SYSTEM_PROMPT },
             ...messages.map(m => ({ role: m.role, content: m.content }))
           ],
-          max_tokens: 2000,
+          max_tokens: GROQ_MAX_TOKENS,
           temperature: 0.7,
         });
         const response = groqResult?.choices?.[0]?.message?.content?.trim();
