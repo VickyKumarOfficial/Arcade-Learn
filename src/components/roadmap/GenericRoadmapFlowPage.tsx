@@ -44,6 +44,7 @@ import Footer from '@/components/Footer';
 import NodeDetailSidebar from '@/components/roadmap/NodeDetailSidebar';
 import PrivacyWarningModal from '@/components/roadmap/PrivacyWarningModal';
 import ProjectComments from '@/components/roadmap/ProjectComments';
+import RoadmapDoubtAssistant from '@/components/roadmap/RoadmapDoubtAssistant';
 import { BACKEND_URL } from '@/config/env';
 import { SECTION_NODE_MAP, ALL_NODE_DETAILS } from '@/data/allNodeDetails';
 import type { RoadmapFlowConfig, RoadmapNodeData } from '@/types/roadmapFlow';
@@ -162,6 +163,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     jobMatches: true,
     faq: true,
     lockGate: false,
+    doubtSolver: true,
     ...config.modules,
   };
 
@@ -899,6 +901,27 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
     return selected?.data.label ?? 'Interactive Diagram';
   }, [sidebar.activeNodeId, nodeLabelById, selected]);
+
+  const activeDoubtTopic = useMemo(() => {
+    if (sidebar.activeNodeId) {
+      return nodeLabelById.get(sidebar.activeNodeId) ?? null;
+    }
+
+    if (selected?.id) {
+      return nodeLabelById.get(selected.id) ?? selected.data.label ?? null;
+    }
+
+    return null;
+  }, [sidebar.activeNodeId, nodeLabelById, selected]);
+
+  const activeDoubtTopicDescription = useMemo(() => {
+    const nodeId = sidebar.activeNodeId ?? selected?.id;
+    if (!nodeId) {
+      return null;
+    }
+
+    return nodeDetails[nodeId]?.description ?? null;
+  }, [sidebar.activeNodeId, selected?.id, nodeDetails]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col">
@@ -1825,6 +1848,15 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
           </div>
         </div>
       </div>
+
+      {modules.doubtSolver && (
+        <RoadmapDoubtAssistant
+          roadmapKey={config.roadmapKey}
+          roadmapTitle={config.title}
+          activeTopic={activeDoubtTopic}
+          activeTopicDescription={activeDoubtTopicDescription}
+        />
+      )}
 
       <Footer />
 

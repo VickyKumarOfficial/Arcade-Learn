@@ -20,12 +20,14 @@ import pdfService from './services/pdfService.js';
 import { invokeMcpTool } from './mcpServer.js';
 import { getRegisteredMcpTools } from './mcpServer.js';
 import { aiOrchestratorService } from './services/aiOrchestratorService.fallback.js';
+import { roadmapDoubtService } from './services/roadmapDoubtService.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 8081;
@@ -428,6 +430,68 @@ app.post('/api/ai/chat', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to process AI chat request.',
+    });
+  }
+});
+
+app.post('/api/roadmap/doubt', async (req, res) => {
+  try {
+    const {
+      roadmapKey,
+      roadmapTitle,
+      activeTopic,
+      activeTopicDescription,
+      question,
+      history = [],
+    } = req.body ?? {};
+
+    const normalizedQuestion = typeof question === 'string' ? question.trim() : '';
+    if (normalizedQuestion.length < 2 || normalizedQuestion.length > 3000) {
+      return res.status(400).json({
+        success: false,
+        error: 'question must be a string between 2 and 3000 characters.',
+      });
+    }
+
+    const normalizedHistory = Array.isArray(history)
+      ? history
+          .filter(
+            (entry) =>
+              entry &&
+              (entry.role === 'user' || entry.role === 'assistant') &&
+              typeof entry.content === 'string' &&
+              entry.content.trim().length > 0,
+          )
+          .slice(-8)
+          .map((entry) => ({
+            role: entry.role,
+            content: entry.content.trim().slice(0, 3000),
+          }))
+      : [];
+
+    const result = await roadmapDoubtService.solveDoubt({
+      roadmapKey: typeof roadmapKey === 'string' ? roadmapKey.trim().slice(0, 120) : null,
+      roadmapTitle: typeof roadmapTitle === 'string' ? roadmapTitle.trim().slice(0, 180) : null,
+      activeTopic: typeof activeTopic === 'string' ? activeTopic.trim().slice(0, 180) : null,
+      activeTopicDescription:
+        typeof activeTopicDescription === 'string'
+          ? activeTopicDescription.trim().slice(0, 900)
+          : null,
+      question: normalizedQuestion,
+      history: normalizedHistory,
+    });
+
+    if (!result.success) {
+      const status = Number.isInteger(result.statusCode) ? result.statusCode : 500;
+      return res.status(status).json(result);
+    }
+
+    return res.json(result);
+  } catch (error) {
+    console.error('Roadmap doubt AI error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to process roadmap doubt request.',
     });
   }
 });

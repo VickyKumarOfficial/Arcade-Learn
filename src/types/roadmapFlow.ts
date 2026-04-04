@@ -52,6 +52,7 @@ export interface RoadmapFeatureModules {
   jobMatches?: boolean;
   faq?: boolean;
   lockGate?: boolean;
+  doubtSolver?: boolean;
 }
 
 export interface RoadmapUiText {
