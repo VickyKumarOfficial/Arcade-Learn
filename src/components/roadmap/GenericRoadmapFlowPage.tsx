@@ -1826,52 +1826,6 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         </div>
       </div>
 
-      {sectionCollapseEnabled && (
-        <div
-          className="fixed bottom-5 right-5 z-30 rounded-xl border border-zinc-700/60 px-4 py-3 flex flex-col gap-2 w-64 max-h-[40vh]"
-          style={{
-            background: 'linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,27,75,0.95) 100%)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.15)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Sections</span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={expandAllSections}
-                disabled={collapsedSections.size === 0}
-                className="text-[10px] px-2 py-1 rounded-md border border-zinc-600 text-zinc-300 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Expand all
-              </button>
-              <button
-                onClick={collapseAllSections}
-                disabled={collapsedSections.size === config.mainSectionIds.length}
-                className="text-[10px] px-2 py-1 rounded-md border border-zinc-600 text-zinc-300 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Collapse all
-              </button>
-            </div>
-          </div>
-
-          <div className="overflow-y-auto pr-1 flex flex-col gap-1">
-            {sectionControls.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => toggleSectionCollapse(section.id)}
-                className="w-full flex items-center justify-between text-left px-2 py-1.5 rounded-md border border-zinc-700/80 hover:bg-white/10"
-              >
-                <span className="text-[11px] text-zinc-200 truncate pr-2">{section.label}</span>
-                <span className="text-zinc-400 shrink-0">
-                  {section.collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <Footer />
 
       {modules.privacyWarning && (
