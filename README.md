@@ -294,6 +294,10 @@ cp .env.example .env
 npm run dev
 ```
 
+### **OpenRouter Migration Docs**
+
+- Active migration summary: `OPENROUTER_MIGRATION.md`
+
 ### **Database Setup**
 
 1. Go to [Supabase Dashboard](https://app.supabase.com)
