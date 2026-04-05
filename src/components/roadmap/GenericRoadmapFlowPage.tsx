@@ -44,6 +44,7 @@ import Footer from '@/components/Footer';
 import NodeDetailSidebar from '@/components/roadmap/NodeDetailSidebar';
 import PrivacyWarningModal from '@/components/roadmap/PrivacyWarningModal';
 import ProjectComments from '@/components/roadmap/ProjectComments';
+import RoadmapDoubtAssistant from '@/components/roadmap/RoadmapDoubtAssistant';
 import { BACKEND_URL } from '@/config/env';
 import { SECTION_NODE_MAP, ALL_NODE_DETAILS } from '@/data/allNodeDetails';
 import type { RoadmapFlowConfig, RoadmapNodeData } from '@/types/roadmapFlow';
@@ -162,6 +163,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     jobMatches: true,
     faq: true,
     lockGate: false,
+    doubtSolver: true,
     ...config.modules,
   };
 
@@ -899,6 +901,21 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
     return selected?.data.label ?? 'Interactive Diagram';
   }, [sidebar.activeNodeId, nodeLabelById, selected]);
+
+  const activeTopic = useMemo(() => {
+    if (sidebar.activeNodeId) {
+      return nodeLabelById.get(sidebar.activeNodeId) ?? null;
+    }
+
+    return selected?.data.label ?? null;
+  }, [sidebar.activeNodeId, nodeLabelById, selected]);
+
+  const activeTopicDescription = useMemo(() => {
+    const activeNodeId = sidebar.activeNodeId ?? selected?.id;
+    if (!activeNodeId) return null;
+
+    return nodeDetails[activeNodeId]?.description ?? null;
+  }, [sidebar.activeNodeId, selected, nodeDetails]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col">
@@ -1825,6 +1842,15 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
           </div>
         </div>
       </div>
+
+      {modules.doubtSolver && (
+        <RoadmapDoubtAssistant
+          roadmapKey={config.roadmapKey}
+          roadmapTitle={config.breadcrumbLabel}
+          activeTopic={activeTopic}
+          activeTopicDescription={activeTopicDescription}
+        />
+      )}
 
       <Footer />
 

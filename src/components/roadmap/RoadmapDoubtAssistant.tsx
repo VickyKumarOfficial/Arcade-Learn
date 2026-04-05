@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler } from 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, MessageCircleQuestion, Send, Sparkles, X } from 'lucide-react';
 import { roadmapDoubtService } from '@/services/roadmapDoubtService';
+import FormattedText from '@/components/FormattedText';
 
 type ChatRole = 'assistant' | 'user';
 
@@ -170,9 +171,9 @@ export default function RoadmapDoubtAssistant({
                       className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                           message.role === 'user'
-                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white whitespace-pre-wrap'
                             : 'border border-white/10 bg-white/5 text-zinc-100'
                         }`}
                       >
@@ -181,7 +182,14 @@ export default function RoadmapDoubtAssistant({
                             <Sparkles className="h-3 w-3" /> Assistant
                           </div>
                         )}
-                        <div>{message.content}</div>
+                        {message.role === 'assistant' ? (
+                          <FormattedText
+                            content={message.content}
+                            className="[&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_p]:text-sm [&_p]:leading-6 [&_p]:mb-2 [&_ul]:my-2 [&_ol]:my-2 [&_li]:text-sm [&_li]:leading-6 [&_pre]:my-2 [&_pre_code]:text-xs"
+                          />
+                        ) : (
+                          <div>{message.content}</div>
+                        )}
                       </div>
                     </div>
                   ))}
