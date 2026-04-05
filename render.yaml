@@ -19,3 +19,35 @@ services:
         sync: false
       - key: EMAILJS_PUBLIC_KEY
         sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: OPENROUTER_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b:free
+      - key: OPENROUTER_ROADMAP_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b:free
+      - key: OPENROUTER_CHAT_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b:free
+      - key: OPENROUTER_CHAT_MAX_TOKENS
+        value: "1400"
+      - key: OPENROUTER_CHAT_TEMPERATURE
+        value: "0.55"
+      - key: OPENROUTER_QUIZ_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b:free
+      - key: OPENROUTER_QUIZ_MAX_TOKENS
+        value: "1800"
+      - key: OPENROUTER_QUIZ_TEMPERATURE
+        value: "0.65"
+      - key: OPENROUTER_SURVEY_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b:free
+      - key: OPENROUTER_SURVEY_MAX_TOKENS
+        value: "8192"
+      - key: OPENROUTER_SURVEY_TEMPERATURE
+        value: "0.7"
+      - key: OPENROUTER_SURVEY_MODEL_VERSION
+        value: openrouter-v1
+      - key: OPENROUTER_APP_NAME
+        value: ArcadeLearn
+      - key: OPENROUTER_APP_URL
+        sync: false

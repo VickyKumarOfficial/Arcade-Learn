@@ -360,7 +360,11 @@ app.post('/api/quiz/generate', async (req, res) => {
     return res.json(result);
   } catch (error) {
     console.error('Quiz generation error:', error);
-    return res.status(500).json({
+    const statusCode = Number.isInteger(error?.statusCode)
+      ? Math.max(400, Math.min(599, error.statusCode))
+      : 500;
+
+    return res.status(statusCode).json({
       success: false,
       error: error.message || 'Failed to generate quiz.'
     });

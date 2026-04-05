@@ -51,7 +51,26 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 EMAILJS_SERVICE_ID=your_emailjs_service_id
 EMAILJS_TEMPLATE_ID=your_template_id
 EMAILJS_PUBLIC_KEY=your_public_key
+OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_ROADMAP_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_CHAT_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_CHAT_MAX_TOKENS=1400
+OPENROUTER_CHAT_TEMPERATURE=0.55
+OPENROUTER_QUIZ_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_QUIZ_MAX_TOKENS=1800
+OPENROUTER_QUIZ_TEMPERATURE=0.65
+OPENROUTER_SURVEY_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_SURVEY_MAX_TOKENS=8192
+OPENROUTER_SURVEY_TEMPERATURE=0.7
+OPENROUTER_SURVEY_MODEL_VERSION=openrouter-v1
+OPENROUTER_APP_NAME=ArcadeLearn
+OPENROUTER_APP_URL=https://your-domain.com
 ```
+
+Notes:
+- AI provider keys are backend-only; do not set any `VITE_GEMINI_API_KEY` frontend variable.
 
 ### 4. Deploy!
 

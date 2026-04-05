@@ -18,7 +18,7 @@ export interface AskRoadmapDoubtPayload {
 export interface AskRoadmapDoubtResponse {
   success: boolean;
   response?: string;
-  provider?: 'openrouter' | 'groq';
+  provider?: 'openrouter';
   error?: string;
 }
 

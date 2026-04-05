@@ -7,10 +7,17 @@
 [![MCP](https://img.shields.io/badge/MCP-Model_Context_Protocol-6C63FF?style=for-the-badge)](https://modelcontextprotocol.io/)
 [![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Google Gemini](https://img.shields.io/badge/Google_Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
-[![Groq](https://img.shields.io/badge/Groq-Llama_3.3-F55036?style=for-the-badge)](https://groq.com/)
+[![OpenRouter](https://img.shields.io/badge/OpenRouter-AI_Gateway-1FB6FF?style=for-the-badge)](https://openrouter.ai/)
 
 </div>
+
+---
+
+## Runtime Status (April 2026)
+
+- Nova chat and roadmap generation run server-side through OpenRouter.
+- MCP quiz generation now runs server-side through OpenRouter.
+- Frontend no longer uses provider API keys.
 
 ---
 
@@ -71,8 +78,8 @@ AI ──custom code──▶ Certificates                          └──▶
 ArcadeLearn is a **data-rich, AI-powered learning platform** with:
 
 - 👤 Per-user XP, levels, streaks, completed roadmaps (Supabase)
-- 🧠 AI chat assistant "Nova" (Google Gemini)
-- 📝 AI quiz generation (Groq / Llama 3.3-70b)
+- 🧠 AI chat assistant "Nova" (OpenRouter models)
+- 📝 AI quiz generation (OpenRouter models)
 - 💼 Job listings + skill-matching engine (Supabase `jobs` table)
 - 📄 Resume parsing + AI-matching (Supabase `parsed_resumes`)
 - 🏆 Certifications, badges, leaderboard (Supabase)
@@ -153,7 +160,7 @@ VS Code (Copilot) ──MCP──▶ Supabase MCP Server ──▶ Your Supabase
 Build a custom MCP server in `backend/` that exposes ArcadeLearn data as tools. Nova calls these tools mid-conversation to answer personalized questions.
 
 ```
-Browser ──▶ backend/server.js ──▶ AI Orchestrator ──▶ Gemini/Groq
+Browser ──▶ backend/server.js ──▶ AI Orchestrator ──▶ OpenRouter/Groq
                                         │
                               (model requests tool)
                                         │
@@ -208,7 +215,7 @@ After:   Browser ──▶ backend/mcpServer.js ──▶ Groq API  (key hidden)
 │       │                              │                      │
 │       │                              ▼                      │
 │       │                    ┌─────────────────┐              │
-│       │                    │  Google Gemini  │              │
+│       │                    │   OpenRouter    │              │
 │       │                    │  (with tools)   │              │
 │       │                    └────────┬────────┘              │
 │       │                             │                       │
@@ -255,14 +262,14 @@ User types: "What should I work on today?"
                     ▼
          AI Orchestrator builds request:
          {
-           model: "gemini-2.0-flash",
+           model: "openrouter:nvidia/nemotron-3-super-120b-a12b:free",
            systemPrompt: "You are Nova, ArcadeLearn AI coach for user abc-123",
            message: "What should I work on today?",
            tools: [get_user_progress, get_job_recommendations, ...]
          }
                     │
                     ▼
-              Google Gemini API
+             OpenRouter API
                     │
          Model decides it needs user data
                     │
@@ -291,7 +298,7 @@ User types: "What should I work on today?"
          → returns top 3 matched jobs
                     │
                     ▼
-         Gemini generates final response with full context:
+         OpenRouter model generates final response with full context:
          "You're doing great! You're Level 4 with a 2-day streak.
           Today I'd suggest completing React Hooks — it's the next
           component in your React roadmap (60% done). Finish 3 more
@@ -913,7 +920,7 @@ export async function generateQuiz(
 
 ### Step 6 — Update Frontend Nova Chat
 
-Replace the direct Gemini call in `src/services/aiService.ts` with the backend endpoint:
+Route frontend chat calls in `src/services/aiService.ts` through the backend endpoint:
 
 ```typescript
 // src/services/aiService.ts — AFTER MCP implementation
@@ -970,12 +977,11 @@ This enables GitHub Copilot to query your live Supabase database and call your c
 
 | Vulnerability | Before | After |
 |---|---|---|
-| **Groq API Key** | Exposed in browser bundle via `VITE_GROQ_API_KEY` | Server-side only in `GROQ_API_KEY` env var |
-| **Gemini API Key** | Called directly from browser | Server-side orchestration only |
+| **OpenRouter API Key** | Exposed in browser bundle via `VITE_*_API_KEY` | Server-side orchestration only in `OPENROUTER_API_KEY` |
 | **Rate Limiting** | None — any user can spam AI calls | 10 quiz/hour per user, enforced server-side |
 | **Input Validation** | None on AI inputs | Length limits, type checking on all inputs |
 | **Tool Authorization** | N/A | All MCP tools receive `userId` and validate against authenticated session |
-| **`dangerouslyAllowBrowser`** | `true` on Groq client | Removed entirely — Groq only runs in backend |
+| **`dangerouslyAllowBrowser`** | `true` on browser-side provider clients | Removed entirely — AI providers run in backend only |
 
 ---
 
@@ -1002,8 +1008,7 @@ This enables GitHub Copilot to query your live Supabase database and call your c
 
 | Item | Before MCP | After MCP |
 |---|---|---|
-| Groq API Key | ⚠️ Exposed in browser | ✅ Server-side only |
-| Gemini API Key | ⚠️ Exposed in browser | ✅ Server-side only |
+| OpenRouter API Key | ⚠️ Inconsistent usage guidance | ✅ Server-side only |
 | AI Rate Limiting | ❌ None | ✅ 10 requests/hour/user |
 | AI Input Validation | ❌ None | ✅ Length + type checked |
 
@@ -1016,14 +1021,13 @@ This enables GitHub Copilot to query your live Supabase database and call your c
 - Node.js v18+
 - An existing ArcadeLearn backend (`backend/`)
 - Supabase project with all tables set up
-- Google AI (Gemini) API key
-- Groq API key
+- OpenRouter API key
 
 ### Install Dependencies
 
 ```bash
 cd backend
-npm install @modelcontextprotocol/sdk zod groq-sdk
+npm install @modelcontextprotocol/sdk zod
 ```
 
 ### Files to Create
@@ -1058,8 +1062,14 @@ SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
 # Move from frontend to backend (SECURITY FIX)
-GROQ_API_KEY=gsk_...          # ← was VITE_GROQ_API_KEY (browser-exposed), now server-only
-GEMINI_API_KEY=AIza...         # ← was VITE_GEMINI_API_KEY (browser-exposed), now server-only
+OPENROUTER_API_KEY=sk-or-v1-...  # server-side only
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_CHAT_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_QUIZ_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_QUIZ_MAX_TOKENS=1800
+OPENROUTER_QUIZ_TEMPERATURE=0.65
+OPENROUTER_SURVEY_MODEL=nvidia/nemotron-3-super-120b-a12b:free
 
 # For Developer MCP (optional — for .vscode/mcp.json)
 SUPABASE_ACCESS_TOKEN=sbp_...  # Supabase personal access token for official MCP server
@@ -1069,8 +1079,8 @@ SUPABASE_ACCESS_TOKEN=sbp_...  # Supabase personal access token for official MCP
 
 ```bash
 # DELETE THESE — no longer needed in the browser
-# VITE_GROQ_API_KEY=...        ← Remove (security vulnerability)
-# VITE_GEMINI_API_KEY=...      ← Remove (security vulnerability)
+# any VITE_GEMINI_API_KEY variable should be removed
+# any VITE_*_API_KEY provider variable should be removed
 
 # Keep this — needed to call your backend
 VITE_BACKEND_URL=https://your-backend.onrender.com

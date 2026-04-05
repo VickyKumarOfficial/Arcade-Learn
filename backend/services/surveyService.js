@@ -1,5 +1,31 @@
 import { supabaseAdmin } from '../lib/supabase.js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { mapOpenRouterError, openRouterProvider } from './openRouterProvider.js';
+
+const OPENROUTER_SURVEY_MODEL =
+  process.env.OPENROUTER_SURVEY_MODEL ||
+  process.env.OPENROUTER_MODEL ||
+  process.env.OPENROUTER_ROADMAP_MODEL ||
+  'nvidia/nemotron-3-super-120b-a12b:free';
+const OPENROUTER_SURVEY_MAX_TOKENS = Number.isFinite(Number(process.env.OPENROUTER_SURVEY_MAX_TOKENS))
+  ? Math.max(512, Math.min(12000, Number(process.env.OPENROUTER_SURVEY_MAX_TOKENS)))
+  : 8192;
+const OPENROUTER_SURVEY_TEMPERATURE = Number.isFinite(Number(process.env.OPENROUTER_SURVEY_TEMPERATURE))
+  ? Math.max(0, Math.min(1, Number(process.env.OPENROUTER_SURVEY_TEMPERATURE)))
+  : 0.7;
+
+function getSurveyModelVersion() {
+  const rawValue =
+    process.env.OPENROUTER_SURVEY_MODEL_VERSION ||
+    process.env.OPENROUTER_MODEL_VERSION ||
+    'openrouter-v1';
+
+  const normalized = String(rawValue).trim();
+  if (!normalized) {
+    return 'openrouter-v1';
+  }
+
+  return normalized.slice(0, 20);
+}
 
 export const surveyService = {
   /**
@@ -244,8 +270,8 @@ export const surveyService = {
       // Build comprehensive AI prompt based on survey responses
       const prompt = this._buildAIRoadmapPrompt(surveyData);
       
-      // Generate recommendations using Gemini AI
-      console.log('🤖 Generating AI roadmap with Gemini...');
+      // Generate recommendations using shared OpenRouter provider
+      console.log('🤖 Generating AI roadmap with OpenRouter...');
       const aiRecommendations = await this._generateAIRecommendations(prompt, surveyData);
       
       if (!aiRecommendations) {
@@ -263,7 +289,7 @@ export const surveyService = {
           recommended_roadmaps: aiRecommendations.roadmaps,
           recommendation_reason: aiRecommendations.reasoning,
           ai_confidence_score: aiRecommendations.confidence,
-          ai_model_version: 'gemini-1.5-flash',
+          ai_model_version: getSurveyModelVersion(),
           generation_method: 'ai_generated'
         })
         .select()
@@ -419,64 +445,34 @@ Generate the response as valid JSON only. No additional text or markdown.`;
   },
 
   /**
-   * Generate AI recommendations using Gemini
+   * Generate AI recommendations using shared OpenRouter provider
    * @private
    */
   async _generateAIRecommendations(prompt, surveyData) {
     try {
-      // Check if API key is available
-      const apiKey = process.env.GEMINI_API_KEY;
-      
-      if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-        console.error('❌ GEMINI_API_KEY not configured properly');
-        console.error('❌ Current value:', apiKey ? apiKey.substring(0, 10) + '...' : 'undefined');
-        return this._generateFallbackRecommendations(surveyData);
-      }
+      console.log('🤖 Calling OpenRouter AI API...');
+      console.log('📋 Prompt length:', prompt.length, 'characters');
 
-      console.log('✅ GEMINI_API_KEY found:', apiKey.substring(0, 20) + '...');
-
-      // Initialize Gemini AI (do it here to ensure env vars are loaded)
-      const genAI = new GoogleGenerativeAI(apiKey);
-      
-      // Initialize Gemini model
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash",
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.8,
-          topK: 40,
-          maxOutputTokens: 8192,  // Increased to prevent truncation
-        }
+      const completion = await openRouterProvider.chatCompletion({
+        model: OPENROUTER_SURVEY_MODEL,
+        maxTokens: OPENROUTER_SURVEY_MAX_TOKENS,
+        temperature: OPENROUTER_SURVEY_TEMPERATURE,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a strict JSON generator for personalized learning roadmap recommendations. Return valid JSON only with no markdown.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
       });
 
-      console.log('🤖 Calling Gemini AI API...');
-      console.log('📋 Prompt length:', prompt.length, 'characters');
-      
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      
-      // Check if response was blocked or incomplete
-      if (!response.candidates || response.candidates.length === 0) {
-        console.error('❌ No candidates in Gemini response');
-        console.error('   Prompt feedback:', response.promptFeedback);
-        return this._generateFallbackRecommendations(surveyData);
-      }
-      
-      const candidate = response.candidates[0];
-      
-      // Check finish reason
-      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
-        console.error('❌ Response not completed normally');
-        console.error('   Finish reason:', candidate.finishReason);
-        if (candidate.finishReason === 'MAX_TOKENS') {
-          console.error('   ⚠️ Token limit reached - response may be incomplete');
-        }
-        // Try to use the partial response anyway
-      }
-      
-      let text = response.text();
-      
-      console.log('✅ Gemini AI response received successfully');
+      let text = completion.text;
+
+      console.log('✅ OpenRouter AI response received successfully');
       console.log('📄 Response length:', text.length, 'characters');
       console.log('📄 First 200 chars:', text.substring(0, 200));
       
@@ -523,14 +519,9 @@ Generate the response as valid JSON only. No additional text or markdown.`;
       return aiRecommendations;
       
     } catch (error) {
-      console.error('❌ ERROR in _generateAIRecommendations:');
-      console.error('❌ Error name:', error.name);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error stack:', error.stack);
-      
-      if (error.message && error.message.includes('API key')) {
-        console.error('❌ API Key issue detected');
-      }
+      const mapped = mapOpenRouterError(error);
+      console.error('❌ OpenRouter error in _generateAIRecommendations:', mapped.statusCode, mapped.error);
+      console.error('❌ Raw error:', error?.message || error);
       
       return this._generateFallbackRecommendations(surveyData);
     }
@@ -553,7 +544,7 @@ Generate the response as valid JSON only. No additional text or markdown.`;
         summary: `Unable to generate AI recommendations at this time`,
         details: [
           'AI service is temporarily unavailable',
-          'Please check your GEMINI_API_KEY configuration',
+          'Please check your OPENROUTER_API_KEY configuration',
           'Try again in a few moments'
         ],
         learning_approach: [

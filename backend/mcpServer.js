@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import Groq from 'groq-sdk';
+import { mapOpenRouterError, openRouterProvider } from './services/openRouterProvider.js';
 import { userProgressService } from './services/userProgressService.js';
 import { userActivityService } from './services/userActivityService.js';
 import { certificateService } from './services/certificateService.js';
@@ -11,18 +11,47 @@ import { analyticsService } from './services/analyticsService.js';
 
 export const mcpServer = new McpServer({
   name: 'arcadelearn-mcp',
-  version: '0.2.0-stop-b'
+  version: '0.2.0-stop-g'
 });
 
 const quizCache = new Map();
 const toolHandlers = new Map();
+const OPENROUTER_QUIZ_MODEL =
+  process.env.OPENROUTER_QUIZ_MODEL ||
+  process.env.OPENROUTER_CHAT_MODEL ||
+  process.env.OPENROUTER_MODEL ||
+  process.env.OPENROUTER_ROADMAP_MODEL ||
+  'nvidia/nemotron-3-super-120b-a12b:free';
+const OPENROUTER_QUIZ_MAX_TOKENS = Number.isFinite(Number(process.env.OPENROUTER_QUIZ_MAX_TOKENS))
+  ? Math.max(512, Math.min(4000, Number(process.env.OPENROUTER_QUIZ_MAX_TOKENS)))
+  : 1800;
+const OPENROUTER_QUIZ_TEMPERATURE = Number.isFinite(Number(process.env.OPENROUTER_QUIZ_TEMPERATURE))
+  ? Math.max(0, Math.min(1, Number(process.env.OPENROUTER_QUIZ_TEMPERATURE)))
+  : 0.65;
 
-function createGroqClient() {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    throw new Error('GROQ_API_KEY is not configured on the backend.');
+function parseQuizJson(rawText) {
+  const normalized = String(rawText || '')
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+
+  if (!normalized) {
+    throw new Error('Empty response from quiz provider.');
   }
-  return new Groq({ apiKey });
+
+  try {
+    return JSON.parse(normalized);
+  } catch {
+    const firstArrayIndex = normalized.indexOf('[');
+    const lastArrayIndex = normalized.lastIndexOf(']');
+
+    if (firstArrayIndex === -1 || lastArrayIndex === -1 || lastArrayIndex <= firstArrayIndex) {
+      throw new Error('Quiz provider response did not contain valid JSON.');
+    }
+
+    const extracted = normalized.slice(firstArrayIndex, lastArrayIndex + 1);
+    return JSON.parse(extracted);
+  }
 }
 
 function buildQuizPrompt(topic, context, count) {
@@ -91,36 +120,31 @@ async function generateQuizHandler({ topic, context = [], count = 4 }) {
     return { success: true, questions: cached.questions, cached: true };
   }
 
-  const groq = createGroqClient();
-  const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
-    temperature: 0.7,
-    max_completion_tokens: 1600,
-    top_p: 1,
-    stream: false,
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a JSON-only quiz generator. Return valid JSON only.'
-      },
-      {
-        role: 'user',
-        content: buildQuizPrompt(topic, context, count)
-      }
-    ]
-  });
-
-  const raw = completion.choices?.[0]?.message?.content?.trim();
-  if (!raw) {
-    throw new Error('Empty response from quiz provider.');
+  let completion;
+  try {
+    completion = await openRouterProvider.chatCompletion({
+      model: OPENROUTER_QUIZ_MODEL,
+      maxTokens: OPENROUTER_QUIZ_MAX_TOKENS,
+      temperature: OPENROUTER_QUIZ_TEMPERATURE,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a JSON-only quiz generator. Return valid JSON only.'
+        },
+        {
+          role: 'user',
+          content: buildQuizPrompt(topic, context, count)
+        }
+      ]
+    });
+  } catch (error) {
+    const mapped = mapOpenRouterError(error);
+    const wrapped = new Error(mapped.error);
+    wrapped.statusCode = mapped.statusCode;
+    throw wrapped;
   }
 
-  const jsonString = raw
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/```\s*$/i, '')
-    .trim();
-
-  const parsed = JSON.parse(jsonString);
+  const parsed = parseQuizJson(completion.text);
   const questions = normalizeQuestions(parsed);
 
   quizCache.set(cacheKey, {
