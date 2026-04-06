@@ -153,15 +153,9 @@ export default function RoadmapDoubtAssistant({
                     </button>
                   </div>
 
-                  <div className="mt-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300">
-                    <span className="text-zinc-500">Roadmap:</span> {roadmapTitle}
-                    {activeTopic && (
-                      <>
-                        <span className="mx-1.5 text-zinc-600">|</span>
-                        <span className="text-zinc-500">Topic:</span> {activeTopic}
-                      </>
-                    )}
-                  </div>
+                  <p className="mt-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300 leading-relaxed">
+                    This assistant is only for this roadmap. This chat is not being saved here.
+                  </p>
                 </div>
 
                 <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
