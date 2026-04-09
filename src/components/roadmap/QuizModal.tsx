@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Brain, RotateCcw, CheckCircle2, XCircle, Info, Loader2, AlertTriangle } from 'lucide-react';
 import { generateQuiz, type QuizQuestion } from '../../services/quizService';
+import type { FrontendQuizEvaluationResult } from '@/types/adaptiveRoadmap';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,25 +12,45 @@ interface Props {
   topic: string;                  // e.g. "What is HTTP?"
   nodeId: string;                 // node id to mark complete
   context: string[];              // whatYoullLearn bullets passed as context
-  onMarkComplete: (nodeId: string) => void;
+  mode?: 'submodule' | 'main';
+  questionCount?: number;
+  persistResult?: boolean;
+  completionScope?: 'node' | 'module';
+  passScorePercentage?: number;
+  onMarkComplete?: (nodeId: string, options?: { scope?: 'node' | 'module' }) => void;
+  onQuizEvaluated?: (result: FrontendQuizEvaluationResult) => void;
   onClose: () => void;
 }
 
-type Phase = 'loading' | 'quiz' | 'results' | 'error';
+type Phase = 'rules' | 'loading' | 'quiz' | 'results' | 'error';
+type QuizMode = 'submodule' | 'main';
+
+const DEFAULT_MAIN_TEST_PASS_PERCENTAGE = 80;
+const DEFAULT_MAIN_TEST_QUESTIONS = 12;
+const DEFAULT_SUBMODULE_QUESTIONS = 5;
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Disclaimer() {
+function Disclaimer({ mode }: { mode: QuizMode }) {
   return (
     <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-5">
       <Info className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
       <p className="text-xs text-amber-300/90 leading-relaxed">
-        <span className="font-semibold">Note:</span> This mini-quiz is only for your own
-        self-review. Your score is <span className="font-semibold">not stored</span> and
-        won't affect any evaluation. The full graded test covering all topics will be
-        available at the end of this module.
+        {mode === 'main' ? (
+          <>
+            <span className="font-semibold">Main component test mode:</span> this is a full-screen
+            assessment with 10-15 questions. Use it to evaluate your overall understanding of the
+            component before moving to the next stage.
+          </>
+        ) : (
+          <>
+            <span className="font-semibold">Sub-module quick check:</span> this attempt is temporary
+            and is not saved to progress history. Only a perfect score marks this sub-module as
+            completed.
+          </>
+        )}
       </p>
     </div>
   );
@@ -37,7 +58,20 @@ function Disclaimer() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function QuizModal({ open, topic, nodeId, context, onMarkComplete, onClose }: Props) {
+export default function QuizModal({
+  open,
+  topic,
+  nodeId,
+  context,
+  mode = 'submodule',
+  questionCount,
+  persistResult,
+  completionScope,
+  passScorePercentage,
+  onMarkComplete,
+  onQuizEvaluated,
+  onClose,
+}: Props) {
   const [phase, setPhase]                   = useState<Phase>('loading');
   const [questions, setQuestions]           = useState<QuizQuestion[]>([]);
   const [current, setCurrent]               = useState(0);
@@ -45,21 +79,66 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
   const [answered, setAnswered]             = useState(false);
   const [score, setScore]                   = useState(0);
   const [errorMsg, setErrorMsg]             = useState('');
-  const [markConfirmShown, setMarkConfirmShown] = useState(false);
   const [marked, setMarked]                 = useState(false);
+  const [mainTestStarted, setMainTestStarted] = useState(false);
+  const [antiCheatViolation, setAntiCheatViolation] = useState<string | null>(null);
+  const quizStartedAtRef = useRef<number>(0);
+  const hasReportedResultRef = useRef(false);
+  const isMainTestMode = mode === 'main';
+  const requestedQuestionCount = Math.max(
+    2,
+    Math.min(15, questionCount ?? (isMainTestMode ? DEFAULT_MAIN_TEST_QUESTIONS : DEFAULT_SUBMODULE_QUESTIONS)),
+  );
+  const shouldReportResult = persistResult ?? isMainTestMode;
+  const completionTarget = completionScope ?? (isMainTestMode ? 'module' : 'node');
+  const requiredScorePercentage = Math.max(
+    0,
+    Math.min(100, passScorePercentage ?? (isMainTestMode ? DEFAULT_MAIN_TEST_PASS_PERCENTAGE : 100)),
+  );
 
-  // ── Load quiz ────────────────────────────────────────────────────────────────
-  const loadQuiz = useCallback(async () => {
-    setPhase('loading');
+  const resetQuizState = useCallback((nextPhase: Phase) => {
+    setPhase(nextPhase);
     setQuestions([]);
     setCurrent(0);
     setSelected(null);
     setAnswered(false);
     setScore(0);
-    setMarkConfirmShown(false);
     setMarked(false);
+    setErrorMsg('');
+    setAntiCheatViolation(null);
+    hasReportedResultRef.current = false;
+    quizStartedAtRef.current = Date.now();
+  }, []);
 
-    const result = await generateQuiz(topic, context);
+  const exitFullscreen = useCallback(async () => {
+    if (!document.fullscreenElement) return;
+    try {
+      await document.exitFullscreen();
+    } catch {
+      // Best effort; ignore browser restrictions.
+    }
+  }, []);
+
+  const enterFullscreen = useCallback(async () => {
+    if (document.fullscreenElement) return;
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch {
+      // If fullscreen is blocked, UI still renders in full-screen modal layout.
+    }
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setMainTestStarted(false);
+    void exitFullscreen();
+    onClose();
+  }, [exitFullscreen, onClose]);
+
+  // ── Load quiz ────────────────────────────────────────────────────────────────
+  const loadQuiz = useCallback(async () => {
+    resetQuizState('loading');
+
+    const result = await generateQuiz(topic, context, requestedQuestionCount);
 
     if (result.success) {
       setQuestions(result.questions);
@@ -68,25 +147,137 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
       setErrorMsg((result as { success: false; error: string }).error);
       setPhase('error');
     }
-  }, [topic, context]);
+  }, [context, requestedQuestionCount, resetQuizState, topic]);
+
+  const startMainTest = useCallback(() => {
+    setMainTestStarted(true);
+    void enterFullscreen();
+    void loadQuiz();
+  }, [enterFullscreen, loadQuiz]);
+
+  const handleRetry = useCallback(() => {
+    if (isMainTestMode) {
+      setMainTestStarted(false);
+      void exitFullscreen();
+      resetQuizState('rules');
+      return;
+    }
+
+    void loadQuiz();
+  }, [exitFullscreen, isMainTestMode, loadQuiz, resetQuizState]);
 
   // Trigger load when modal opens
   useEffect(() => {
-    if (open) loadQuiz();
-  }, [open, loadQuiz]);
+    if (!open) {
+      setMainTestStarted(false);
+      void exitFullscreen();
+      return;
+    }
+
+    if (isMainTestMode) {
+      resetQuizState('rules');
+      return;
+    }
+
+    void loadQuiz();
+  }, [exitFullscreen, isMainTestMode, loadQuiz, open, resetQuizState]);
 
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleClose();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onClose]);
+  }, [handleClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (!isMainTestMode || !mainTestStarted) return;
+    if (phase !== 'quiz') return;
+
+    const failForCheating = (reason: string) => {
+      setAntiCheatViolation(reason);
+      setPhase('results');
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        failForCheating('Tab switching detected. Main tests do not allow leaving the active tab.');
+      }
+    };
+
+    const preventContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+      failForCheating('Right click is disabled during the main test.');
+    };
+
+    const preventClipboard = (event: ClipboardEvent) => {
+      event.preventDefault();
+      failForCheating('Copy, cut, and paste are disabled during the main test.');
+    };
+
+    const handleBlur = () => {
+      failForCheating('Focus was lost from the test window. This is not allowed during main tests.');
+    };
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        failForCheating('Exiting fullscreen is not allowed during the main test.');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('contextmenu', preventContextMenu);
+    document.addEventListener('copy', preventClipboard);
+    document.addEventListener('cut', preventClipboard);
+    document.addEventListener('paste', preventClipboard);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('contextmenu', preventContextMenu);
+      document.removeEventListener('copy', preventClipboard);
+      document.removeEventListener('cut', preventClipboard);
+      document.removeEventListener('paste', preventClipboard);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [isMainTestMode, mainTestStarted, open, phase]);
+
+  const effectiveCorrectAnswers = antiCheatViolation ? 0 : score;
+
+  useEffect(() => {
+    if (phase !== 'results') return;
+    if (questions.length === 0) return;
+    if (hasReportedResultRef.current) return;
+    if (!shouldReportResult) return;
+
+    hasReportedResultRef.current = true;
+
+    onQuizEvaluated?.({
+      nodeId,
+      topic,
+      scorePercentage: Math.round((effectiveCorrectAnswers / questions.length) * 100),
+      correctAnswers: effectiveCorrectAnswers,
+      totalQuestions: questions.length,
+      durationSeconds: Math.max(1, Math.round((Date.now() - quizStartedAtRef.current) / 1000)),
+    });
+  }, [
+    effectiveCorrectAnswers,
+    nodeId,
+    onQuizEvaluated,
+    phase,
+    questions.length,
+    shouldReportResult,
+    topic,
+  ]);
 
   // ── Answer selection ─────────────────────────────────────────────────────────
   const handleSelect = (idx: number) => {
     if (answered) return;
+    if (antiCheatViolation) return;
     setSelected(idx);
     setAnswered(true);
     if (idx === questions[current].correctIndex) {
@@ -122,23 +313,36 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
   };
 
   // ── Score helpers ─────────────────────────────────────────────────────────────
-  const pct = questions.length > 0 ? score / questions.length : 0;
+  const pct = questions.length > 0 ? effectiveCorrectAnswers / questions.length : 0;
+  const scorePercentage = Math.round(pct * 100);
+  const passed = scorePercentage >= requiredScorePercentage;
+
+  useEffect(() => {
+    if (phase !== 'results') return;
+    if (!passed) return;
+    if (marked) return;
+
+    onMarkComplete?.(nodeId, { scope: completionTarget });
+    setMarked(true);
+  }, [completionTarget, marked, nodeId, onMarkComplete, passed, phase]);
 
   const scoreColor =
-    score === questions.length
+    effectiveCorrectAnswers === questions.length
       ? 'text-emerald-400'
-      : score >= questions.length * 0.75
+      : effectiveCorrectAnswers >= questions.length * 0.75
       ? 'text-emerald-400'
-      : score >= questions.length * 0.5
+      : effectiveCorrectAnswers >= questions.length * 0.5
       ? 'text-amber-400'
       : 'text-red-400';
 
   const scoreLabel =
-    score === questions.length
+    antiCheatViolation
+      ? 'Main test failed due to anti-cheating policy.'
+      : effectiveCorrectAnswers === questions.length
       ? '🎉 Perfect!'
-      : score >= questions.length * 0.75
+      : effectiveCorrectAnswers >= questions.length * 0.75
       ? '🌟 Great job!'
-      : score >= questions.length * 0.5
+      : effectiveCorrectAnswers >= questions.length * 0.5
       ? '📚 Keep learning!'
       : '💪 Review the topic and try again.';
 
@@ -155,12 +359,12 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
           />
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-[61] flex items-center justify-center p-4"
+            className={`fixed inset-0 z-[61] flex items-center justify-center ${isMainTestMode ? 'p-0' : 'p-4'}`}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -168,13 +372,16 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
             onClick={e => e.stopPropagation()}
           >
             <div
-              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl
+              className={`relative w-full overflow-y-auto
                          bg-gradient-to-b from-slate-900 via-[#1a1740] to-slate-900
-                         border border-white/10 shadow-2xl"
+                         border border-white/10 shadow-2xl
+                         ${isMainTestMode
+                           ? 'h-[100vh] max-h-[100vh] rounded-none'
+                           : 'max-w-xl max-h-[90vh] rounded-2xl'}`}
             >
               {/* Close button */}
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400
                            hover:text-white hover:bg-white/10 transition-colors z-10"
               >
@@ -189,7 +396,7 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
                     <Brain className="w-4 h-4 text-white" />
                   </span>
                   <p className="text-xs font-medium text-indigo-300/80 uppercase tracking-widest">
-                    Knowledge Check
+                    {isMainTestMode ? 'Main Component Test Mode' : 'Knowledge Check'}
                   </p>
                 </div>
                 <h3 className="text-lg font-bold text-white leading-tight pr-8">{topic}</h3>
@@ -197,6 +404,55 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
 
               {/* Body */}
               <div className="px-6 py-5">
+
+                {/* ── Rules (main test only) ── */}
+                {phase === 'rules' && isMainTestMode && (
+                  <motion.div
+                    className="max-w-3xl mx-auto py-8"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <div className="rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-5 mb-5">
+                      <h4 className="text-lg font-bold text-cyan-200">Main Test Rules</h4>
+                      <p className="text-sm text-cyan-100/90 mt-1">
+                        This is a proctored test mode. Read and accept the rules before starting.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 text-sm text-gray-200">
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                        1. Test opens in full-screen and must stay in full-screen until submission.
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                        2. Tab switching or losing focus is not allowed.
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                        3. Right click, copy, cut, and paste actions are blocked.
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                        4. Any rule violation ends the attempt as failed.
+                      </div>
+                      <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-emerald-200">
+                        5. Pass requirement: {requiredScorePercentage}% or above across {requestedQuestionCount} questions.
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex gap-3">
+                      <button
+                        onClick={handleClose}
+                        className="flex-1 py-3 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={startMainTest}
+                        className="flex-1 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 text-sm font-bold transition-all shadow-lg shadow-cyan-500/30"
+                      >
+                        Accept Rules and Start Test
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
 
                 {/* ── Loading ── */}
                 {phase === 'loading' && (
@@ -208,7 +464,11 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
                     <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
                     <div className="text-center">
                       <p className="text-white font-medium">AI is crafting your quiz…</p>
-                      <p className="text-sm text-gray-500 mt-1">Fresh questions generated just for you</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {isMainTestMode
+                          ? `Preparing ${requestedQuestionCount}-question test mode`
+                          : 'Fresh questions generated just for you'}
+                      </p>
                     </div>
                   </motion.div>
                 )}
@@ -243,14 +503,20 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <Disclaimer />
+                    <Disclaimer mode={mode} />
+
+                    {isMainTestMode && (
+                      <div className="mb-4 rounded-xl border border-cyan-400/25 bg-cyan-500/10 px-4 py-2.5 text-xs text-cyan-100">
+                        Anti-cheating active: stay on this tab, keep fullscreen, and avoid right-click/copy/cut/paste.
+                      </div>
+                    )}
 
                     {/* Progress */}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs text-gray-400 font-medium">
                         Question {current + 1} of {questions.length}
                       </span>
-                      <span className="text-xs text-gray-500">{score} correct so far</span>
+                      <span className="text-xs text-gray-500">{effectiveCorrectAnswers} correct so far</span>
                     </div>
                     <div className="w-full h-1.5 bg-white/10 rounded-full mb-5 overflow-hidden">
                       <motion.div
@@ -355,7 +621,7 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
                     transition={{ duration: 0.3 }}
                     className="py-4"
                   >
-                    <Disclaimer />
+                    <Disclaimer mode={mode} />
 
                     {/* Score card */}
                     <div className="flex flex-col items-center py-6 mb-5 rounded-2xl
@@ -386,7 +652,7 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
                     {/* Action buttons */}
                     <div className="flex gap-3">
                       <button
-                        onClick={loadQuiz}
+                        onClick={handleRetry}
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl
                                    bg-white/10 hover:bg-white/15 border border-white/10 text-white
                                    text-sm font-medium transition-colors"
@@ -394,7 +660,7 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
                         <RotateCcw className="w-4 h-4" /> Try Again
                       </button>
                       <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600
                                    hover:from-indigo-500 hover:to-purple-500 text-white font-semibold
                                    text-sm transition-all"
@@ -408,93 +674,27 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
                       <div className="h-px w-full bg-white/5 mb-4" />
 
                       {!marked ? (
-                        <>
-                          {/* Inline warning / confirmation */}
-                          <AnimatePresence>
-                            {markConfirmShown && pct > 0 && pct < 1 && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -6 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className={`flex items-start gap-2.5 px-4 py-3 rounded-xl border mb-3
-                                            ${
-                                              pct >= 0.6
-                                                ? 'bg-amber-500/10 border-amber-500/25'
-                                                : 'bg-red-500/10 border-red-500/25'
-                                            }`}
-                              >
-                                <AlertTriangle
-                                  className={`w-4 h-4 mt-0.5 shrink-0 ${
-                                    pct >= 0.6 ? 'text-amber-400' : 'text-red-400'
-                                  }`}
-                                />
-                                <div className="flex-1">
-                                  <p
-                                    className={`text-xs leading-relaxed ${
-                                      pct >= 0.6 ? 'text-amber-300/90' : 'text-red-300/90'
-                                    }`}
-                                  >
-                                    {pct >= 0.6
-                                      ? "Your foundation's coming along, but some concepts still need attention. Revisit the weaker areas and keep building — strong fundamentals now will save you hours down the road. You've got this! 💪"
-                                      : 'Are you sure you want to mark this module as completed? Your score suggests some core concepts are unclear. We strongly recommend reviewing the material first for the best long-term results.'}
-                                  </p>
-                                  <button
-                                    onClick={() => { onMarkComplete(nodeId); setMarked(true); }}
-                                    className={`mt-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                                                transition-colors
-                                                ${
-                                                  pct >= 0.6
-                                                    ? 'bg-amber-500/30 hover:bg-amber-500/50 text-amber-200'
-                                                    : 'bg-red-500/30 hover:bg-red-500/50 text-red-200'
-                                                }`}
-                                  >
-                                    Yes, mark as completed anyway
-                                  </button>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {/* The mark button — style changes by score */}
-                          {pct === 0 ? (
-                            <button
-                              disabled
-                              title="Score at least one question to unlock this"
-                              className="w-full py-3 rounded-xl bg-white/5 border border-white/5
-                                         text-gray-600 text-sm font-semibold cursor-not-allowed"
-                            >
-                              Mark as Completed
-                            </button>
-                          ) : pct === 1 ? (
-                            <button
-                              onClick={() => { onMarkComplete(nodeId); setMarked(true); }}
-                              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl
-                                         bg-gradient-to-r from-emerald-600 to-teal-600
-                                         hover:from-emerald-500 hover:to-teal-500
-                                         text-white text-sm font-semibold transition-all
-                                         shadow-lg shadow-emerald-500/20"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              Mark as Completed
-                            </button>
+                        <div
+                          className={`flex items-start gap-2.5 px-4 py-3 rounded-xl border
+                                      ${passed
+                                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                                        : 'bg-red-500/10 border-red-500/25'}`}
+                        >
+                          {passed ? (
+                            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
                           ) : (
-                            <button
-                              onClick={() => setMarkConfirmShown(prev => !prev)}
-                              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl
-                                          border text-sm font-semibold transition-all
-                                          ${
-                                            pct >= 0.6
-                                              ? 'bg-amber-500/15 border-amber-500/30 hover:bg-amber-500/25 text-amber-300'
-                                              : 'bg-orange-500/15 border-orange-500/30 hover:bg-orange-500/25 text-orange-300'
-                                          }`}
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              Mark as Completed
-                              <span className="text-xs opacity-60 ml-1">{markConfirmShown ? '▲' : '▼'}</span>
-                            </button>
+                            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-red-400" />
                           )}
-                        </>
+                          <p
+                            className={`text-xs leading-relaxed ${passed ? 'text-emerald-200' : 'text-red-300/90'}`}
+                          >
+                            {antiCheatViolation
+                              ? `Test invalidated: ${antiCheatViolation}`
+                              : passed
+                              ? `Passed with ${scorePercentage}%. ${completionTarget === 'module' ? 'Module' : 'Sub-node'} will be marked completed automatically.`
+                              : `You scored ${scorePercentage}%. Need at least ${requiredScorePercentage}% to complete this ${completionTarget === 'module' ? 'module' : 'sub-node'}.`}
+                          </p>
+                        </div>
                       ) : (
                         // Already marked
                         <motion.div
@@ -504,7 +704,9 @@ export default function QuizModal({ open, topic, nodeId, context, onMarkComplete
                                      bg-emerald-500/15 border border-emerald-500/30"
                         >
                           <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                          <span className="text-sm font-semibold text-emerald-300">Node marked as completed!</span>
+                          <span className="text-sm font-semibold text-emerald-300">
+                            {completionTarget === 'module' ? 'Module marked as completed!' : 'Sub-node marked as completed!'}
+                          </span>
                         </motion.div>
                       )}
                     </div>

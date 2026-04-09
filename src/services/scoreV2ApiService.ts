@@ -28,6 +28,18 @@ interface LeaderboardEnvelope {
   error?: string;
 }
 
+let hasWarnedScoreV2Network = false;
+
+function logScoreV2NetworkWarning(context: string, error: unknown) {
+  if (hasWarnedScoreV2Network) return;
+
+  hasWarnedScoreV2Network = true;
+  console.warn(
+    `[scoreV2ApiService] ${context}. Backend may be unavailable at ${BACKEND_URL || '(same-domain)'}.`,
+    error,
+  );
+}
+
 function hashTo32Hex(value: string): string {
   const seeds = [2166136261, 2166136261 ^ 0x9e3779b9, 2166136261 ^ 0x85ebca6b, 2166136261 ^ 0xc2b2ae35];
   const output: string[] = [];
@@ -98,7 +110,7 @@ class ScoreV2ApiService {
 
       return payload.data;
     } catch (error) {
-      console.error('Failed to fetch Score V2 summary:', error);
+      logScoreV2NetworkWarning('Unable to fetch Score V2 summary', error);
       return null;
     }
   }
@@ -120,7 +132,7 @@ class ScoreV2ApiService {
       const body = (await response.json()) as ScoreAttemptEnvelope;
       return body;
     } catch (error) {
-      console.error('Failed to submit Score V2 attempt:', error);
+      logScoreV2NetworkWarning('Unable to submit Score V2 attempt', error);
       return null;
     }
   }
@@ -142,7 +154,7 @@ class ScoreV2ApiService {
       const body = (await response.json()) as ScoreAttemptEnvelope;
       return body;
     } catch (error) {
-      console.error('Failed to submit Score V2 module bonus:', error);
+      logScoreV2NetworkWarning('Unable to submit Score V2 module bonus', error);
       return null;
     }
   }
@@ -171,7 +183,7 @@ class ScoreV2ApiService {
 
       return payload.data;
     } catch (error) {
-      console.error('Failed to fetch Score V2 leaderboard:', error);
+      logScoreV2NetworkWarning('Unable to fetch Score V2 leaderboard', error);
       return null;
     }
   }

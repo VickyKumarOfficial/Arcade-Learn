@@ -47,3 +47,27 @@ export interface FrontendRoadmapModuleCatalog {
   module_count: number;
   modules: FrontendRoadmapModule[];
 }
+
+export interface FrontendQuizEvaluationResult {
+  nodeId: string;
+  topic: string;
+  scorePercentage: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  durationSeconds: number;
+}
+
+export interface FrontendRoadmapUserProgress {
+  user_id: string;
+  roadmap_key: string;
+  selected_level: FrontendSkillLevel;
+  effective_level: FrontendSkillLevel;
+  completed_modules: string[];
+  completed_node_ids: string[];
+  current_module: string | null;
+  scores: Record<string, number>;
+  attempts: Record<string, number>;
+  time_taken: Record<string, number>;
+  recommended_module_type: Record<string, FrontendModuleType>;
+  updated_at: string;
+}

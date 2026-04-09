@@ -8,6 +8,7 @@ import axios from 'axios';
 import { BACKEND_URL } from '@/config/env';
 
 const ACTIVITY_LOGGER_DEBUG = import.meta.env.DEV && import.meta.env.VITE_DEBUG_ACTIVITY_LOGGER === 'true';
+let hasWarnedActivityNetwork = false;
 
 const debugActivityLog = (...args: unknown[]) => {
   if (ACTIVITY_LOGGER_DEBUG) {
@@ -72,6 +73,19 @@ class ActivityLogger {
         return false;
       }
     } catch (error) {
+      const isNetworkError = axios.isAxiosError(error) && (!error.response || error.code === 'ERR_NETWORK');
+
+      if (isNetworkError) {
+        if (!hasWarnedActivityNetwork) {
+          hasWarnedActivityNetwork = true;
+          console.warn(
+            `[activityLogger] Backend is unreachable at ${BACKEND_URL || '(same-domain)'}. Activity logging will be skipped until connectivity returns.`,
+          );
+        }
+
+        return false;
+      }
+
       console.error('Error logging activity:', error);
       return false;
     }
@@ -255,6 +269,19 @@ class ActivityLogger {
         return false;
       }
     } catch (error) {
+      const isNetworkError = axios.isAxiosError(error) && (!error.response || error.code === 'ERR_NETWORK');
+
+      if (isNetworkError) {
+        if (!hasWarnedActivityNetwork) {
+          hasWarnedActivityNetwork = true;
+          console.warn(
+            `[activityLogger] Backend is unreachable at ${BACKEND_URL || '(same-domain)'}. Bulk activity logging will be skipped until connectivity returns.`,
+          );
+        }
+
+        return false;
+      }
+
       console.error('Error bulk logging activities:', error);
       return false;
     }

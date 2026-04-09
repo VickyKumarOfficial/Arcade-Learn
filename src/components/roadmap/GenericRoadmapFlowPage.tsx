@@ -38,6 +38,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { nodeTypes } from '@/components/roadmap/RoadmapFlowNodes';
 import Footer from '@/components/Footer';
@@ -48,7 +49,13 @@ import RoadmapDoubtAssistant from '@/components/roadmap/RoadmapDoubtAssistant';
 import { BACKEND_URL } from '@/config/env';
 import { SECTION_NODE_MAP, ALL_NODE_DETAILS } from '@/data/allNodeDetails';
 import { frontendRoadmapModuleService } from '@/services/frontendRoadmapModuleService';
-import type { FrontendRoadmapModule, FrontendSkillLevel } from '@/types/adaptiveRoadmap';
+import { frontendRoadmapProgressService } from '@/services/frontendRoadmapProgressService';
+import type {
+  FrontendQuizEvaluationResult,
+  FrontendRoadmapModule,
+  FrontendRoadmapUserProgress,
+  FrontendSkillLevel,
+} from '@/types/adaptiveRoadmap';
 import type { RoadmapFlowConfig, RoadmapNodeData } from '@/types/roadmapFlow';
 
 interface ProjectComment {
@@ -139,6 +146,7 @@ const LIKE_POP_PARTICLES = [
 
 export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPageProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const canvasWidth = config.canvasWidth ?? 1040;
   const canvasHeight = config.canvasHeight ?? 2700;
@@ -180,9 +188,11 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<FrontendSkillLevel | null>(
     isAdaptiveFrontendRoadmap ? null : 'intermediate',
   );
+  const [effectiveSkillLevel, setEffectiveSkillLevel] = useState<FrontendSkillLevel>('intermediate');
   const [pendingSkillLevel, setPendingSkillLevel] = useState<FrontendSkillLevel>('beginner');
   const [showSkillLevelPrompt, setShowSkillLevelPrompt] = useState(isAdaptiveFrontendRoadmap);
   const [activeModule, setActiveModule] = useState<FrontendRoadmapModule | null>(null);
+  const [frontendProgress, setFrontendProgress] = useState<FrontendRoadmapUserProgress | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(config.flowNodes);
   const [edges, , onEdgesChange] = useEdgesState(config.flowEdges);
@@ -231,18 +241,79 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   useEffect(() => {
     if (isAdaptiveFrontendRoadmap) {
       setSelectedSkillLevel(null);
+      setEffectiveSkillLevel('intermediate');
       setPendingSkillLevel('beginner');
       setShowSkillLevelPrompt(true);
       setActiveModule(null);
+      setFrontendProgress(null);
       return;
     }
 
     setSelectedSkillLevel('intermediate');
+    setEffectiveSkillLevel('intermediate');
     setShowSkillLevelPrompt(false);
     setActiveModule(null);
+    setFrontendProgress(null);
   }, [config.roadmapKey, isAdaptiveFrontendRoadmap]);
 
-  const activeSkillLevel: FrontendSkillLevel = selectedSkillLevel ?? 'intermediate';
+  const activeSkillLevel: FrontendSkillLevel = effectiveSkillLevel;
+  const progressUserId = user?.id ?? 'anonymous';
+
+  const resolveAdaptiveModule = useCallback((params: {
+    nodeId: string;
+    level: FrontendSkillLevel;
+    progress: FrontendRoadmapUserProgress | null;
+  }) => {
+    const conceptId = SECTION_NODE_MAP[params.nodeId] ?? params.nodeId;
+    const recommendedType = frontendRoadmapProgressService.getRecommendedModuleType(
+      params.progress,
+      conceptId,
+    );
+
+    return (
+      frontendRoadmapModuleService.getModuleForNode({
+        nodeId: params.nodeId,
+        level: params.level,
+        type: recommendedType,
+      }) ??
+      frontendRoadmapModuleService.getModuleForNode({
+        nodeId: params.nodeId,
+        level: params.level,
+        type: 'core',
+      })
+    );
+  }, []);
+
+  const applyAdaptiveProgressToNodes = useCallback(
+    (progress: FrontendRoadmapUserProgress) => {
+      const completedModules = new Set(progress.completed_modules);
+      const completedNodes = new Set(progress.completed_node_ids);
+
+      setNodes((currentNodes) =>
+        currentNodes.map((node) => {
+          const conceptId = SECTION_NODE_MAP[node.id] ?? node.id;
+          const module = resolveAdaptiveModule({
+            nodeId: node.id,
+            level: progress.effective_level,
+            progress,
+          });
+          const isCompleted =
+            completedNodes.has(node.id) || completedModules.has(conceptId) || node.data.completed === true;
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              completed: isCompleted,
+              moduleId: module?.module_id ?? node.data.moduleId,
+              status: isCompleted ? 'completed' : 'unlocked',
+            },
+          };
+        }),
+      );
+    },
+    [resolveAdaptiveModule, setNodes],
+  );
 
   const confirmSkillLevelSelection = useCallback(() => {
     const level = pendingSkillLevel;
@@ -250,36 +321,37 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     setSelectedSkillLevel(level);
     setShowSkillLevelPrompt(false);
 
-    setNodes((currentNodes) => currentNodes.map((node) => {
-      const module = frontendRoadmapModuleService.getModuleForNode({
-        nodeId: node.id,
-        level,
-        type: 'core',
-      });
+    const loadedProgress = frontendRoadmapProgressService.loadProgress({
+      userId: progressUserId,
+      roadmapKey: config.roadmapKey,
+      selectedLevel: level,
+    });
 
-      if (!module) return node;
+    const syncedProgress = frontendRoadmapProgressService.updateSelectedLevel(loadedProgress, level);
+    frontendRoadmapProgressService.saveProgress(syncedProgress);
 
-      return {
-        ...node,
-        data: {
-          ...node.data,
-          moduleId: module.module_id,
-          status: node.data.completed ? 'completed' : 'unlocked',
-        },
-      };
-    }));
+    setFrontendProgress(syncedProgress);
+    setEffectiveSkillLevel(syncedProgress.effective_level);
+    applyAdaptiveProgressToNodes(syncedProgress);
 
     const firstMainNodeId = config.mainNodeIds[0];
     if (firstMainNodeId) {
       setActiveModule(
-        frontendRoadmapModuleService.getModuleForNode({
+        resolveAdaptiveModule({
           nodeId: firstMainNodeId,
-          level,
-          type: 'core',
+          level: syncedProgress.effective_level,
+          progress: syncedProgress,
         }),
       );
     }
-  }, [config.mainNodeIds, pendingSkillLevel, setNodes]);
+  }, [
+    applyAdaptiveProgressToNodes,
+    config.mainNodeIds,
+    config.roadmapKey,
+    pendingSkillLevel,
+    progressUserId,
+    resolveAdaptiveModule,
+  ]);
 
   useEffect(() => {
     if (flowLazyCutoffY >= flowLazyTargetCutoffY) return;
@@ -945,10 +1017,10 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
         if (isAdaptiveFrontendRoadmap) {
           const moduleFromNodeData = frontendRoadmapModuleService.getModuleById(node.data.moduleId);
-          const module = moduleFromNodeData ?? frontendRoadmapModuleService.getModuleForNode({
+          const module = moduleFromNodeData ?? resolveAdaptiveModule({
             nodeId: node.id,
             level: activeSkillLevel,
-            type: 'core',
+            progress: frontendProgress,
           });
           setActiveModule(module);
         }
@@ -961,7 +1033,16 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         setSelected((prev) => (prev?.id === node.id ? null : node));
       }
     },
-    [activeSkillLevel, isAdaptiveFrontendRoadmap, nodeDetails, showSkillLevelPrompt, sidebar.activeNodeId, sidebar.open],
+    [
+      activeSkillLevel,
+      frontendProgress,
+      isAdaptiveFrontendRoadmap,
+      nodeDetails,
+      resolveAdaptiveModule,
+      showSkillLevelPrompt,
+      sidebar.activeNodeId,
+      sidebar.open,
+    ],
   );
 
   const completedMain = useMemo(
@@ -996,6 +1077,121 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
     return nodeDetails[activeNodeId]?.description ?? null;
   }, [sidebar.activeNodeId, selected, nodeDetails]);
+
+  const handleAdaptiveQuizEvaluated = useCallback(
+    (result: FrontendQuizEvaluationResult) => {
+      if (!isAdaptiveFrontendRoadmap || !frontendProgress) return;
+
+      const conceptId = SECTION_NODE_MAP[result.nodeId] ?? result.nodeId;
+      const nextProgress = frontendRoadmapProgressService.recordQuizAttempt(frontendProgress, {
+        conceptId,
+        result,
+      });
+
+      setFrontendProgress(nextProgress);
+      setEffectiveSkillLevel(nextProgress.effective_level);
+      frontendRoadmapProgressService.saveProgress(nextProgress);
+      applyAdaptiveProgressToNodes(nextProgress);
+
+      if (sidebar.activeNodeId) {
+        setActiveModule(
+          resolveAdaptiveModule({
+            nodeId: sidebar.activeNodeId,
+            level: nextProgress.effective_level,
+            progress: nextProgress,
+          }),
+        );
+      }
+    },
+    [
+      applyAdaptiveProgressToNodes,
+      frontendProgress,
+      isAdaptiveFrontendRoadmap,
+      resolveAdaptiveModule,
+      sidebar.activeNodeId,
+    ],
+  );
+
+  const handleNodeMarkComplete = useCallback(
+    (nodeId: string, options?: { scope?: 'node' | 'module' }) => {
+      const scope = options?.scope ?? 'node';
+      const conceptId = SECTION_NODE_MAP[nodeId] ?? nodeId;
+      const sectionData = ALL_NODE_DETAILS[conceptId];
+
+      setNodes((nds) => {
+        if (scope === 'module') {
+          const idsToComplete = new Set<string>([conceptId, nodeId]);
+          sectionData?.subNodes.forEach((subNode) => idsToComplete.add(subNode.id));
+
+          return nds.map((node) =>
+            idsToComplete.has(node.id)
+              ? { ...node, data: { ...node.data, completed: true, status: 'completed' as const } }
+              : node,
+          );
+        }
+
+        const updated = nds.map((node) =>
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, completed: true, status: 'completed' as const } }
+            : node,
+        );
+
+        if (sectionData && conceptId !== nodeId) {
+          const subIds = sectionData.subNodes.map((subNode) => subNode.id);
+          const allDone = subIds.every(
+            (id) => updated.find((node) => node.id === id)?.data?.completed === true,
+          );
+          if (allDone) {
+            return updated.map((node) =>
+              node.id === conceptId
+                ? { ...node, data: { ...node.data, completed: true, status: 'completed' as const } }
+                : node,
+            );
+          }
+        }
+
+        return updated;
+      });
+
+      if (!isAdaptiveFrontendRoadmap || !frontendProgress) return;
+
+      let nextProgress = frontendProgress;
+
+      if (scope === 'module') {
+        const nodeIdsToRecord = [conceptId, ...(sectionData?.subNodes.map((subNode) => subNode.id) ?? [])];
+        nodeIdsToRecord.forEach((id) => {
+          nextProgress = frontendRoadmapProgressService.markNodeCompleted(nextProgress, {
+            nodeId: id,
+            conceptId,
+            markModuleCompleted: true,
+          });
+        });
+      } else {
+        const markModuleCompleted =
+          conceptId === nodeId
+            ? true
+            : Boolean(
+                sectionData &&
+                sectionData.subNodes.every(
+                  (subNode) =>
+                    subNode.id === nodeId ||
+                    nodes.find((existingNode) => existingNode.id === subNode.id)?.data?.completed === true,
+                ),
+              );
+
+        nextProgress = frontendRoadmapProgressService.markNodeCompleted(nextProgress, {
+          nodeId,
+          conceptId,
+          markModuleCompleted,
+        });
+      }
+
+      setFrontendProgress(nextProgress);
+      frontendRoadmapProgressService.saveProgress(nextProgress);
+      applyAdaptiveProgressToNodes(nextProgress);
+    },
+    [applyAdaptiveProgressToNodes, frontendProgress, isAdaptiveFrontendRoadmap, nodes, setNodes],
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col">
@@ -2004,37 +2200,14 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         sectionId={sidebar.sectionId}
         activeNodeId={sidebar.activeNodeId}
         moduleContent={isAdaptiveFrontendRoadmap ? activeModule : null}
+        onQuizEvaluated={isAdaptiveFrontendRoadmap ? handleAdaptiveQuizEvaluated : undefined}
         onClose={() => {
           setSidebar({ open: false, sectionId: null, activeNodeId: null });
           if (isAdaptiveFrontendRoadmap) {
             setActiveModule(null);
           }
         }}
-        onMarkComplete={(nodeId) =>
-          setNodes((nds) => {
-            const updated = nds.map((n) =>
-              n.id === nodeId ? { ...n, data: { ...n.data, completed: true, status: 'completed' as const } } : n,
-            );
-
-            const sectionId = SECTION_NODE_MAP[nodeId];
-            if (sectionId && sectionId !== nodeId) {
-              const sectionData = ALL_NODE_DETAILS[sectionId];
-              if (sectionData) {
-                const subIds = sectionData.subNodes.map((sn) => sn.id);
-                const allDone = subIds.every(
-                  (id) => updated.find((n) => n.id === id)?.data?.completed === true,
-                );
-                if (allDone) {
-                  return updated.map((n) =>
-                    n.id === sectionId ? { ...n, data: { ...n.data, completed: true, status: 'completed' as const } } : n,
-                  );
-                }
-              }
-            }
-
-            return updated;
-          })
-        }
+        onMarkComplete={handleNodeMarkComplete}
       />
     </div>
   );

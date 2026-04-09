@@ -14,6 +14,7 @@ import { ALL_NODE_DETAILS, type ResourceType } from '../../data/allNodeDetails';
 import type {
   FrontendRoadmapModule,
   FrontendModuleResourceType,
+  FrontendQuizEvaluationResult,
 } from '@/types/adaptiveRoadmap';
 import QuizModal from './QuizModal';
 
@@ -28,7 +29,8 @@ interface Props {
   /** Optional adaptive module payload. Falls back to ALL_NODE_DETAILS when absent. */
   moduleContent?: FrontendRoadmapModule | null;
   onClose: () => void;
-  onMarkComplete?: (nodeId: string) => void;
+  onMarkComplete?: (nodeId: string, options?: { scope?: 'node' | 'module' }) => void;
+  onQuizEvaluated?: (result: FrontendQuizEvaluationResult) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -72,6 +74,11 @@ interface QuizState {
   topic: string;
   nodeId: string;
   context: string[];
+  mode: 'submodule' | 'main';
+  questionCount: number;
+  persistResult: boolean;
+  completionScope: 'node' | 'module';
+  passScorePercentage: number;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -83,6 +90,7 @@ export default function NodeDetailSidebar({
   moduleContent,
   onClose,
   onMarkComplete,
+  onQuizEvaluated,
 }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [quiz, setQuiz] = useState<QuizState>({
@@ -90,6 +98,11 @@ export default function NodeDetailSidebar({
     topic: '',
     nodeId: '',
     context: [],
+    mode: 'submodule',
+    questionCount: 5,
+    persistResult: false,
+    completionScope: 'node',
+    passScorePercentage: 100,
   });
 
   // ── Look up section data ───────────────────────────────────────────────────
@@ -120,8 +133,12 @@ export default function NodeDetailSidebar({
     ];
   }, [moduleContent]);
 
-  const subNodes = moduleContent ? dynamicSubNodes : (sectionData?.subNodes ?? []);
-  const section = moduleContent ? dynamicSection : sectionData?.section;
+  const subNodes = sectionData?.subNodes ?? dynamicSubNodes;
+  const section = sectionData?.section ?? dynamicSection;
+  const mainQuizContext = useMemo(() => {
+    const flattened = subNodes.flatMap((node) => node.whatYoullLearn ?? []);
+    return Array.from(new Set(flattened.map((point) => point.trim()).filter(Boolean)));
+  }, [subNodes]);
 
   // ── Auto-expand on open / node change ─────────────────────────────────────
   useEffect(() => {
@@ -149,8 +166,8 @@ export default function NodeDetailSidebar({
   const toggle = (id: string) =>
     setExpandedId(prev => (prev === id ? null : id));
 
-  const openQuiz = (topic: string, nodeId: string, context: string[]) =>
-    setQuiz({ open: true, topic, nodeId, context });
+  const openQuiz = (payload: Omit<QuizState, 'open'>) =>
+    setQuiz({ open: true, ...payload });
   const closeQuiz = () =>
     setQuiz(prev => ({ ...prev, open: false }));
 
@@ -224,6 +241,31 @@ export default function NodeDetailSidebar({
             <div className="flex-shrink-0 px-7 py-3.5 border-b border-white/5 flex items-center gap-2">
               <span className="text-sm text-gray-500">{subNodes.length} topics</span>
               <span className="h-px flex-1 bg-white/5" />
+              {section && mainQuizContext.length > 0 && (sectionId || moduleContent) && (
+                <button
+                  onClick={() =>
+                    openQuiz({
+                      topic: `${section.label} - Main Component Test`,
+                      nodeId: sectionId ?? moduleContent?.concept_id ?? activeNodeId ?? '',
+                      context: mainQuizContext,
+                      mode: 'main',
+                      questionCount: 12,
+                      persistResult: true,
+                      completionScope: 'module',
+                      passScorePercentage: 80,
+                    })
+                  }
+                  className="relative px-4 py-2 rounded-full text-xs font-black tracking-wide
+                             border border-cyan-200/80 text-slate-900
+                             bg-gradient-to-r from-emerald-300 via-cyan-300 to-sky-300
+                             hover:from-emerald-200 hover:via-cyan-200 hover:to-sky-200
+                             shadow-[0_0_24px_rgba(34,211,238,0.35)] hover:shadow-[0_0_30px_rgba(52,211,153,0.45)]
+                             transition-all"
+                >
+                  <span className="absolute inset-0 rounded-full animate-pulse bg-white/15 pointer-events-none" />
+                  <span className="relative">Start Main Test (10-15 Q)</span>
+                </button>
+              )}
               <span className="text-xs text-gray-500">Click a topic to expand</span>
             </div>
 
@@ -357,13 +399,16 @@ export default function NodeDetailSidebar({
                               <div className="h-px w-full bg-white/5 mb-4" />
                               <button
                                 onClick={() =>
-                                  openQuiz(
-                                    node.label,
-                                    moduleContent
-                                      ? (activeNodeId ?? sectionId ?? moduleContent.concept_id)
-                                      : node.id,
-                                    node.whatYoullLearn,
-                                  )
+                                  openQuiz({
+                                    topic: node.label,
+                                    nodeId: node.id,
+                                    context: node.whatYoullLearn,
+                                    mode: 'submodule',
+                                    questionCount: 5,
+                                    persistResult: false,
+                                    completionScope: 'node',
+                                    passScorePercentage: 100,
+                                  })
                                 }
                                 className="w-full flex items-center justify-center gap-2.5 py-3 px-4
                                            rounded-xl border border-indigo-500/30
@@ -409,7 +454,13 @@ export default function NodeDetailSidebar({
         topic={quiz.topic}
         nodeId={quiz.nodeId}
         context={quiz.context}
+        mode={quiz.mode}
+        questionCount={quiz.questionCount}
+        persistResult={quiz.persistResult}
+        completionScope={quiz.completionScope}
+        passScorePercentage={quiz.passScorePercentage}
         onMarkComplete={onMarkComplete}
+        onQuizEvaluated={onQuizEvaluated}
         onClose={closeQuiz}
       />
     </>
