@@ -6,6 +6,8 @@ export type RoadmapNodeData = {
   completed?: boolean;
   description?: string;
   optional?: boolean;
+  moduleId?: string;
+  status?: 'locked' | 'unlocked' | 'completed';
 };
 
 export interface RoadmapNodeResource {

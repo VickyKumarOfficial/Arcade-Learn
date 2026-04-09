@@ -1,250 +1,324 @@
-## Plan: Adaptive Roadmap Cutover
+# 🚀 ArcadeLearn – Final Implementation Blueprint  
+## Personalized Dynamic Roadmap + Adaptive Content + Level-Based System
 
-Implement your updated architecture from Dynamic_Roadmap.md line 338 onward in a low-risk sequence: database foundation first, backend contracts second, frontend API cutover behind fallback flags third, then staged rollout with strict verification.
+---
 
-### Master plan status
-- This file is the single source of truth for implementation scope, sequencing, and acceptance criteria.
-- All new requirements must be added here before implementation begins for that requirement.
-- If a requirement conflicts with an existing rule in this file, update the rule first, then implement.
+# 🧠 1. OBJECTIVE
 
-### Implementation operating rules
-1. Sequence discipline
-- Execute phases in order unless explicitly marked parallel-safe in this file.
-- Do not skip schema and contract validation before frontend integration.
+Build a **scalable adaptive learning system** where:
 
-2. Change-control protocol
-- For every newly proposed idea, classify as: implement-now, implement-later, or not-feasible-currently.
-- Record the reason and impacted sections before coding.
+- Roadmap is **dynamically generated**
+- Content is **modular and reusable**
+- Personalization is **behavior-driven**
+- Difficulty is **level-aware (Beginner / Intermediate / Advanced)**
 
-3. Definition of done per step
-- Code implemented.
-- Endpoint/schema/type contracts aligned.
-- Verification checks for that step passed.
-- No regression in fallback behavior.
+---
 
-4. Rollback readiness
-- Feature flags must remain available until rollout reaches 100% and verification stays stable.
-- Any critical consistency or auth issue triggers immediate rollback to fallback mode.
+# 🏗️ 2. SYSTEM OVERVIEW
 
-5. Tracking format
-- Maintain each step state as: not-started, in-progress, blocked, done.
-- Blocked items require blocker reason and next action.
 
-### Steps
-1. Freeze API contracts and node-state semantics.
-Define exact response/request shapes for:
-- GET user roadmap graph
-- GET module by id
-- POST topic completion
-- POST quiz attempt
-Include mandatory progression fields:
-- locked
-- unlockRequirements
-- remediationRequired
-- remediationTags
-Dependency: none.
+User → Select Level → Roadmap Graph → Sidebar (Learning)
+→ Progress Tracking → Diagnosis Engine
+→ Level Adjustment → Content Selection → Roadmap Update
 
-2. Add migration safety guardrails.
-Introduce rollout flags so static roadmap remains default until API path is stable.
-Dependency: step 1.
 
-3. Create roadmap/module/topic catalog tables.
-Design normalized content source for sidebar and graph generation.
-Dependency: step 1.
+---
 
-4. Create topic-level user progress table.
-Store attempts, best score, completion, time spent, last activity.
-Dependency: step 3.
+# 🧩 3. DATA MODELS (FOUNDATION)
 
-5. Add optional insights storage.
-Store weak areas and pace summaries, but keep adaptation rule-based first.
-Dependency: step 4.
-Parallel: can run with step 6.
+---
 
-6. Add RLS, uniqueness, and idempotency constraints.
-Prevent duplicate completion/attempt writes and enforce user isolation.
-Dependency: steps 3 and 4.
+## 🔹 3.1 Modules (Content Library)
 
-7. Seed catalog from current static roadmap data.
-Backfill module/topic records from existing node details and configs.
-Dependency: steps 3 and 6.
+Each concept contains **level-based content sets**:
 
-8. Implement backend module service.
-Serve module payload for sidebar by module id.
-Dependency: steps 3 and 7.
+- `core` → main learning  
+- `revision` → concept clarity  
+- `practice` → problem-solving  
 
-9. Implement backend roadmap graph service.
-Generate nodes and edges from catalog + user progress + adaptation rules.
-Enforce strict progression: all roadmap nodes remain locked until predecessor module completion criteria are satisfied.
-Dependency: steps 4 and 7.
-Parallel: can run with step 8.
+### Structure:
+```json
+{
+  "module_id": "dns_revision_inter",
+  "concept_id": "dns",
+  "type": "revision",
+  "level": "intermediate",
+  "title": "DNS Simplified",
+  "topics": [...],
+  "resources": [...],
+  "quiz": [...]
+}
+🔹 3.2 Folder Structure (MVP)
+/data
+  /modules
+    dns/
+      /beg
+        dns_core_beg.json
+        dns_revision_beg.json
+        dns_practice_beg.json
+      /inter
+        dns_core_inter.json
+        dns_revision_inter.json
+        dns_practice_inter.json
+      /adv
+        dns_core_adv.json
+        dns_revision_adv.json
+        dns_practice_adv.json
+🔹 3.3 UserProfile
+{
+  "user_id": "123",
+  "goal": "frontend_dev",
+  "selected_level": "intermediate",
+  "time_per_week": 10
+}
+🔹 3.4 UserProgress (CRITICAL)
+{
+  "user_id": "123",
+  "completed_modules": ["internet"],
+  "current_module": "dns",
+  "scores": {
+    "dns": 40
+  },
+  "attempts": {
+    "dns": 3
+  },
+  "time_taken": {
+    "dns": 120
+  },
+  "effective_level": "intermediate"
+}
+📚 4. CONTENT SYSTEM IMPLEMENTATION
+🔹 4.1 Content Types
+Core Module
+Explanation
+Examples
+Basic quiz
+Revision Module
+Simplified explanation
+Analogies / visuals
+Easy quiz
+Practice Module
+Problem sets (easy → medium)
+Guided solutions
+🔹 4.2 Content Fetching
+onNodeClick(moduleId):
+    module = fetchModule(moduleId)
+    openSidebar(module)
+🎨 5. FRONTEND IMPLEMENTATION
+🔹 5.1 Roadmap (Graph Layer)
 
-10. Implement adaptation service (rule engine v1).
-Start with deterministic rules:
-- low score -> weak area
-- repeated failure -> revision/practice insertion
-- sustained high score -> optional skip
-Never replace a blocked node silently; attach visible tagged remediation nodes and gate unlock on remediation completion.
-Dependency: steps 4 and 9.
+Each node:
 
-11. Add backend endpoints.
-Wire routes in server for graph fetch, module fetch, topic completion, and quiz attempt submission.
-Dependency: steps 8, 9, 10.
+{
+  "id": "dns",
+  "data": {
+    "moduleId": "dns_core_inter",
+    "status": "locked/unlocked/completed"
+  }
+}
+🔹 5.2 Sidebar (Learning Layer)
 
-12. Integrate scoring and activity signals.
-Reuse existing score/event and activity patterns to feed adaptation.
-All completion/adaptation calculations must be filtered by current roadmap_id; do not use global stars, total score, or cross-roadmap aggregates.
-Dependency: step 11.
+Displays:
 
-13. Add frontend roadmap API client and hook.
-Fetch graph + user node states with robust loading/error handling.
-Dependency: step 11.
+Topics
+Resources
+Quiz
+🔄 6. USER INTERACTION FLOW
+User selects level
+ → Roadmap generated
+ → User clicks node
+ → Sidebar opens
+ → Learns content
+ → Attempts quiz
+ → Progress saved
+🧠 7. DIAGNOSIS SYSTEM (USER ANALYSIS)
+🔹 Input Signals
+Quiz Score
+Attempts Count
+Time Taken
+🔹 Derived Metric
+time_ratio = time_taken / expected_time
+🔹 Cases + Actions
+🔴 Concept Not Understood
 
-14. Update roadmap flow page to API-first with static fallback.
-If flag off or API fails, preserve current config-based behavior.
-Dependency: step 13.
+Constraints:
 
-15. Update sidebar and quiz write path.
-On module open -> fetch module payload.
-On topic/quiz action -> submit progress update and refresh graph.
-Dependency: steps 11 and 14.
+score < 50
+time_ratio > 1.3
+attempts high
 
-16. Reconcile client state with backend truth.
-Keep optimistic UI, but backend node state is authoritative after refresh.
-Dependency: step 15.
+Action:
 
-17. Run verification gates.
-Schema, auth, idempotency, API contracts, frontend regressions, performance.
-Dependency: steps 11 to 16.
+Add revision module
+if score < 50 AND time_ratio > 1.3 AND attempts > threshold:
+    action = "add_revision_module"
+🟠 Problem-Solving Weakness
 
-18. Rollout by cohorts with rollback switch.
-Internal -> 10% -> 50% -> 100%, stop on error/latency/consistency threshold breaches.
-Dependency: step 17.
+Constraints:
 
-### Mandatory progression and remediation behavior
-1. Initial lock state
-- All roadmap nodes are locked by default.
-- Only the current actionable start node is unlocked for first interaction.
+50 ≤ score ≤ 70
+attempts high
 
-2. Unlock rule
-- A parent node is considered complete only after all required sub-nodes are completed.
-- The next sequential node unlocks only after parent completion criteria are met.
+Action:
 
-3. Stuck/difficulty rule
-- If a user is stuck on a node, do not replace the node invisibly.
-- Keep the original node visible and attach additional remediation nodes.
+Add practice module
+if score >= 50 AND score <= 70 AND attempts > threshold:
+    action = "add_practice_module"
+🟡 Slow Learner
 
-4. Remediation node types and tags
-- Allowed remediation tags: recommended-practice, recommended-assignment, recommended-revision.
-- Remediation nodes must be visually distinguishable and auditable in the graph response.
+Constraints:
 
-5. Unlock gating with remediation
-- When remediationRequired is true, the next primary node remains locked.
-- Unlock is granted only after required remediation nodes are completed.
+score ≥ 70
+time_ratio > 1.5
 
-6. Transparency requirement
-- Graph payload must include unlockReason and remediationReason so users understand why a node is locked or why extra nodes appeared.
+Action:
 
-7. Roadmap-scoped scoring rule
-- Completion and remediation decisions are computed only from the active roadmap's module/topic attempts.
-- Global gamification metrics (stars, overall points, total XP, cross-roadmap scores) are excluded from unlocking and adaptation decisions.
-- Every decision query must be filtered by roadmap_id and module_id context.
+Reduce load
+if score >= 70 AND time_ratio > 1.5:
+    action = "reduce_load"
+🟢 Fast Learner
 
-### Signal tracking and diagnosis engine
-1. Raw signals to track (roadmap-scoped)
-- Performance signals: quiz score, attempts per question, accuracy percentage.
-- Time signals: time spent versus expected, idle time, drop-offs.
-- Interaction signals: re-reading content, skipping topics, clicking hints.
-- Progress signals: completion rate, drop-off points.
+Constraints:
 
-2. Derived diagnosis outputs
-- conceptNotUnderstood
-- cannotApplyConcept
-- slowLearner
-- fastLearner
-- inconsistentLearner
-- disengaged
-- overconfidence
+score ≥ 85
+time_ratio < 0.7
 
-3. Diagnosis engine rules and actions
-- Case 1: Concept not understood.
-	Detection: score < 50%, high time spent, multiple re-reads.
-	Meaning: user is confused, not only weak.
-	Action: add revision module, simplified explanation, and visual/video resources.
+Action:
 
-- Case 2: Cannot solve problems.
-	Detection: score between 50% and 70%, fails application questions, multiple attempts.
-	Meaning: concept known but not applied.
-	Action: add practice module, guided problem-solving, and step-by-step examples.
+Skip basics
+if score >= 85 AND time_ratio < 0.7:
+    action = "skip_basics"
+🔵 Inconsistent Learner
 
-- Case 3: Slow learner.
-	Detection: time taken > 1.5x expected and eventually completes correctly.
-	Meaning: needs more time, not weak.
-	Action: extend timeline, reduce daily load, and add optional reinforcement.
+Constraints:
 
-- Case 4: Fast learner.
-	Detection: score > 85% and time taken < expected.
-	Meaning: user is ahead of roadmap pace.
-	Action: skip only optional basics, add advanced topics and project nodes.
+high variation in scores
 
-- Case 5: Inconsistent learner.
-	Detection: alternating good and poor scores with irregular activity.
-	Meaning: consistency issue.
-	Action: add checkpoint modules, mini assessments, and reminder hooks (future feature).
+Action:
 
-- Case 6: Drop-off or disengagement.
-	Detection: stops mid-module or long inactivity.
-	Meaning: overwhelmed or bored.
-	Action: add quick-win easy nodes, interactive content, and temporary difficulty reduction.
+Add checkpoints
+⚫ Disengaged User
 
-- Case 7: Overconfidence.
-	Detection: skips content and then fails quizzes on skipped areas.
-	Meaning: hidden weakness despite confidence.
-	Action: enforce assessment gates and mandatory quizzes before unlock.
+Constraints:
 
-4. Engine constraints
-- Do not silently replace original nodes; attach remediation nodes with visible tags.
-- Unlock decisions remain roadmap-scoped and node-sequential.
-- Every diagnosis result must include reason fields in graph payload for transparency.
+inactivity high
 
-### Relevant files
-- backend/server.js — Add adaptive roadmap/module/progress endpoints and auth checks.
-- backend/services/userProgressService.js — Extend from aggregate to topic-level compatibility.
-- backend/services/scoreV2Service.js — Reuse attempt idempotency and score summarization.
-- backend/services/surveyService.js — Reuse user profile/time/skill signals.
-- backend/services/userActivityService.js — Reuse pace and activity metrics.
-- backend/mcpServer.js — Reuse roadmap/user context extraction patterns where useful.
-- database/score_v2_phase2_schema.sql — Reference pattern for constraints, RLS, indexes.
-- database/survey_schema.sql — Reference pattern for profile/latest-response semantics.
-- database/activity_tracking_schema.sql — Reference for activity-derived adaptation signals.
-- database/resume_schema.sql — Resume signals for personalization.
-- src/components/roadmap/GenericRoadmapFlowPage.tsx — API-first graph hydration with fallback.
-- src/components/roadmap/NodeDetailSidebar.tsx — Dynamic module payload rendering.
-- src/components/roadmap/QuizModal.tsx — Persisted quiz attempt and completion updates.
-- src/services/quizService.ts — Extend generate path with submit path.
-- src/contexts/GameTestContext.tsx — Transition-state sync during cutover.
-- src/types/roadmapFlow.ts — Extend node/graph contract types.
-- src/data/allNodeDetails.ts — Source for initial catalog seeding.
-- src/data/frontendRoadmapConfig.ts — Keep as fallback until full cutover.
-- src/data/backendRoadmapConfig.ts — Keep as fallback until full cutover.
-- src/data/fullstackMernRoadmapConfig.ts — Keep as fallback until full cutover.
+Action:
 
-### Verification
-1. Schema integrity check: new tables, indexes, constraints, policies created and queryable.
-2. Seed integrity check: expected roadmap/module/topic counts and relationships.
-3. Auth check: user cannot read/write another user’s roadmap progress.
-4. Idempotency check: repeated topic/quiz submissions do not duplicate awards/completions.
-5. API contract check: payload shape matches frozen contract for all new endpoints.
-6. Frontend regression check: static fallback and API path both render correctly.
-7. Consistency check: node states remain correct after reload and cross-device sync.
-8. Performance check: roadmap graph and progress-write latency within thresholds under concurrent load.
-9. Progression check: next node does not unlock until required sub-nodes complete.
-10. Remediation check: stuck-node flow shows tagged additional nodes and does not silently replace the original node.
-11. Scope check: adaptation decisions for one roadmap do not change because of performance in other roadmaps.
+Add easy modules
+🟣 Overconfidence
 
-### Decisions
-- Use Supabase PostgreSQL as primary store (no datastore migration in this scope).
-- Rule-based adaptation first; AI optimization later.
-- Do not store full per-user roadmap JSON blob; derive graph from catalog + user state.
-- Keep static configs as a controlled fallback until rollout completion.
-- Use roadmap-scoped mastery as the only decision input for node completion/unlock/remediation inside that roadmap.
+Constraints:
+
+skipped content + failed
+
+Action:
+
+Add revision
+⚙️ 8. LEVEL-BASED ADAPTATION SYSTEM
+🔹 Step 1: Initial Level Assignment
+User selects level (beg / inter / adv)
+First node uses this level
+initial_module = concept_core[selected_level]
+🔹 Step 2: Effective Level (Dynamic)
+
+System maintains:
+
+effective_level = user.current_level
+🔹 Step 3: Progress-Based Level Adjustment
+Simple Logic:
+if score >= 80 consistently:
+    upgrade level
+
+if score < 50 repeatedly:
+    downgrade level
+
+else:
+    keep same level
+🔹 Step 4: Level Override in Recommendations
+if concept_issue:
+
+    if score < 40:
+        module = revision_beg
+
+    else:
+        module = revision[effective_level]
+
+if practice_issue:
+    module = practice[effective_level]
+⚙️ 9. ROADMAP GENERATION ENGINE
+function generateRoadmap(user):
+
+    base = core modules (based on level)
+
+    remove completed modules
+
+    issue = diagnose(user)
+
+    adjust effective_level
+
+    if issue == "concept_issue":
+        insert revision module (based on level)
+
+    if issue == "practice_issue":
+        insert practice module
+
+    if fast learner:
+        upgrade level and skip modules
+
+    return nodes + edges
+🔹 Example
+
+Before:
+
+Internet → DNS → HTML
+
+After:
+
+Internet → DNS → DNS_Revision_Beg → DNS_Practice_Inter → HTML
+🔁 10. CONTENT + RECOMMENDATION CONNECTION
+User attempts quiz
+   ↓
+System evaluates performance
+   ↓
+Diagnosis identifies issue
+   ↓
+Adjust effective level
+   ↓
+Select module (type + level)
+   ↓
+Insert node in roadmap
+   ↓
+Sidebar loads correct content
+⚡ 11. DYNAMIC ADAPTATION (SIDEBAR LEVEL)
+if user weak:
+    show more examples
+
+if user strong:
+    shorten explanation
+⚠️ 12. DESIGN RULES
+✅ DO:
+Keep modules reusable
+Separate content from roadmap
+Use moduleId linking
+Track user progress
+Allow level fallback
+❌ DON’T:
+Lock user to one level
+Store full roadmap per user
+Duplicate content
+Overuse AI
+🏁 13. IMPLEMENTATION PHASES
+✅ Phase 1 (MVP)
+Create module JSON files (level-based)
+Build static roadmap
+Implement sidebar
+✅ Phase 2
+Add UserProgress tracking
+Connect content dynamically
+✅ Phase 3
+Implement diagnosis engine
+Add dynamic node insertion
+✅ Phase 4
+Add level adaptation
+Optimize UX

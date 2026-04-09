@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -11,6 +11,10 @@ import {
   Brain,
 } from 'lucide-react';
 import { ALL_NODE_DETAILS, type ResourceType } from '../../data/allNodeDetails';
+import type {
+  FrontendRoadmapModule,
+  FrontendModuleResourceType,
+} from '@/types/adaptiveRoadmap';
 import QuizModal from './QuizModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -21,6 +25,8 @@ interface Props {
   sectionId: string | null;
   /** The specific sub-node that was clicked (null = show first sub-node) */
   activeNodeId: string | null;
+  /** Optional adaptive module payload. Falls back to ALL_NODE_DETAILS when absent. */
+  moduleContent?: FrontendRoadmapModule | null;
   onClose: () => void;
   onMarkComplete?: (nodeId: string) => void;
 }
@@ -47,6 +53,18 @@ const TYPE_COLORS: Record<ResourceType, string> = {
   book:        'bg-amber-500/20 text-amber-300 border-amber-500/30',
 };
 
+function normalizeResourceType(type: FrontendModuleResourceType | string): ResourceType {
+  switch (type) {
+    case 'video':
+    case 'interactive':
+    case 'book':
+    case 'article':
+      return type;
+    default:
+      return 'article';
+  }
+}
+
 // ─── Quiz state ───────────────────────────────────────────────────────────────
 
 interface QuizState {
@@ -62,6 +80,7 @@ export default function NodeDetailSidebar({
   open,
   sectionId,
   activeNodeId,
+  moduleContent,
   onClose,
   onMarkComplete,
 }: Props) {
@@ -75,8 +94,34 @@ export default function NodeDetailSidebar({
 
   // ── Look up section data ───────────────────────────────────────────────────
   const sectionData = sectionId ? ALL_NODE_DETAILS[sectionId] : null;
-  const subNodes = sectionData?.subNodes ?? [];
-  const section = sectionData?.section;
+  const dynamicSection = useMemo(() => {
+    if (!moduleContent) return null;
+
+    return {
+      label: moduleContent.title,
+      description: moduleContent.objective,
+    };
+  }, [moduleContent]);
+
+  const dynamicSubNodes = useMemo(() => {
+    if (!moduleContent) return [];
+
+    return [
+      {
+        id: `${moduleContent.module_id}-topics`,
+        label: `${moduleContent.concept_label} (${moduleContent.type} - ${moduleContent.level})`,
+        intro: moduleContent.objective,
+        whatYoullLearn: moduleContent.topics,
+        resources: moduleContent.resources.map((resource) => ({
+          ...resource,
+          type: normalizeResourceType(resource.type),
+        })),
+      },
+    ];
+  }, [moduleContent]);
+
+  const subNodes = moduleContent ? dynamicSubNodes : (sectionData?.subNodes ?? []);
+  const section = moduleContent ? dynamicSection : sectionData?.section;
 
   // ── Auto-expand on open / node change ─────────────────────────────────────
   useEffect(() => {
@@ -312,7 +357,13 @@ export default function NodeDetailSidebar({
                               <div className="h-px w-full bg-white/5 mb-4" />
                               <button
                                 onClick={() =>
-                                  openQuiz(node.label, node.id, node.whatYoullLearn)
+                                  openQuiz(
+                                    node.label,
+                                    moduleContent
+                                      ? (activeNodeId ?? sectionId ?? moduleContent.concept_id)
+                                      : node.id,
+                                    node.whatYoullLearn,
+                                  )
                                 }
                                 className="w-full flex items-center justify-center gap-2.5 py-3 px-4
                                            rounded-xl border border-indigo-500/30

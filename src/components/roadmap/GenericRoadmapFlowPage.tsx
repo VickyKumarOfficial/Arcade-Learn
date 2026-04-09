@@ -47,6 +47,8 @@ import ProjectComments from '@/components/roadmap/ProjectComments';
 import RoadmapDoubtAssistant from '@/components/roadmap/RoadmapDoubtAssistant';
 import { BACKEND_URL } from '@/config/env';
 import { SECTION_NODE_MAP, ALL_NODE_DETAILS } from '@/data/allNodeDetails';
+import { frontendRoadmapModuleService } from '@/services/frontendRoadmapModuleService';
+import type { FrontendRoadmapModule, FrontendSkillLevel } from '@/types/adaptiveRoadmap';
 import type { RoadmapFlowConfig, RoadmapNodeData } from '@/types/roadmapFlow';
 
 interface ProjectComment {
@@ -171,8 +173,16 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   const faqs = config.faqs;
   const careerFeatures = config.careerSupportFeatures ?? [];
   const nodeDetails = config.nodeDetails ?? {};
+  const isAdaptiveFrontendRoadmap = config.roadmapKey === 'frontend';
 
   const IconComponent = Code2;
+
+  const [selectedSkillLevel, setSelectedSkillLevel] = useState<FrontendSkillLevel | null>(
+    isAdaptiveFrontendRoadmap ? null : 'intermediate',
+  );
+  const [pendingSkillLevel, setPendingSkillLevel] = useState<FrontendSkillLevel>('beginner');
+  const [showSkillLevelPrompt, setShowSkillLevelPrompt] = useState(isAdaptiveFrontendRoadmap);
+  const [activeModule, setActiveModule] = useState<FrontendRoadmapModule | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(config.flowNodes);
   const [edges, , onEdgesChange] = useEdgesState(config.flowEdges);
@@ -217,6 +227,59 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     setFlowLazyTargetCutoffY(0);
     setSecondarySectionVisibility({ projects: false, career: false, faq: false });
   }, [config.roadmapKey]);
+
+  useEffect(() => {
+    if (isAdaptiveFrontendRoadmap) {
+      setSelectedSkillLevel(null);
+      setPendingSkillLevel('beginner');
+      setShowSkillLevelPrompt(true);
+      setActiveModule(null);
+      return;
+    }
+
+    setSelectedSkillLevel('intermediate');
+    setShowSkillLevelPrompt(false);
+    setActiveModule(null);
+  }, [config.roadmapKey, isAdaptiveFrontendRoadmap]);
+
+  const activeSkillLevel: FrontendSkillLevel = selectedSkillLevel ?? 'intermediate';
+
+  const confirmSkillLevelSelection = useCallback(() => {
+    const level = pendingSkillLevel;
+
+    setSelectedSkillLevel(level);
+    setShowSkillLevelPrompt(false);
+
+    setNodes((currentNodes) => currentNodes.map((node) => {
+      const module = frontendRoadmapModuleService.getModuleForNode({
+        nodeId: node.id,
+        level,
+        type: 'core',
+      });
+
+      if (!module) return node;
+
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          moduleId: module.module_id,
+          status: node.data.completed ? 'completed' : 'unlocked',
+        },
+      };
+    }));
+
+    const firstMainNodeId = config.mainNodeIds[0];
+    if (firstMainNodeId) {
+      setActiveModule(
+        frontendRoadmapModuleService.getModuleForNode({
+          nodeId: firstMainNodeId,
+          level,
+          type: 'core',
+        }),
+      );
+    }
+  }, [config.mainNodeIds, pendingSkillLevel, setNodes]);
 
   useEffect(() => {
     if (flowLazyCutoffY >= flowLazyTargetCutoffY) return;
@@ -866,14 +929,31 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   const onNodeClick: NodeMouseHandler = useCallback(
     (_evt, node) => {
       if (node.type === 'startNode' || node.type === 'infoCard') return;
+      if (isAdaptiveFrontendRoadmap && showSkillLevelPrompt) return;
 
       const sectionId = SECTION_NODE_MAP[node.id];
       if (sectionId) {
-        setSidebar((prev) =>
-          prev.open && prev.activeNodeId === node.id
-            ? { open: false, sectionId: null, activeNodeId: null }
-            : { open: true, sectionId, activeNodeId: node.id },
-        );
+        const shouldClose = sidebar.open && sidebar.activeNodeId === node.id;
+
+        if (shouldClose) {
+          setSidebar({ open: false, sectionId: null, activeNodeId: null });
+          if (isAdaptiveFrontendRoadmap) {
+            setActiveModule(null);
+          }
+          return;
+        }
+
+        if (isAdaptiveFrontendRoadmap) {
+          const moduleFromNodeData = frontendRoadmapModuleService.getModuleById(node.data.moduleId);
+          const module = moduleFromNodeData ?? frontendRoadmapModuleService.getModuleForNode({
+            nodeId: node.id,
+            level: activeSkillLevel,
+            type: 'core',
+          });
+          setActiveModule(module);
+        }
+
+        setSidebar({ open: true, sectionId, activeNodeId: node.id });
         return;
       }
 
@@ -881,7 +961,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         setSelected((prev) => (prev?.id === node.id ? null : node));
       }
     },
-    [nodeDetails],
+    [activeSkillLevel, isAdaptiveFrontendRoadmap, nodeDetails, showSkillLevelPrompt, sidebar.activeNodeId, sidebar.open],
   );
 
   const completedMain = useMemo(
@@ -981,6 +1061,13 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
           </div>
 
           <div className="ml-auto flex items-center gap-4">
+            {isAdaptiveFrontendRoadmap && selectedSkillLevel && (
+              <div className="hidden md:flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1">
+                <span className="text-[10px] uppercase tracking-wide text-blue-300">Level</span>
+                <span className="text-xs font-semibold text-blue-100 capitalize">{selectedSkillLevel}</span>
+              </div>
+            )}
+
             <div className="flex flex-col items-end gap-0.5">
               <div className="flex items-center gap-1.5">
                 <CheckSquare size={13} className="text-emerald-400" />
@@ -1852,6 +1939,55 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         />
       )}
 
+      {isAdaptiveFrontendRoadmap && showSkillLevelPrompt && (
+        <div className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-[#1a1740] to-slate-900 p-6 shadow-2xl">
+            <p className="text-xs uppercase tracking-widest text-blue-300 mb-2">Frontend roadmap setup</p>
+            <h2 className="text-2xl font-bold text-white mb-2">What is your current skill status?</h2>
+            <p className="text-sm text-zinc-400 mb-5">
+              Choose your current level. The roadmap will treat your first module accordingly and use this as baseline.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+              {([
+                { key: 'beginner', title: 'Beginner', note: 'Starting from basics' },
+                { key: 'intermediate', title: 'Intermediate', note: 'Comfortable with fundamentals' },
+                { key: 'advanced', title: 'Advanced', note: 'Ready for faster pace' },
+              ] as const).map((option) => {
+                const selected = pendingSkillLevel === option.key;
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setPendingSkillLevel(option.key)}
+                    className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                      selected
+                        ? 'border-blue-400/70 bg-blue-500/20'
+                        : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <p className={`text-sm font-semibold ${selected ? 'text-blue-100' : 'text-white'}`}>
+                      {option.title}
+                    </p>
+                    <p className="text-xs text-zinc-400 mt-1">{option.note}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={confirmSkillLevelSelection}
+                className="bg-blue-600 hover:bg-blue-500 text-white"
+              >
+                Start with {pendingSkillLevel}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
 
       {modules.privacyWarning && (
@@ -1867,11 +2003,17 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         open={sidebar.open}
         sectionId={sidebar.sectionId}
         activeNodeId={sidebar.activeNodeId}
-        onClose={() => setSidebar({ open: false, sectionId: null, activeNodeId: null })}
+        moduleContent={isAdaptiveFrontendRoadmap ? activeModule : null}
+        onClose={() => {
+          setSidebar({ open: false, sectionId: null, activeNodeId: null });
+          if (isAdaptiveFrontendRoadmap) {
+            setActiveModule(null);
+          }
+        }}
         onMarkComplete={(nodeId) =>
           setNodes((nds) => {
             const updated = nds.map((n) =>
-              n.id === nodeId ? { ...n, data: { ...n.data, completed: true } } : n,
+              n.id === nodeId ? { ...n, data: { ...n.data, completed: true, status: 'completed' as const } } : n,
             );
 
             const sectionId = SECTION_NODE_MAP[nodeId];
@@ -1884,7 +2026,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
                 );
                 if (allDone) {
                   return updated.map((n) =>
-                    n.id === sectionId ? { ...n, data: { ...n.data, completed: true } } : n,
+                    n.id === sectionId ? { ...n, data: { ...n.data, completed: true, status: 'completed' as const } } : n,
                   );
                 }
               }
