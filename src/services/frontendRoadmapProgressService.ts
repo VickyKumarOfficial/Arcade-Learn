@@ -4,6 +4,10 @@ import type {
   FrontendRoadmapUserProgress,
   FrontendSkillLevel,
 } from '@/types/adaptiveRoadmap';
+import {
+  diagnoseFrontendLearningSignal,
+  shiftSkillLevel,
+} from '@/services/frontendRoadmapDiagnosisService';
 
 const STORAGE_PREFIX = 'arcadelearn_frontend_roadmap_progress_v1';
 const DEFAULT_MODULE_TYPE: FrontendModuleType = 'core';
@@ -85,6 +89,7 @@ interface FrontendProgressLoadParams extends FrontendProgressIdentity {
 interface FrontendQuizAttemptParams {
   conceptId: string;
   result: FrontendQuizEvaluationResult;
+  expectedTimeMinutes?: number;
 }
 
 interface FrontendCompletionParams {
@@ -192,25 +197,31 @@ class FrontendRoadmapProgressService {
     progress: FrontendRoadmapUserProgress,
     params: FrontendQuizAttemptParams,
   ): FrontendRoadmapUserProgress {
-    const { conceptId, result } = params;
+    const { conceptId, result, expectedTimeMinutes } = params;
     const safeConceptId = conceptId.trim();
 
     if (!safeConceptId) return progress;
 
     const nextAttempts = (progress.attempts[safeConceptId] ?? 0) + 1;
     const nextScore = clampPercentage(result.scorePercentage);
+    const previousScore = progress.scores[safeConceptId];
     const nextTimeTaken =
       (progress.time_taken[safeConceptId] ?? 0) + normalizeDurationSeconds(result.durationSeconds);
 
-    let recommendedModuleType: FrontendModuleType = DEFAULT_MODULE_TYPE;
-    if (nextScore < 50) {
-      recommendedModuleType = 'revision';
-    } else if (nextScore <= 70) {
-      recommendedModuleType = 'practice';
-    }
+    const diagnosis = diagnoseFrontendLearningSignal({
+      scorePercentage: nextScore,
+      attempts: nextAttempts,
+      totalTimeSeconds: nextTimeTaken,
+      expectedTimeMinutes,
+      previousScorePercentage: previousScore,
+    });
+
+    const nextEffectiveLevel = shiftSkillLevel(progress.effective_level, diagnosis.levelDelta);
+    const recommendedModuleType: FrontendModuleType = diagnosis.recommendedModuleType ?? DEFAULT_MODULE_TYPE;
 
     return {
       ...progress,
+      effective_level: nextEffectiveLevel,
       scores: {
         ...progress.scores,
         [safeConceptId]: nextScore,
