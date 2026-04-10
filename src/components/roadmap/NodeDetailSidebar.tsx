@@ -250,12 +250,14 @@ export default function NodeDetailSidebar({
                   onClick={() =>
                     openQuiz({
                       topic: `${section.label} - Main Component Test`,
-                      nodeId: sectionId ?? moduleContent?.concept_id ?? activeNodeId ?? '',
+                      nodeId: shouldUseModuleContent
+                        ? (activeNodeId ?? moduleContent?.module_id ?? moduleContent?.concept_id ?? '')
+                        : (sectionId ?? moduleContent?.concept_id ?? activeNodeId ?? ''),
                       context: mainQuizContext,
                       mode: 'main',
                       questionCount: 12,
                       persistResult: true,
-                      completionScope: 'module',
+                      completionScope: shouldUseModuleContent ? 'node' : 'module',
                       passScorePercentage: 80,
                     })
                   }

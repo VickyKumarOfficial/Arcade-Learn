@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { CheckCircle2 } from 'lucide-react';
-import { RoadmapNodeData } from '@/data/frontendRoadmapFlow';
+import type { RoadmapNodeData } from '@/types/roadmapFlow';
 import { Tooltip } from '@/components/ui/tooltip-card';
 
 const SUBNODE_FADE_CLASS = import.meta.env.PROD ? 'roadmap-subnode-fade' : '';
@@ -156,6 +156,7 @@ StartNode.displayName = 'StartNode';
 // ─────────────────────────────────────────────────────────────────────────────
 export const MainNode = memo(({ data }: NodeProps<RoadmapNodeData>) => {
   const isRecommendedAddon = data.recommendedAddon === true && data.completed !== true;
+  const isLocked = data.status === 'locked' && data.completed !== true;
   const recommendedStyle =
     data.recommendationType === 'practice'
       ? 'bg-violet-200 border-violet-500 text-violet-950 dark:bg-violet-900/35 dark:border-violet-500 dark:text-violet-100'
@@ -165,7 +166,8 @@ export const MainNode = memo(({ data }: NodeProps<RoadmapNodeData>) => {
     <div
       className={`
         relative px-4 py-2.5 rounded-md border-2 w-[200px] text-center font-semibold text-sm
-        shadow-sm cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5
+        shadow-sm transition-all
+        ${isLocked ? 'opacity-45 saturate-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md hover:-translate-y-0.5'}
         ${
           data.completed
             ? 'bg-green-100 border-green-400 text-green-900 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300'
@@ -216,7 +218,8 @@ export const BranchNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
       relative ${SUBNODE_FADE_CLASS} px-3 py-2 rounded-md border min-w-[190px] text-center text-xs font-medium
-      shadow-sm cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5
+      shadow-sm transition-all
+      ${data.status === 'locked' && data.completed !== true ? 'opacity-45 saturate-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md hover:-translate-y-0.5'}
       ${
         data.completed
           ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-900/20 dark:border-green-600 dark:text-green-300'
@@ -242,7 +245,8 @@ export const LeftBranchNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
       relative ${SUBNODE_FADE_CLASS} px-3 py-2 rounded-md border min-w-[190px] text-center text-xs font-medium
-      shadow-sm cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5
+      shadow-sm transition-all
+      ${data.status === 'locked' && data.completed !== true ? 'opacity-45 saturate-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md hover:-translate-y-0.5'}
       ${
         data.completed
           ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-900/20 dark:border-green-600 dark:text-green-300'
@@ -268,7 +272,8 @@ export const OptionNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
   <div
     className={`
       relative ${SUBNODE_FADE_CLASS} px-3 py-1.5 rounded-full border text-center text-xs font-semibold
-      shadow-sm cursor-pointer transition-all hover:shadow-md
+      shadow-sm transition-all
+      ${data.status === 'locked' && data.completed !== true ? 'opacity-45 saturate-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md'}
       ${
         data.completed
           ? 'bg-green-50 border-green-400 text-green-700 dark:bg-green-900/20 dark:border-green-500 dark:text-green-300'

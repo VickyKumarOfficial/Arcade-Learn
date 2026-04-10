@@ -5,6 +5,7 @@ export type RoadmapNodeData = {
   completed?: boolean;
   description?: string;
   optional?: boolean;
+  status?: 'locked' | 'unlocked' | 'completed';
   recommendedAddon?: boolean;
   recommendationType?: 'revision' | 'practice';
 };

@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/sonner';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -417,19 +418,23 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
             };
           });
 
-          const adaptiveNodes: Node<RoadmapNodeData>[] = insertionSpecs.map((spec) => ({
-            id: spec.adaptiveNodeId,
-            type: 'mainNode',
-            position: spec.position,
-            data: {
-              label: `${spec.module.concept_label} (${spec.module.type})`,
-              completed: false,
-              moduleId: spec.module.module_id,
-              status: 'unlocked' as const,
-              recommendedAddon: true,
-              recommendationType: spec.module.type === 'practice' ? 'practice' : 'revision',
-            },
-          }));
+          const adaptiveNodes: Node<RoadmapNodeData>[] = insertionSpecs.map((spec) => {
+            const isAdaptiveCompleted = completedNodes.has(spec.adaptiveNodeId);
+
+            return {
+              id: spec.adaptiveNodeId,
+              type: 'mainNode',
+              position: spec.position,
+              data: {
+                label: `${spec.module.concept_label} (${spec.module.type})`,
+                completed: isAdaptiveCompleted,
+                moduleId: spec.module.module_id,
+                status: isAdaptiveCompleted ? 'completed' as const : 'unlocked' as const,
+                recommendedAddon: true,
+                recommendationType: spec.module.type === 'practice' ? 'practice' : 'revision',
+              },
+            };
+          });
 
           return [...updatedStaticNodes, ...adaptiveNodes];
         }
@@ -1005,6 +1010,53 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     return completedIds;
   }, [nodes]);
 
+  const currentAttemptSectionId = useMemo(() => {
+    if (!isAdaptiveFrontendRoadmap || showSkillLevelPrompt) {
+      return null;
+    }
+
+    for (const sectionId of config.mainNodeIds) {
+      const coreCompleted = completedNodeIds.has(sectionId);
+      const adaptiveNodesForSection = nodes.filter(
+        (node) => getAdaptiveSourceNodeId(node.id) === sectionId,
+      );
+      const adaptiveCompleted = adaptiveNodesForSection.every((node) => node.data.completed === true);
+
+      if (!(coreCompleted && adaptiveCompleted)) {
+        return sectionId;
+      }
+    }
+
+    return null;
+  }, [config.mainNodeIds, completedNodeIds, isAdaptiveFrontendRoadmap, nodes, showSkillLevelPrompt]);
+
+  const lockedNodeIds = useMemo(() => {
+    const lockedIds = new Set<string>();
+
+    if (!currentAttemptSectionId) {
+      return lockedIds;
+    }
+
+    for (const node of nodes) {
+      if (node.type === 'startNode' || node.type === 'infoCard') {
+        continue;
+      }
+
+      if (node.data.completed) {
+        continue;
+      }
+
+      const adaptiveSectionId = getAdaptiveSourceNodeId(node.id);
+      const sectionId = SECTION_NODE_MAP[node.id] ?? adaptiveSectionId;
+
+      if (sectionId && sectionId !== currentAttemptSectionId) {
+        lockedIds.add(node.id);
+      }
+    }
+
+    return lockedIds;
+  }, [currentAttemptSectionId, nodes]);
+
   const alwaysVisibleNodeIds = useMemo(() => {
     const ids = new Set<string>([...config.mainNodeIds, ...config.mainSectionIds]);
 
@@ -1034,16 +1086,33 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     const useCollapseVisibility = sectionCollapseEnabled && collapsedSections.size > 0;
 
     return nodes.map((node) => {
-      const sectionId = SECTION_NODE_MAP[node.id];
+      const adaptiveSectionId = getAdaptiveSourceNodeId(node.id);
+      const sectionId = SECTION_NODE_MAP[node.id] ?? adaptiveSectionId;
       const hiddenByCollapse = useCollapseVisibility && Boolean(sectionId) && sectionId !== node.id
         ? collapsedSections.has(sectionId)
         : false;
       const hiddenByLazy = lazyHiddenNodeIds.has(node.id);
       const shouldHide = hiddenByCollapse || hiddenByLazy;
 
-      return node.hidden === shouldHide ? node : { ...node, hidden: shouldHide };
+      const shouldApplyAttemptLock = Boolean(sectionId) && currentAttemptSectionId !== null;
+      const nextStatus = shouldApplyAttemptLock
+        ? (node.data.completed ? 'completed' : lockedNodeIds.has(node.id) ? 'locked' : 'unlocked')
+        : node.data.status;
+      const statusChanged = nextStatus !== node.data.status;
+
+      if (node.hidden === shouldHide && !statusChanged) {
+        return node;
+      }
+
+      return {
+        ...node,
+        hidden: shouldHide,
+        data: statusChanged
+          ? { ...node.data, status: nextStatus }
+          : node.data,
+      };
     });
-  }, [nodes, sectionCollapseEnabled, collapsedSections, lazyHiddenNodeIds]);
+  }, [nodes, sectionCollapseEnabled, collapsedSections, lazyHiddenNodeIds, currentAttemptSectionId, lockedNodeIds]);
 
   const hiddenNodeIds = useMemo(() => {
     const hiddenIds = new Set<string>();
@@ -1182,11 +1251,24 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       if (node.type === 'startNode' || node.type === 'infoCard') return;
       if (isAdaptiveFrontendRoadmap && showSkillLevelPrompt) return;
 
+      if (isAdaptiveFrontendRoadmap && lockedNodeIds.has(node.id)) {
+        const unlockedTopicLabel = currentAttemptSectionId
+          ? (nodeLabelById.get(currentAttemptSectionId) ?? currentAttemptSectionId)
+          : 'the current topic';
+
+        toast.info('Topic locked', {
+          id: 'roadmap-topic-locked',
+          description: `Complete ${unlockedTopicLabel} first. You can attempt one topic at a time.`,
+        });
+        return;
+      }
+
       const adaptiveSectionId = getAdaptiveSourceNodeId(node.id);
       const sectionId = SECTION_NODE_MAP[node.id] ?? adaptiveSectionId;
       if (sectionId) {
         const clickedRecommendedNode = Boolean(adaptiveSectionId);
-        const activeNodeKey = adaptiveSectionId ?? node.id;
+        const activeNodeKey = node.id;
+        const moduleLookupNodeId = adaptiveSectionId ?? node.id;
         const shouldClose = sidebar.open && sidebar.activeNodeId === activeNodeKey;
 
         if (shouldClose) {
@@ -1201,7 +1283,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         if (isAdaptiveFrontendRoadmap) {
           const moduleFromNodeData = frontendRoadmapModuleService.getModuleById(node.data.moduleId);
           const module = moduleFromNodeData ?? resolveAdaptiveModule({
-            nodeId: activeNodeKey,
+            nodeId: moduleLookupNodeId,
             level: activeSkillLevel,
             progress: frontendProgress,
           });
@@ -1222,6 +1304,9 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       frontendProgress,
       isAdaptiveFrontendRoadmap,
       nodeDetails,
+      currentAttemptSectionId,
+      lockedNodeIds,
+      nodeLabelById,
       resolveAdaptiveModule,
       showSkillLevelPrompt,
       sidebar.activeNodeId,
@@ -1336,11 +1421,21 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   const handleNodeMarkComplete = useCallback(
     (nodeId: string, options?: { scope?: 'node' | 'module' }) => {
       const scope = options?.scope ?? 'node';
-      const conceptId = SECTION_NODE_MAP[nodeId] ?? nodeId;
-      const sectionData = ALL_NODE_DETAILS[conceptId];
+      const adaptiveSourceNodeId = getAdaptiveSourceNodeId(nodeId);
+      const isAdaptiveAddonNode = Boolean(adaptiveSourceNodeId);
+      const conceptId = SECTION_NODE_MAP[nodeId] ?? adaptiveSourceNodeId ?? nodeId;
+      const sectionData = isAdaptiveAddonNode ? null : ALL_NODE_DETAILS[conceptId];
 
       setNodes((nds) => {
         if (scope === 'module') {
+          if (isAdaptiveAddonNode) {
+            return nds.map((node) =>
+              node.id === nodeId
+                ? { ...node, data: { ...node.data, completed: true, status: 'completed' as const } }
+                : node,
+            );
+          }
+
           const idsToComplete = new Set<string>([conceptId, nodeId]);
           sectionData?.subNodes.forEach((subNode) => idsToComplete.add(subNode.id));
 
@@ -1379,6 +1474,13 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       let nextProgress = frontendProgress;
 
       if (scope === 'module') {
+        if (isAdaptiveAddonNode) {
+          nextProgress = frontendRoadmapProgressService.markNodeCompleted(nextProgress, {
+            nodeId,
+            conceptId,
+            markModuleCompleted: false,
+          });
+        } else {
         const nodeIdsToRecord = [conceptId, ...(sectionData?.subNodes.map((subNode) => subNode.id) ?? [])];
         nodeIdsToRecord.forEach((id) => {
           nextProgress = frontendRoadmapProgressService.markNodeCompleted(nextProgress, {
@@ -1387,24 +1489,33 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
             markModuleCompleted: true,
           });
         });
+        }
       } else {
-        const markModuleCompleted =
-          conceptId === nodeId
-            ? true
-            : Boolean(
-                sectionData &&
-                sectionData.subNodes.every(
-                  (subNode) =>
-                    subNode.id === nodeId ||
-                    nodes.find((existingNode) => existingNode.id === subNode.id)?.data?.completed === true,
-                ),
-              );
+        if (isAdaptiveAddonNode) {
+          nextProgress = frontendRoadmapProgressService.markNodeCompleted(nextProgress, {
+            nodeId,
+            conceptId,
+            markModuleCompleted: false,
+          });
+        } else {
+          const markModuleCompleted =
+            conceptId === nodeId
+              ? true
+              : Boolean(
+                  sectionData &&
+                  sectionData.subNodes.every(
+                    (subNode) =>
+                      subNode.id === nodeId ||
+                      nodes.find((existingNode) => existingNode.id === subNode.id)?.data?.completed === true,
+                  ),
+                );
 
-        nextProgress = frontendRoadmapProgressService.markNodeCompleted(nextProgress, {
-          nodeId,
-          conceptId,
-          markModuleCompleted,
-        });
+          nextProgress = frontendRoadmapProgressService.markNodeCompleted(nextProgress, {
+            nodeId,
+            conceptId,
+            markModuleCompleted,
+          });
+        }
       }
 
       setFrontendProgress(nextProgress);
@@ -1546,6 +1657,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
               </div>
             )}
 
+            {/* Dev-only: manual recommendation popup trigger temporarily disabled.
             {isAdaptiveFrontendRoadmap && (
               <button
                 type="button"
@@ -1556,6 +1668,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
                 <Zap size={12} /> Preview Guide
               </button>
             )}
+            */}
 
             <div className="flex flex-col items-end gap-0.5">
               <div className="flex items-center gap-1.5">
