@@ -26,8 +26,10 @@ interface Props {
   sectionId: string | null;
   /** The specific sub-node that was clicked (null = show first sub-node) */
   activeNodeId: string | null;
-  /** Optional adaptive module payload. Falls back to ALL_NODE_DETAILS when absent. */
+  /** Optional adaptive module payload used for recommendation add-on nodes. */
   moduleContent?: FrontendRoadmapModule | null;
+  /** When true, prefer moduleContent over static ALL_NODE_DETAILS content. */
+  preferModuleContent?: boolean;
   onClose: () => void;
   onMarkComplete?: (nodeId: string, options?: { scope?: 'node' | 'module' }) => void;
   onQuizEvaluated?: (result: FrontendQuizEvaluationResult) => void;
@@ -88,6 +90,7 @@ export default function NodeDetailSidebar({
   sectionId,
   activeNodeId,
   moduleContent,
+  preferModuleContent = false,
   onClose,
   onMarkComplete,
   onQuizEvaluated,
@@ -133,8 +136,9 @@ export default function NodeDetailSidebar({
     ];
   }, [moduleContent]);
 
-  const subNodes = sectionData?.subNodes ?? dynamicSubNodes;
-  const section = sectionData?.section ?? dynamicSection;
+  const shouldUseModuleContent = Boolean(moduleContent) && preferModuleContent;
+  const subNodes = shouldUseModuleContent ? dynamicSubNodes : (sectionData?.subNodes ?? dynamicSubNodes);
+  const section = shouldUseModuleContent ? dynamicSection : (sectionData?.section ?? dynamicSection);
   const mainQuizContext = useMemo(() => {
     const flattened = subNodes.flatMap((node) => node.whatYoullLearn ?? []);
     return Array.from(new Set(flattened.map((point) => point.trim()).filter(Boolean)));

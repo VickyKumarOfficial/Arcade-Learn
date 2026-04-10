@@ -383,7 +383,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
             module,
             position: {
               x: sourceNode.position.x,
-              y: sourceNode.position.y + ((targetNode.position.y - sourceNode.position.y) / 2) - 18,
+              y: sourceNode.position.y + ((targetNode.position.y - sourceNode.position.y) / 2) + 6,
             },
           };
         })
@@ -426,6 +426,8 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
               completed: false,
               moduleId: spec.module.module_id,
               status: 'unlocked' as const,
+              recommendedAddon: true,
+              recommendationType: spec.module.type === 'practice' ? 'practice' : 'revision',
             },
           }));
 
@@ -796,6 +798,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   const [showLegend, setShowLegend] = useState(true);
   const [adaptiveCoachMessage, setAdaptiveCoachMessage] = useState<AdaptiveRecommendationCoachState | null>(null);
   const [adaptiveCoachShowReason, setAdaptiveCoachShowReason] = useState(false);
+  const [sidebarUsesRecommendedModuleContent, setSidebarUsesRecommendedModuleContent] = useState(false);
   const [sidebar, setSidebar] = useState<{ open: boolean; sectionId: string | null; activeNodeId: string | null }>({
     open: false,
     sectionId: null,
@@ -1182,11 +1185,13 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       const adaptiveSectionId = getAdaptiveSourceNodeId(node.id);
       const sectionId = SECTION_NODE_MAP[node.id] ?? adaptiveSectionId;
       if (sectionId) {
+        const clickedRecommendedNode = Boolean(adaptiveSectionId);
         const activeNodeKey = adaptiveSectionId ?? node.id;
         const shouldClose = sidebar.open && sidebar.activeNodeId === activeNodeKey;
 
         if (shouldClose) {
           setSidebar({ open: false, sectionId: null, activeNodeId: null });
+          setSidebarUsesRecommendedModuleContent(false);
           if (isAdaptiveFrontendRoadmap) {
             setActiveModule(null);
           }
@@ -1203,6 +1208,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
           setActiveModule(module);
         }
 
+        setSidebarUsesRecommendedModuleContent(clickedRecommendedNode);
         setSidebar({ open: true, sectionId, activeNodeId: activeNodeKey });
         return;
       }
@@ -2396,6 +2402,12 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
             <span className="text-[11px] text-zinc-300">Core topic</span>
           </div>
           <div className="flex items-center gap-2">
+            <span className="relative w-4 h-4 rounded-sm bg-sky-300 border border-sky-500 shrink-0">
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-sky-600 border border-white/70" />
+            </span>
+            <span className="text-[11px] text-zinc-300">Recommended add-on</span>
+          </div>
+          <div className="flex items-center gap-2">
             <span
               className="w-4 h-4 rounded-sm"
               style={{ background: 'rgba(120,53,15,0.6)', border: '1px solid #f59e0b' }}
@@ -2565,9 +2577,11 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         sectionId={sidebar.sectionId}
         activeNodeId={sidebar.activeNodeId}
         moduleContent={isAdaptiveFrontendRoadmap ? activeModule : null}
+        preferModuleContent={isAdaptiveFrontendRoadmap && sidebarUsesRecommendedModuleContent}
         onQuizEvaluated={isAdaptiveFrontendRoadmap ? handleAdaptiveQuizEvaluated : undefined}
         onClose={() => {
           setSidebar({ open: false, sectionId: null, activeNodeId: null });
+          setSidebarUsesRecommendedModuleContent(false);
           if (isAdaptiveFrontendRoadmap) {
             setActiveModule(null);
           }

@@ -8,6 +8,8 @@ export type RoadmapNodeData = {
   optional?: boolean;
   moduleId?: string;
   status?: 'locked' | 'unlocked' | 'completed';
+  recommendedAddon?: boolean;
+  recommendationType?: 'revision' | 'practice';
 };
 
 export interface RoadmapNodeResource {

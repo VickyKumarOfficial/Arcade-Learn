@@ -154,40 +154,58 @@ StartNode.displayName = 'StartNode';
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN NODE  – solid yellow, bold – central learning path
 // ─────────────────────────────────────────────────────────────────────────────
-export const MainNode = memo(({ data }: NodeProps<RoadmapNodeData>) => (
-  <div
-    className={`
-      relative px-4 py-2.5 rounded-md border-2 w-[200px] text-center font-semibold text-sm
-      shadow-sm cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5
-      ${
-        data.completed
-          ? 'bg-green-100 border-green-400 text-green-900 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300'
-          : 'bg-yellow-300 border-yellow-500 text-gray-900 dark:bg-yellow-400 dark:border-yellow-600'
-      }
-    `}
-  >
-    {/* Handles – all four sides */}
-    <H type="target" pos={Position.Top} />
-    <H type="source" pos={Position.Bottom} />
-    {/* Right handles – 5 spread positions */}
-    <H type="source" pos={Position.Right} id="r1" top="10%" />
-    <H type="source" pos={Position.Right} id="r2" top="28%" />
-    <H type="source" pos={Position.Right} id="right" top="50%" />
-    <H type="source" pos={Position.Right} id="r4" top="72%" />
-    <H type="source" pos={Position.Right} id="r5" top="90%" />
-    {/* Left handles – 5 spread positions */}
-    <H type="source" pos={Position.Left} id="l1" top="10%" />
-    <H type="source" pos={Position.Left} id="l2" top="28%" />
-    <H type="source" pos={Position.Left} id="left" top="50%" />
-    <H type="source" pos={Position.Left} id="l4" top="72%" />
-    <H type="source" pos={Position.Left} id="l5" top="90%" />
+export const MainNode = memo(({ data }: NodeProps<RoadmapNodeData>) => {
+  const isRecommendedAddon = data.recommendedAddon === true && data.completed !== true;
+  const recommendedStyle =
+    data.recommendationType === 'practice'
+      ? 'bg-violet-200 border-violet-500 text-violet-950 dark:bg-violet-900/35 dark:border-violet-500 dark:text-violet-100'
+      : 'bg-sky-200 border-sky-500 text-sky-950 dark:bg-sky-900/35 dark:border-sky-500 dark:text-sky-100';
 
-    {data.completed && <CompletedBadge />}
-    <Tooltip content={TOOLTIP_MAP[data.label] ?? data.label} containerClassName="cursor-pointer">
-      <span>{data.label}</span>
-    </Tooltip>
-  </div>
-));
+  return (
+    <div
+      className={`
+        relative px-4 py-2.5 rounded-md border-2 w-[200px] text-center font-semibold text-sm
+        shadow-sm cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5
+        ${
+          data.completed
+            ? 'bg-green-100 border-green-400 text-green-900 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300'
+            : isRecommendedAddon
+              ? recommendedStyle
+              : 'bg-yellow-300 border-yellow-500 text-gray-900 dark:bg-yellow-400 dark:border-yellow-600'
+        }
+      `}
+    >
+      {/* Handles – all four sides */}
+      <H type="target" pos={Position.Top} />
+      <H type="source" pos={Position.Bottom} />
+      {/* Right handles – 5 spread positions */}
+      <H type="source" pos={Position.Right} id="r1" top="10%" />
+      <H type="source" pos={Position.Right} id="r2" top="28%" />
+      <H type="source" pos={Position.Right} id="right" top="50%" />
+      <H type="source" pos={Position.Right} id="r4" top="72%" />
+      <H type="source" pos={Position.Right} id="r5" top="90%" />
+      {/* Left handles – 5 spread positions */}
+      <H type="source" pos={Position.Left} id="l1" top="10%" />
+      <H type="source" pos={Position.Left} id="l2" top="28%" />
+      <H type="source" pos={Position.Left} id="left" top="50%" />
+      <H type="source" pos={Position.Left} id="l4" top="72%" />
+      <H type="source" pos={Position.Left} id="l5" top="90%" />
+
+      {isRecommendedAddon && (
+        <span
+          className="pointer-events-none absolute z-10 inline-flex whitespace-nowrap rounded-full border border-white/55 bg-sky-600 px-1.5 py-[1px] text-[10px] font-bold uppercase leading-none tracking-[0.04em] text-white shadow"
+          style={{ top: -10, right: -50, left: 'auto' }}
+        >
+          Recommended
+        </span>
+      )}
+      {data.completed && <CompletedBadge />}
+      <Tooltip content={TOOLTIP_MAP[data.label] ?? data.label} containerClassName="cursor-pointer">
+        <span>{data.label}</span>
+      </Tooltip>
+    </div>
+  );
+});
 
 MainNode.displayName = 'MainNode';
 
