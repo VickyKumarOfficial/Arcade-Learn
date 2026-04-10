@@ -35,7 +35,7 @@ import {
   DollarSign,
   Heart,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,9 +48,11 @@ import ProjectComments from '@/components/roadmap/ProjectComments';
 import RoadmapDoubtAssistant from '@/components/roadmap/RoadmapDoubtAssistant';
 import { BACKEND_URL } from '@/config/env';
 import { SECTION_NODE_MAP, ALL_NODE_DETAILS } from '@/data/allNodeDetails';
+import { diagnoseFrontendLearningSignal } from '@/services/frontendRoadmapDiagnosisService';
 import { frontendRoadmapModuleService } from '@/services/frontendRoadmapModuleService';
 import { frontendRoadmapProgressService } from '@/services/frontendRoadmapProgressService';
 import type {
+  FrontendModuleType,
   FrontendQuizEvaluationResult,
   FrontendRoadmapModule,
   FrontendRoadmapUserProgress,
@@ -99,18 +101,69 @@ interface JobMatch {
   savedCount?: number;
 }
 
+interface AdaptiveRecommendationCoachState {
+  id: number;
+  conceptId: string;
+  conceptLabel: string;
+  recommendationType: Exclude<FrontendModuleType, 'core'>;
+  reason: string;
+  scorePercentage: number;
+  correctAnswers: number;
+  totalQuestions: number;
+}
+
 interface GenericRoadmapFlowPageProps {
   config: RoadmapFlowConfig;
 }
 
 const ADAPTIVE_NODE_PREFIX = 'adaptive-node-';
 const ADAPTIVE_EDGE_PREFIX = 'adaptive-edge-';
+const ADAPTIVE_GUIDE_AVATAR_URL = 'https://media.giphy.com/media/ZVik7pBtu9dNS/giphy.gif';
 
 const getAdaptiveSourceNodeId = (nodeId: string): string | null => (
   nodeId.startsWith(ADAPTIVE_NODE_PREFIX)
     ? nodeId.slice(ADAPTIVE_NODE_PREFIX.length)
     : null
 );
+
+function getAdaptiveRecommendationSummary(message: AdaptiveRecommendationCoachState): string {
+  if (message.recommendationType === 'revision') {
+    return `I added ${message.conceptLabel} revision to rebuild your fundamentals before the next step.`;
+  }
+
+  return `I added ${message.conceptLabel} practice so you can reinforce this concept with extra hands-on work.`;
+}
+
+function AdaptiveGuideAvatar({ reduceMotion }: { reduceMotion: boolean }): JSX.Element {
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  return (
+    // <motion.div
+    //   animate={reduceMotion ? undefined : { y: [0, -4, 0] }}
+    //   transition={reduceMotion ? undefined : { duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+    //   className="shrink-0"
+    //   aria-hidden="true"
+    // >
+      <div className="h-[74px] w-[74px] rounded-full border border-cyan-300/35 bg-[#0b1223] p-1.5 shadow-[0_8px_20px_rgba(8,145,178,0.22)]">
+        {imageLoadFailed ? (
+          <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-2xl">
+            <span>🙂</span>
+          </div>
+        ) : (
+          <img
+            src={ADAPTIVE_GUIDE_AVATAR_URL}
+            alt=""
+            className="h-full w-full rounded-full object-cover"
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={() => setImageLoadFailed(true)}
+          />
+        )}
+      </div>
+    // </motion.div>
+  );
+}
 
 function formatIndianLakhSalary(salary?: string | null): string {
   if (!salary) return 'Salary not disclosed';
@@ -156,6 +209,7 @@ const LIKE_POP_PARTICLES = [
 export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPageProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
 
   const canvasWidth = config.canvasWidth ?? 1040;
   const canvasHeight = config.canvasHeight ?? 2700;
@@ -740,6 +794,8 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   }, [selectedProjectSubmission]);
 
   const [showLegend, setShowLegend] = useState(true);
+  const [adaptiveCoachMessage, setAdaptiveCoachMessage] = useState<AdaptiveRecommendationCoachState | null>(null);
+  const [adaptiveCoachShowReason, setAdaptiveCoachShowReason] = useState(false);
   const [sidebar, setSidebar] = useState<{ open: boolean; sectionId: string | null; activeNodeId: string | null }>({
     open: false,
     sectionId: null,
@@ -1104,6 +1160,17 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     return () => clearTimeout(timer);
   }, [likeBurst]);
 
+  useEffect(() => {
+    if (!adaptiveCoachMessage || adaptiveCoachShowReason) return;
+
+    const timer = window.setTimeout(() => {
+      setAdaptiveCoachMessage(null);
+      setAdaptiveCoachShowReason(false);
+    }, 9000);
+
+    return () => window.clearTimeout(timer);
+  }, [adaptiveCoachMessage, adaptiveCoachShowReason]);
+
   const toggleFaq = (id: string) =>
     setOpenFaqs((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
@@ -1195,16 +1262,45 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
       const resultSourceNodeId = getAdaptiveSourceNodeId(result.nodeId) ?? result.nodeId;
       const conceptId = SECTION_NODE_MAP[resultSourceNodeId] ?? resultSourceNodeId;
+      const previousRecommendationType = frontendRoadmapProgressService.getRecommendedModuleType(
+        frontendProgress,
+        conceptId,
+      );
       const moduleForAttempt = resolveAdaptiveModule({
         nodeId: resultSourceNodeId,
         level: frontendProgress.effective_level,
         progress: frontendProgress,
+      });
+      const diagnosis = diagnoseFrontendLearningSignal({
+        scorePercentage: result.scorePercentage,
+        attempts: (frontendProgress.attempts[conceptId] ?? 0) + 1,
+        totalTimeSeconds: (frontendProgress.time_taken[conceptId] ?? 0) + Math.max(1, Math.round(result.durationSeconds)),
+        expectedTimeMinutes: moduleForAttempt?.expected_time_minutes,
+        previousScorePercentage: frontendProgress.scores[conceptId],
       });
       const nextProgress = frontendRoadmapProgressService.recordQuizAttempt(frontendProgress, {
         conceptId,
         result,
         expectedTimeMinutes: moduleForAttempt?.expected_time_minutes,
       });
+      const nextRecommendationType = frontendRoadmapProgressService.getRecommendedModuleType(nextProgress, conceptId);
+
+      if (nextRecommendationType !== 'core' && nextRecommendationType !== previousRecommendationType) {
+        setAdaptiveCoachMessage({
+          id: Date.now(),
+          conceptId,
+          conceptLabel:
+            moduleForAttempt?.concept_label
+            ?? ALL_NODE_DETAILS[conceptId]?.section.label
+            ?? conceptId.toUpperCase(),
+          recommendationType: nextRecommendationType,
+          reason: diagnosis.reason,
+          scorePercentage: result.scorePercentage,
+          correctAnswers: result.correctAnswers,
+          totalQuestions: result.totalQuestions,
+        });
+        setAdaptiveCoachShowReason(false);
+      }
 
       setFrontendProgress(nextProgress);
       setEffectiveSkillLevel(nextProgress.effective_level);
@@ -1312,6 +1408,67 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     [applyAdaptiveProgressToNodes, frontendProgress, isAdaptiveFrontendRoadmap, nodes, setNodes],
   );
 
+  const triggerAdaptiveCoachPreview = useCallback(() => {
+    if (!isAdaptiveFrontendRoadmap) return;
+
+    const candidateNodeId = sidebar.activeNodeId ?? config.mainNodeIds[0];
+    if (!candidateNodeId) return;
+
+    const sourceNodeId = getAdaptiveSourceNodeId(candidateNodeId) ?? candidateNodeId;
+    const conceptId = SECTION_NODE_MAP[sourceNodeId] ?? sourceNodeId;
+    const module = activeModule ?? resolveAdaptiveModule({
+      nodeId: sourceNodeId,
+      level: frontendProgress?.effective_level ?? activeSkillLevel,
+      progress: frontendProgress,
+    });
+
+    const simulatedScorePercentage = 29;
+    const simulatedTotalQuestions = 7;
+    const simulatedCorrectAnswers = 2;
+    const simulatedTimeSeconds = Math.max(
+      1,
+      Math.round((module?.expected_time_minutes ?? 20) * 60 * 1.25),
+    );
+
+    const diagnosis = diagnoseFrontendLearningSignal({
+      scorePercentage: simulatedScorePercentage,
+      attempts: (frontendProgress?.attempts[conceptId] ?? 0) + 1,
+      totalTimeSeconds: (frontendProgress?.time_taken[conceptId] ?? 0) + simulatedTimeSeconds,
+      expectedTimeMinutes: module?.expected_time_minutes,
+      previousScorePercentage: frontendProgress?.scores[conceptId],
+    });
+
+    const recommendationType: Exclude<FrontendModuleType, 'core'> =
+      diagnosis.recommendedModuleType === 'core'
+        ? 'revision'
+        : diagnosis.recommendedModuleType;
+
+    setAdaptiveCoachMessage({
+      id: Date.now(),
+      conceptId,
+      conceptLabel:
+        module?.concept_label
+        ?? ALL_NODE_DETAILS[conceptId]?.section.label
+        ?? conceptId.toUpperCase(),
+      recommendationType,
+      reason:
+        diagnosis.reason
+        || `Preview mode: based on this score, ${recommendationType} support is recommended before moving ahead.`,
+      scorePercentage: simulatedScorePercentage,
+      correctAnswers: simulatedCorrectAnswers,
+      totalQuestions: simulatedTotalQuestions,
+    });
+    setAdaptiveCoachShowReason(false);
+  }, [
+    activeModule,
+    activeSkillLevel,
+    config.mainNodeIds,
+    frontendProgress,
+    isAdaptiveFrontendRoadmap,
+    resolveAdaptiveModule,
+    sidebar.activeNodeId,
+  ]);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col">
       <div
@@ -1381,6 +1538,17 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
                 <span className="text-[10px] uppercase tracking-wide text-blue-300">Level</span>
                 <span className="text-xs font-semibold text-blue-100 capitalize">{selectedSkillLevel}</span>
               </div>
+            )}
+
+            {isAdaptiveFrontendRoadmap && (
+              <button
+                type="button"
+                onClick={triggerAdaptiveCoachPreview}
+                className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold text-cyan-100 hover:bg-cyan-500/20 transition-colors"
+                title="Preview adaptive recommendation coach"
+              >
+                <Zap size={12} /> Preview Guide
+              </button>
             )}
 
             <div className="flex flex-col items-end gap-0.5">
@@ -2252,6 +2420,84 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
           activeTopic={activeTopic}
           activeTopicDescription={activeTopicDescription}
         />
+      )}
+
+      {isAdaptiveFrontendRoadmap && (
+        <AnimatePresence>
+          {adaptiveCoachMessage && (
+            <motion.div
+              key={adaptiveCoachMessage.id}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.96 }}
+              animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.96 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
+              className="fixed bottom-24 right-4 sm:right-6 z-[72] w-[min(92vw,420px)]"
+            >
+              <div className="relative rounded-2xl border border-cyan-300/30 bg-gradient-to-br from-slate-900 via-[#151b37] to-slate-900 p-4 shadow-[0_12px_40px_rgba(6,182,212,0.2)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdaptiveCoachMessage(null);
+                    setAdaptiveCoachShowReason(false);
+                  }}
+                  className="absolute right-2.5 top-2.5 rounded-md p-1 text-zinc-400 hover:bg-white/10 hover:text-zinc-100 transition-colors"
+                  aria-label="Dismiss recommendation coach"
+                >
+                  <X size={14} />
+                </button>
+
+                <div className="flex items-start gap-3 pr-6">
+                  <AdaptiveGuideAvatar reduceMotion={Boolean(shouldReduceMotion)} />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase tracking-widest text-cyan-300/90 font-semibold">Adaptive Guide</p>
+                    <h4 className="text-sm font-bold text-white mt-0.5">Recommendation Added</h4>
+                    <p className="text-xs text-zinc-300 mt-2 leading-relaxed">
+                      {getAdaptiveRecommendationSummary(adaptiveCoachMessage)}
+                    </p>
+                    <p className="text-[11px] text-cyan-200/85 mt-2">
+                      Score: {adaptiveCoachMessage.correctAnswers}/{adaptiveCoachMessage.totalQuestions} ({adaptiveCoachMessage.scorePercentage}%)
+                    </p>
+
+                    <AnimatePresence initial={false}>
+                      {adaptiveCoachShowReason && (
+                        <motion.p
+                          initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                          animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
+                          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                          transition={{ duration: 0.18, ease: 'easeOut' }}
+                          className="mt-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-[11px] leading-relaxed text-zinc-300 overflow-hidden"
+                        >
+                          {adaptiveCoachMessage.reason}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdaptiveCoachMessage(null);
+                          setAdaptiveCoachShowReason(false);
+                        }}
+                        className="rounded-md border border-cyan-300/30 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 hover:bg-cyan-500/20 transition-colors"
+                      >
+                        Got it
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdaptiveCoachShowReason((prev) => !prev)}
+                        className="rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-zinc-200 hover:bg-white/10 transition-colors"
+                      >
+                        {adaptiveCoachShowReason ? 'Hide details' : 'Why this recommendation?'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       )}
 
       {isAdaptiveFrontendRoadmap && showSkillLevelPrompt && (
