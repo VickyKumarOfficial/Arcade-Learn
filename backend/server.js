@@ -780,6 +780,44 @@ app.post('/api/user/:userId/sync', async (req, res) => {
   }
 });
 
+app.get('/api/user/:userId/roadmap-progress/:roadmapId', async (req, res) => {
+  try {
+    const { userId, roadmapId } = req.params;
+    const result = await userProgressService.getRoadmapProgressDetails(userId, roadmapId);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        roadmapId,
+        rows: result.data,
+      });
+    } else {
+      res.status(400).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/user/:userId/roadmap-progress/sync', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const payload = req.body;
+    const result = await userProgressService.syncRoadmapProgressDetails(userId, payload);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        ...result.data,
+      });
+    } else {
+      res.status(400).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Leaderboard Routes
 app.get('/api/leaderboard', async (req, res) => {
   try {

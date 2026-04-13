@@ -108,6 +108,8 @@ CREATE TABLE IF NOT EXISTS public.user_roadmap_progress (
   component_id TEXT NOT NULL,
   completed_at TIMESTAMPTZ,
   time_spent_minutes INTEGER DEFAULT 0,
+  extra_node_added TEXT,
+  current_level TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, roadmap_id, component_id)

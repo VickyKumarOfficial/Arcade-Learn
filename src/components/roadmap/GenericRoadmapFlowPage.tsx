@@ -485,20 +485,57 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     [config.flowEdges, config.flowNodes, config.mainNodeIds, resolveAdaptiveModule, setEdges, setNodes],
   );
 
-  const confirmSkillLevelSelection = useCallback(() => {
+  const syncRoadmapProgressToBackend = useCallback(
+    (progress: FrontendRoadmapUserProgress, options?: { notifyAnonymous?: boolean }) => {
+      const shouldNotifyAnonymous = options?.notifyAnonymous ?? false;
+
+      if (!frontendRoadmapProgressService.shouldUseRemoteSync(progress.user_id)) {
+        if (shouldNotifyAnonymous) {
+          toast.info('Sign in to enable cloud progress sync', {
+            id: 'roadmap-sync-anonymous',
+            description: 'Roadmap progress is saved locally right now. Sign in to store it in the database.',
+          });
+        }
+        return;
+      }
+
+      void frontendRoadmapProgressService.syncProgressToBackend(progress).then((synced) => {
+        if (!synced) {
+          toast.error('Roadmap sync failed', {
+            id: 'roadmap-sync-failed',
+            description: 'Could not save roadmap progress to backend. Check server connectivity and try again.',
+          });
+        }
+      });
+    },
+    [],
+  );
+
+  const confirmSkillLevelSelection = useCallback(async () => {
     const level = pendingSkillLevel;
 
     setSelectedSkillLevel(level);
     setShowSkillLevelPrompt(false);
 
-    const loadedProgress = frontendRoadmapProgressService.loadProgress({
+    const localProgress = frontendRoadmapProgressService.loadProgress({
       userId: progressUserId,
       roadmapKey: config.roadmapKey,
       selectedLevel: level,
     });
 
+    const remoteProgress = await frontendRoadmapProgressService.loadProgressFromBackend({
+      userId: progressUserId,
+      roadmapKey: config.roadmapKey,
+      selectedLevel: level,
+    });
+
+    const loadedProgress = remoteProgress
+      ? frontendRoadmapProgressService.mergeProgress(localProgress, remoteProgress)
+      : localProgress;
+
     const syncedProgress = frontendRoadmapProgressService.updateSelectedLevel(loadedProgress, level);
     frontendRoadmapProgressService.saveProgress(syncedProgress);
+    syncRoadmapProgressToBackend(syncedProgress, { notifyAnonymous: true });
 
     setFrontendProgress(syncedProgress);
     setEffectiveSkillLevel(syncedProgress.effective_level);
@@ -521,6 +558,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     pendingSkillLevel,
     progressUserId,
     resolveAdaptiveModule,
+    syncRoadmapProgressToBackend,
   ]);
 
   useEffect(() => {
@@ -1396,6 +1434,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       setFrontendProgress(nextProgress);
       setEffectiveSkillLevel(nextProgress.effective_level);
       frontendRoadmapProgressService.saveProgress(nextProgress);
+      syncRoadmapProgressToBackend(nextProgress);
       applyAdaptiveProgressToNodes(nextProgress);
 
       if (sidebar.activeNodeId) {
@@ -1415,6 +1454,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
       isAdaptiveFrontendRoadmap,
       resolveAdaptiveModule,
       sidebar.activeNodeId,
+      syncRoadmapProgressToBackend,
     ],
   );
 
@@ -1520,9 +1560,10 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
       setFrontendProgress(nextProgress);
       frontendRoadmapProgressService.saveProgress(nextProgress);
+      syncRoadmapProgressToBackend(nextProgress);
       applyAdaptiveProgressToNodes(nextProgress);
     },
-    [applyAdaptiveProgressToNodes, frontendProgress, isAdaptiveFrontendRoadmap, nodes, setNodes],
+    [applyAdaptiveProgressToNodes, frontendProgress, isAdaptiveFrontendRoadmap, nodes, setNodes, syncRoadmapProgressToBackend],
   );
 
   const triggerAdaptiveCoachPreview = useCallback(() => {
@@ -1653,7 +1694,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
             {isAdaptiveFrontendRoadmap && selectedSkillLevel && (
               <div className="hidden md:flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1">
                 <span className="text-[10px] uppercase tracking-wide text-blue-300">Level</span>
-                <span className="text-xs font-semibold text-blue-100 capitalize">{selectedSkillLevel}</span>
+                <span className="text-xs font-semibold text-blue-100 capitalize">{effectiveSkillLevel}</span>
               </div>
             )}
 

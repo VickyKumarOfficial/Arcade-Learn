@@ -4,6 +4,7 @@ import type {
   FrontendRoadmapUserProgress,
   FrontendSkillLevel,
 } from '@/types/adaptiveRoadmap';
+import { BACKEND_URL } from '@/config/env';
 import {
   diagnoseFrontendLearningSignal,
   shiftSkillLevel,
@@ -11,6 +12,44 @@ import {
 
 const STORAGE_PREFIX = 'arcadelearn_frontend_roadmap_progress_v1';
 const DEFAULT_MODULE_TYPE: FrontendModuleType = 'core';
+const ADAPTIVE_NODE_PREFIX = 'adaptive-node-';
+const ROADMAP_LEVEL_META_COMPONENT_ID = '__roadmap_level__';
+
+interface RoadmapProgressRow {
+  component_id: string;
+  completed_at: string | null;
+  time_spent_minutes: number | null;
+  extra_node_added: string | null;
+  current_level: string | null;
+  updated_at: string | null;
+}
+
+interface RoadmapProgressGetResponse {
+  success: boolean;
+  roadmapId?: string;
+  rows?: RoadmapProgressRow[];
+  error?: string;
+}
+
+interface RoadmapProgressSyncEntry {
+  componentId: string;
+  completedAt: string | null;
+  timeSpentMinutes: number;
+  extraNodeAdded: FrontendModuleType;
+  currentLevel: FrontendSkillLevel;
+}
+
+let hasWarnedRoadmapProgressNetwork = false;
+
+function logRoadmapProgressNetworkWarning(context: string, error: unknown) {
+  if (hasWarnedRoadmapProgressNetwork) return;
+
+  hasWarnedRoadmapProgressNetwork = true;
+  console.warn(
+    `[frontendRoadmapProgressService] ${context}. Backend may be unavailable at ${BACKEND_URL || '(same-domain)'}.`,
+    error,
+  );
+}
 
 function clampPercentage(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -33,6 +72,14 @@ function ensureSkillLevel(
   }
 
   return fallbackLevel;
+}
+
+function parseSkillLevel(value: unknown): FrontendSkillLevel | null {
+  if (value === 'beginner' || value === 'intermediate' || value === 'advanced') {
+    return value;
+  }
+
+  return null;
 }
 
 function ensureModuleType(value: unknown): FrontendModuleType {
@@ -99,6 +146,10 @@ interface FrontendCompletionParams {
 }
 
 class FrontendRoadmapProgressService {
+  shouldUseRemoteSync(userId: string): boolean {
+    return Boolean(userId && userId !== 'anonymous');
+  }
+
   createDefaultProgress(params: FrontendProgressLoadParams): FrontendRoadmapUserProgress {
     const { userId, roadmapKey, selectedLevel } = params;
 
@@ -161,6 +212,210 @@ class FrontendRoadmapProgressService {
     } catch (error) {
       console.error('[frontendRoadmapProgressService] Failed to load progress:', error);
       return fallback;
+    }
+  }
+
+  mergeProgress(
+    localProgress: FrontendRoadmapUserProgress,
+    remoteProgress: FrontendRoadmapUserProgress,
+  ): FrontendRoadmapUserProgress {
+    const updatedAt =
+      new Date(remoteProgress.updated_at).getTime() >= new Date(localProgress.updated_at).getTime()
+        ? remoteProgress.updated_at
+        : localProgress.updated_at;
+
+    return {
+      ...localProgress,
+      completed_node_ids: Array.from(
+        new Set([...localProgress.completed_node_ids, ...remoteProgress.completed_node_ids]),
+      ),
+      completed_modules: Array.from(
+        new Set([...localProgress.completed_modules, ...remoteProgress.completed_modules]),
+      ),
+      recommended_module_type: {
+        ...localProgress.recommended_module_type,
+        ...remoteProgress.recommended_module_type,
+      },
+      effective_level: remoteProgress.effective_level ?? localProgress.effective_level,
+      updated_at: updatedAt,
+    };
+  }
+
+  async loadProgressFromBackend(
+    params: FrontendProgressLoadParams,
+  ): Promise<FrontendRoadmapUserProgress | null> {
+    if (!this.shouldUseRemoteSync(params.userId)) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/api/user/${params.userId}/roadmap-progress/${encodeURIComponent(params.roadmapKey)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const payload = (await response.json()) as RoadmapProgressGetResponse;
+      if (!payload.success || !Array.isArray(payload.rows)) {
+        return null;
+      }
+
+      if (payload.rows.length === 0) {
+        return null;
+      }
+
+      const fallback = this.createDefaultProgress(params);
+      const completedNodeIds = new Set<string>();
+      const recommendedModuleType: Record<string, FrontendModuleType> = {};
+      let remoteEffectiveLevel: FrontendSkillLevel | null = null;
+
+      for (const row of payload.rows) {
+        const componentId = typeof row.component_id === 'string' ? row.component_id.trim() : '';
+        if (!componentId) {
+          continue;
+        }
+
+        const levelFromRow = parseSkillLevel(row.current_level);
+        if (!remoteEffectiveLevel && levelFromRow) {
+          remoteEffectiveLevel = levelFromRow;
+        }
+
+        if (componentId === ROADMAP_LEVEL_META_COMPONENT_ID) {
+          continue;
+        }
+
+        if (row.completed_at) {
+          completedNodeIds.add(componentId);
+        }
+
+        if (componentId.startsWith(ADAPTIVE_NODE_PREFIX)) {
+          const conceptId = componentId.slice(ADAPTIVE_NODE_PREFIX.length).trim();
+          const moduleType = ensureModuleType(row.extra_node_added);
+          if (conceptId && moduleType !== 'core') {
+            recommendedModuleType[conceptId] = moduleType;
+          }
+        }
+
+      }
+
+      return {
+        ...fallback,
+        selected_level: params.selectedLevel,
+        effective_level: remoteEffectiveLevel ?? params.selectedLevel,
+        completed_node_ids: Array.from(completedNodeIds),
+        recommended_module_type: recommendedModuleType,
+        updated_at: payload.rows[0]?.updated_at ?? new Date().toISOString(),
+      };
+    } catch (error) {
+      logRoadmapProgressNetworkWarning('Unable to fetch roadmap progress details', error);
+      return null;
+    }
+  }
+
+  buildRemoteSyncEntries(progress: FrontendRoadmapUserProgress): RoadmapProgressSyncEntry[] {
+    const entriesByComponentId = new Map<string, RoadmapProgressSyncEntry>();
+    const completedNodeIds = new Set(progress.completed_node_ids);
+
+    const upsertEntry = (
+      componentId: string,
+      extraNodeAdded: FrontendModuleType,
+      completedAt: string | null,
+      conceptIdForTime?: string,
+    ) => {
+      const safeComponentId = componentId.trim();
+      if (!safeComponentId) return;
+
+      const conceptSeconds = conceptIdForTime
+        ? (progress.time_taken[conceptIdForTime] ?? 0)
+        : 0;
+
+      const timeSpentMinutes = Math.max(
+        0,
+        Math.round(conceptSeconds / 60),
+      );
+
+      const previous = entriesByComponentId.get(safeComponentId);
+
+      entriesByComponentId.set(safeComponentId, {
+        componentId: safeComponentId,
+        completedAt: completedAt ?? previous?.completedAt ?? null,
+        timeSpentMinutes: Math.max(timeSpentMinutes, previous?.timeSpentMinutes ?? 0),
+        extraNodeAdded,
+        currentLevel: progress.effective_level,
+      });
+    };
+
+    // Always write one metadata row so initial selected level is persisted
+    // before any node completion, and overwritten as the effective level changes.
+    upsertEntry(ROADMAP_LEVEL_META_COMPONENT_ID, 'core', null);
+
+    for (const completedNodeId of completedNodeIds) {
+      const isAdaptiveNode = completedNodeId.startsWith(ADAPTIVE_NODE_PREFIX);
+      const conceptId = isAdaptiveNode
+        ? completedNodeId.slice(ADAPTIVE_NODE_PREFIX.length)
+        : completedNodeId;
+      const adaptiveType = isAdaptiveNode
+        ? ensureModuleType(progress.recommended_module_type[conceptId])
+        : 'core';
+
+      upsertEntry(completedNodeId, adaptiveType, progress.updated_at, conceptId);
+    }
+
+    for (const [conceptId, moduleType] of Object.entries(progress.recommended_module_type)) {
+      const normalizedType = ensureModuleType(moduleType);
+      if (normalizedType === 'core') {
+        continue;
+      }
+
+      const adaptiveNodeId = `${ADAPTIVE_NODE_PREFIX}${conceptId}`;
+      upsertEntry(
+        adaptiveNodeId,
+        normalizedType,
+        completedNodeIds.has(adaptiveNodeId) ? progress.updated_at : null,
+        conceptId,
+      );
+    }
+
+    return Array.from(entriesByComponentId.values());
+  }
+
+  async syncProgressToBackend(progress: FrontendRoadmapUserProgress): Promise<boolean> {
+    if (!this.shouldUseRemoteSync(progress.user_id)) {
+      return false;
+    }
+
+    try {
+      const entries = this.buildRemoteSyncEntries(progress);
+
+      const response = await fetch(`${BACKEND_URL}/api/user/${progress.user_id}/roadmap-progress/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roadmapId: progress.roadmap_key,
+          entries,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.text();
+        console.warn('[frontendRoadmapProgressService] Roadmap progress sync failed:', payload);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      logRoadmapProgressNetworkWarning('Unable to sync roadmap progress details', error);
+      return false;
     }
   }
 

@@ -5,6 +5,83 @@ class UserProgressService {
     this.supabase = supabaseAdmin;
   }
 
+  normalizeAdaptiveNodeType(value) {
+    if (value === 'revision' || value === 'practice') {
+      return value;
+    }
+
+    return 'core';
+  }
+
+  normalizeSkillLevel(value) {
+    if (value === 'beginner' || value === 'intermediate' || value === 'advanced') {
+      return value;
+    }
+
+    return null;
+  }
+
+  async ensureProfileExists(userId) {
+    try {
+      if (!userId) {
+        return { success: false, error: 'userId is required.' };
+      }
+
+      const { data: existingProfile, error: existingProfileError } = await this.supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (existingProfileError) {
+        console.error('Error checking profile existence:', existingProfileError);
+        return { success: false, error: existingProfileError.message };
+      }
+
+      if (existingProfile?.id) {
+        return { success: true };
+      }
+
+      const { data: authUserData, error: authUserError } = await this.supabase.auth.admin.getUserById(userId);
+      if (authUserError || !authUserData?.user) {
+        console.error('Error fetching auth user for profile backfill:', authUserError);
+        return { success: false, error: authUserError?.message || 'Auth user not found.' };
+      }
+
+      const authUser = authUserData.user;
+      const metadata = authUser.user_metadata || {};
+
+      const fullName = typeof metadata.full_name === 'string' ? metadata.full_name.trim() : '';
+      const metadataFirstName = typeof metadata.first_name === 'string' ? metadata.first_name.trim() : '';
+      const metadataLastName = typeof metadata.last_name === 'string' ? metadata.last_name.trim() : '';
+
+      const fallbackNameParts = fullName ? fullName.split(/\s+/) : [];
+      const firstName = metadataFirstName || fallbackNameParts[0] || 'User';
+      const lastName = metadataLastName || (fallbackNameParts.length > 1 ? fallbackNameParts.slice(1).join(' ') : null);
+      const email = authUser.email || `${userId}@placeholder.local`;
+
+      const { error: insertProfileError } = await this.supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          avatar_url: typeof metadata.avatar_url === 'string' ? metadata.avatar_url : null,
+        });
+
+      if (insertProfileError) {
+        console.error('Error backfilling missing profile:', insertProfileError);
+        return { success: false, error: insertProfileError.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error in ensureProfileExists:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // Fetch user progress from Supabase
   async getUserProgress(userId) {
     try {
@@ -196,6 +273,97 @@ class UserProgressService {
       }
     } catch (error) {
       console.error('Error in syncUserProgress:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getRoadmapProgressDetails(userId, roadmapId) {
+    try {
+      if (!userId || !roadmapId) {
+        return { success: false, error: 'userId and roadmapId are required.' };
+      }
+
+      const { data, error } = await this.supabase
+        .from('user_roadmap_progress')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('roadmap_id', roadmapId)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching roadmap progress details:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data: data || [] };
+    } catch (error) {
+      console.error('Error in getRoadmapProgressDetails:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async syncRoadmapProgressDetails(userId, payload) {
+    try {
+      const roadmapId = payload?.roadmapId;
+      const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+
+      if (!userId || !roadmapId) {
+        return { success: false, error: 'userId and roadmapId are required.' };
+      }
+
+      const profileCheck = await this.ensureProfileExists(userId);
+      if (!profileCheck.success) {
+        return {
+          success: false,
+          error: profileCheck.error || 'Unable to ensure profile exists for this user.',
+        };
+      }
+
+      const normalizedRows = entries
+        .map((entry) => {
+          const componentId = typeof entry?.componentId === 'string' ? entry.componentId.trim() : '';
+          if (!componentId) {
+            return null;
+          }
+
+          const completedAt = typeof entry?.completedAt === 'string' && entry.completedAt.trim().length > 0
+            ? entry.completedAt
+            : null;
+
+          const timeSpentMinutesRaw = Number(entry?.timeSpentMinutes ?? 0);
+          const timeSpentMinutes = Number.isFinite(timeSpentMinutesRaw)
+            ? Math.max(0, Math.round(timeSpentMinutesRaw))
+            : 0;
+
+          return {
+            user_id: userId,
+            roadmap_id: roadmapId,
+            component_id: componentId,
+            completed_at: completedAt,
+            time_spent_minutes: timeSpentMinutes,
+            extra_node_added: this.normalizeAdaptiveNodeType(entry?.extraNodeAdded),
+            current_level: this.normalizeSkillLevel(entry?.currentLevel),
+            updated_at: new Date().toISOString(),
+          };
+        })
+        .filter(Boolean);
+
+      if (normalizedRows.length === 0) {
+        return { success: true, data: { upserted: 0 } };
+      }
+
+      const { error } = await this.supabase
+        .from('user_roadmap_progress')
+        .upsert(normalizedRows, { onConflict: 'user_id,roadmap_id,component_id' });
+
+      if (error) {
+        console.error('Error syncing roadmap progress details:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data: { upserted: normalizedRows.length } };
+    } catch (error) {
+      console.error('Error in syncRoadmapProgressDetails:', error);
       return { success: false, error: error.message };
     }
   }
