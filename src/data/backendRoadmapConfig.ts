@@ -160,6 +160,10 @@ export const backendRoadmapConfig: RoadmapFlowConfig = {
   title: 'Backend Development Roadmap',
   breadcrumbLabel: 'Backend',
   detailRoute: '/roadmap/backend-nodejs',
+  adaptive: {
+    enabled: true,
+    defaultSelectedLevel: 'intermediate',
+  },
   mentorRoute: '/roadmap/backend-nodejs/mentor',
   sectionCollapseEnabled: true,
   defaultCollapsedSectionIds: [],

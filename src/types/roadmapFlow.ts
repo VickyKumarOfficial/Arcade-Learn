@@ -1,5 +1,6 @@
 import type { Edge, Node } from 'reactflow';
 import type { LucideIcon } from 'lucide-react';
+import type { AdaptiveSkillLevel } from '@/types/adaptiveRoadmap';
 
 export type RoadmapNodeData = {
   label: string;
@@ -71,6 +72,12 @@ export interface RoadmapUiText {
   careerDescription?: string;
 }
 
+export interface RoadmapAdaptiveConfig {
+  enabled?: boolean;
+  defaultSelectedLevel?: AdaptiveSkillLevel;
+  moduleProviderKey?: string;
+}
+
 export interface RoadmapFlowConfig {
   roadmapKey: string;
   title: string;
@@ -92,4 +99,5 @@ export interface RoadmapFlowConfig {
   canvasHeight?: number;
   jobMatchesLimit?: number;
   uiText?: RoadmapUiText;
+  adaptive?: RoadmapAdaptiveConfig;
 }

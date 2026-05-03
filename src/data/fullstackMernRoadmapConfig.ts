@@ -160,6 +160,10 @@ export const fullstackMernRoadmapConfig: RoadmapFlowConfig = {
   title: 'Full Stack MERN Development Roadmap',
   breadcrumbLabel: 'MERN',
   detailRoute: '/roadmap/fullstack-mern',
+  adaptive: {
+    enabled: true,
+    defaultSelectedLevel: 'intermediate',
+  },
   mentorRoute: '/roadmap/fullstack-mern/mentor',
   sectionCollapseEnabled: true,
   defaultCollapsedSectionIds: [],

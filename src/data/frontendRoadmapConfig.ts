@@ -185,6 +185,11 @@ export const frontendRoadmapConfig: RoadmapFlowConfig = {
   title: 'Frontend Development Roadmap',
   breadcrumbLabel: 'Frontend',
   detailRoute: '/roadmap/frontend-react',
+  adaptive: {
+    enabled: true,
+    defaultSelectedLevel: 'intermediate',
+    moduleProviderKey: 'frontend-catalog',
+  },
   mentorRoute: '/roadmap/frontend-react/mentor',
   sectionCollapseEnabled: true,
   defaultCollapsedSectionIds: [],
