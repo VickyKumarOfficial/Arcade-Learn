@@ -309,9 +309,10 @@ CREATE TABLE IF NOT EXISTS public.ai_chats (
 CREATE TABLE IF NOT EXISTS public.ai_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chat_id UUID REFERENCES public.ai_chats(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('user', 'ai')),
-  content TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  prompt TEXT,
+  response TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  responded_at TIMESTAMPTZ
 );
 
 -- Create indexes for AI chat tables
@@ -403,7 +404,7 @@ ALTER TABLE public.ai_feedback
   ADD COLUMN IF NOT EXISTS llm_response TEXT;
 
 UPDATE public.ai_feedback AS af
-SET llm_response = am.content
+SET llm_response = am.response
 FROM public.ai_messages AS am
 WHERE af.feedback_scope = 'message'
   AND af.message_id = am.id

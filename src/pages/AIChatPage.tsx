@@ -448,69 +448,75 @@ const AIChatPage = () => {
 
     try {
       let chatToUpdate = currentChat;
+      let responseMessageId: string | null = null;
 
       // If no current chat, create a new one
       if (!currentChat) {
         const title = message.length > 30 ? message.substring(0, 30) + '...' : message;
         
-        const newChat = await aiChatService.createChat(user.id, {
-          title,
-          firstMessage: {
-            type: 'user',
-            content: message
-          }
-        });
+        const newChat = await aiChatService.createChat(user.id, { title });
 
         if (!newChat) {
           console.error('Failed to create new chat');
           return;
         }
 
-        // Load the full chat with messages
-        const fullChat = await aiChatService.getChatWithMessages(newChat.id);
-        if (fullChat) {
-          setCurrentChat(fullChat);
-          chatToUpdate = fullChat;
-          
-          // Update chat history
-          setChatHistory(prev => [
-            { ...newChat, lastMessage: message },
-            ...prev.filter(chat => chat.id !== newChat.id)
-          ]);
-        }
-      } else {
-        // Add message to existing chat
-        const newMessage = await aiChatService.addMessage({
-          chatId: currentChat.id,
-          type: 'user',
-          content: message
+        const promptResult = await aiChatService.addPrompt({
+          chatId: newChat.id,
+          prompt: message,
         });
 
-        if (newMessage) {
-          // Update current chat with new message
-          const updatedChat = {
-            ...currentChat,
-            messages: [
-              ...(currentChat.messages || []),
-              {
-                id: newMessage.id,
-                chatId: newMessage.chatId,
-                type: newMessage.type,
-                content: newMessage.content,
-                createdAt: newMessage.createdAt
-              }
-            ]
-          };
-          setCurrentChat(updatedChat);
-          chatToUpdate = updatedChat;
-
-          // Update chat history
-          setChatHistory(prev => prev.map(chat =>
-            chat.id === currentChat.id
-              ? { ...chat, lastMessage: message, updatedAt: new Date() }
-              : chat
-          ));
+        if (!promptResult) {
+          console.error('Failed to persist prompt');
+          return;
         }
+
+        responseMessageId = promptResult.messageId;
+
+        const seededChat = {
+          ...newChat,
+          messages: [promptResult.message],
+        };
+
+        setCurrentChat(seededChat);
+        chatToUpdate = seededChat;
+
+        // Update chat history
+        setChatHistory(prev => [
+          { ...newChat, lastMessage: message },
+          ...prev.filter(chat => chat.id !== newChat.id)
+        ]);
+      } else {
+        // Add message to existing chat
+        const promptResult = await aiChatService.addPrompt({
+          chatId: currentChat.id,
+          prompt: message,
+        });
+
+        if (!promptResult) {
+          console.error('Failed to persist prompt');
+          return;
+        }
+
+        responseMessageId = promptResult.messageId;
+
+        // Update current chat with new message
+        const updatedChat = {
+          ...currentChat,
+          messages: [
+            ...(currentChat.messages || []),
+            promptResult.message,
+          ]
+        };
+        setCurrentChat(updatedChat);
+        chatToUpdate = updatedChat;
+
+        // Update chat history
+        setChatHistory(prev => prev.map(chat =>
+          chat.id === currentChat.id
+            ? { ...chat, lastMessage: message, updatedAt: new Date() }
+            : chat
+        ));
       }
 
       setMessage('');
@@ -535,10 +541,13 @@ const AIChatPage = () => {
 
         const aiResponseContent = aiResponse.response || 'I apologize, but I couldn\'t generate a response. Please try again.';
 
-        const aiMessage = await aiChatService.addMessage({
-          chatId: chatToUpdate.id,
-          type: 'ai',
-          content: aiResponseContent
+        if (!responseMessageId) {
+          throw new Error('Missing prompt reference for AI response');
+        }
+
+        const aiMessage = await aiChatService.addResponse({
+          messageId: responseMessageId,
+          response: aiResponseContent,
         });
 
         if (aiMessage) {
@@ -547,13 +556,7 @@ const AIChatPage = () => {
             ...chatToUpdate,
             messages: [
               ...(chatToUpdate.messages || []),
-              {
-                id: aiMessage.id,
-                chatId: aiMessage.chatId,
-                type: aiMessage.type,
-                content: aiMessage.content,
-                createdAt: aiMessage.createdAt
-              }
+              aiMessage
             ]
           };
           setCurrentChat(updatedChat);
@@ -573,10 +576,13 @@ const AIChatPage = () => {
         console.error('Error getting AI response:', error);
         
         // Still save an error message to chat
-        const errorMessage = await aiChatService.addMessage({
-          chatId: chatToUpdate.id,
-          type: 'ai',
-          content: `I apologize, but I'm having trouble processing your request right now. ${error instanceof Error ? error.message : 'Please try again later.'}`
+        if (!responseMessageId) {
+          throw error;
+        }
+
+        const errorMessage = await aiChatService.addResponse({
+          messageId: responseMessageId,
+          response: `I apologize, but I'm having trouble processing your request right now. ${error instanceof Error ? error.message : 'Please try again later.'}`,
         });
 
         if (errorMessage) {
@@ -584,13 +590,7 @@ const AIChatPage = () => {
             ...chatToUpdate,
             messages: [
               ...(chatToUpdate.messages || []),
-              {
-                id: errorMessage.id,
-                chatId: errorMessage.chatId,
-                type: errorMessage.type,
-                content: errorMessage.content,
-                createdAt: errorMessage.createdAt
-              }
+              errorMessage
             ]
           };
           setCurrentChat(updatedChat);
@@ -659,28 +659,24 @@ const AIChatPage = () => {
       }
 
       const aiResponseContent = aiResponse.response || 'I could not generate a retry response. Please try again.';
-      const aiMessage = await aiChatService.addMessage({
-        chatId: currentChat.id,
-        type: 'ai',
-        content: aiResponseContent,
+      const aiMessage = await aiChatService.addResponse({
+        messageId: aiMessageId,
+        response: aiResponseContent,
       });
 
       if (!aiMessage) {
         throw new Error('Failed to persist retry response');
       }
 
+      const updatedMessages = chatMessages.map((msg) =>
+        msg.id === aiMessageId
+          ? { ...msg, content: aiMessage.content, createdAt: aiMessage.createdAt }
+          : msg,
+      );
+
       const updatedChat = {
         ...currentChat,
-        messages: [
-          ...chatMessages,
-          {
-            id: aiMessage.id,
-            chatId: aiMessage.chatId,
-            type: aiMessage.type,
-            content: aiMessage.content,
-            createdAt: aiMessage.createdAt,
-          },
-        ],
+        messages: updatedMessages,
       };
 
       setCurrentChat(updatedChat);

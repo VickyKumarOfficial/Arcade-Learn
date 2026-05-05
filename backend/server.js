@@ -556,7 +556,7 @@ app.post('/api/ai/feedback', async (req, res) => {
 
       const { data: messageRow, error: messageError } = await supabaseAdmin
         .from('ai_messages')
-        .select('id, chat_id, type, content')
+        .select('id, chat_id, response')
         .eq('id', normalizedMessageId)
         .maybeSingle();
 
@@ -575,7 +575,7 @@ app.post('/api/ai/feedback', async (req, res) => {
         });
       }
 
-      if (messageRow.type !== 'ai') {
+      if (!messageRow.response || messageRow.response.trim().length === 0) {
         return res.status(400).json({
           success: false,
           error: 'Feedback is only supported for AI responses.',
@@ -619,8 +619,8 @@ app.post('/api/ai/feedback', async (req, res) => {
         reason: normalizedReason,
         reasons: normalizedReasons.length > 0 ? normalizedReasons : null,
         details: normalizedDetails,
-        llm_response: typeof messageRow.content === 'string'
-          ? messageRow.content.slice(0, 12000)
+        llm_response: typeof messageRow.response === 'string'
+          ? messageRow.response.slice(0, 12000)
           : null,
         rating: null,
         updated_at: new Date().toISOString(),

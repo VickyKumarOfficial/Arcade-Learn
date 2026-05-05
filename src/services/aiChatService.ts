@@ -19,16 +19,16 @@ export interface AIChat {
 
 export interface CreateChatData {
   title: string;
-  firstMessage: {
-    type: 'user' | 'ai';
-    content: string;
-  };
 }
 
-export interface CreateMessageData {
+export interface CreatePromptData {
   chatId: string;
-  type: 'user' | 'ai';
-  content: string;
+  prompt: string;
+}
+
+export interface CreateResponseData {
+  messageId: string;
+  response: string;
 }
 
 class AIChatService {
@@ -60,15 +60,6 @@ class AIChatService {
         return null;
       }
 
-      // Add the first message if provided
-      if (data.firstMessage) {
-        await this.addMessage({
-          chatId: chat.id,
-          type: data.firstMessage.type,
-          content: data.firstMessage.content,
-        });
-      }
-
       return this.mapChat(chat);
     } catch (error) {
       console.error('Error in createChat:', error);
@@ -77,20 +68,19 @@ class AIChatService {
   }
 
   // Add a message to an existing chat
-  async addMessage(data: CreateMessageData): Promise<AIChatMessage | null> {
+  async addPrompt(data: CreatePromptData): Promise<{ messageId: string; message: AIChatMessage } | null> {
     try {
       const { data: message, error: messageError } = await supabase
         .from('ai_messages')
         .insert({
           chat_id: data.chatId,
-          type: data.type,
-          content: data.content,
+          prompt: data.prompt,
         })
         .select()
         .single();
 
       if (messageError) {
-        console.error('Error adding message:', messageError);
+        console.error('Error adding prompt:', messageError);
         return null;
       }
 
@@ -101,14 +91,53 @@ class AIChatService {
         .eq('id', data.chatId);
 
       return {
-        id: message.id,
-        chatId: message.chat_id,
-        type: message.type as 'user' | 'ai',
-        content: message.content,
-        createdAt: new Date(message.created_at),
+        messageId: message.id,
+        message: {
+          id: `${message.id}:prompt`,
+          chatId: message.chat_id,
+          type: 'user',
+          content: message.prompt,
+          createdAt: new Date(message.created_at),
+        },
       };
     } catch (error) {
-      console.error('Error in addMessage:', error);
+      console.error('Error in addPrompt:', error);
+      return null;
+    }
+  }
+
+  async addResponse(data: CreateResponseData): Promise<AIChatMessage | null> {
+    try {
+      const respondedAt = new Date().toISOString();
+      const { data: message, error: messageError } = await supabase
+        .from('ai_messages')
+        .update({
+          response: data.response,
+          responded_at: respondedAt,
+        })
+        .eq('id', data.messageId)
+        .select()
+        .single();
+
+      if (messageError) {
+        console.error('Error adding response:', messageError);
+        return null;
+      }
+
+      await supabase
+        .from('ai_chats')
+        .update({ updated_at: respondedAt })
+        .eq('id', message.chat_id);
+
+      return {
+        id: message.id,
+        chatId: message.chat_id,
+        type: 'ai',
+        content: message.response,
+        createdAt: new Date(message.responded_at || message.created_at),
+      };
+    } catch (error) {
+      console.error('Error in addResponse:', error);
       return null;
     }
   }
@@ -161,19 +190,36 @@ class AIChatService {
         return null;
       }
 
+      const mappedMessages: AIChatMessage[] = [];
+      for (const msg of messages) {
+        if (msg.prompt) {
+          mappedMessages.push({
+            id: `${msg.id}:prompt`,
+            chatId: msg.chat_id,
+            type: 'user',
+            content: msg.prompt,
+            createdAt: new Date(msg.created_at),
+          });
+        }
+
+        if (msg.response) {
+          mappedMessages.push({
+            id: msg.id,
+            chatId: msg.chat_id,
+            type: 'ai',
+            content: msg.response,
+            createdAt: new Date(msg.responded_at || msg.created_at),
+          });
+        }
+      }
+
       return {
         id: chat.id,
         userId: chat.user_id,
         title: chat.title,
         createdAt: new Date(chat.created_at),
         updatedAt: new Date(chat.updated_at),
-        messages: messages.map(msg => ({
-          id: msg.id,
-          chatId: msg.chat_id,
-          type: msg.type as 'user' | 'ai',
-          content: msg.content,
-          createdAt: new Date(msg.created_at),
-        })),
+        messages: mappedMessages,
       };
     } catch (error) {
       console.error('Error in getChatWithMessages:', error);
@@ -189,9 +235,10 @@ class AIChatService {
         .select(`
           *,
           ai_messages (
-            content,
+            prompt,
+            response,
             created_at,
-            type
+            responded_at
           )
         `)
         .eq('user_id', userId)
@@ -205,8 +252,13 @@ class AIChatService {
       return data.map(chat => {
         // Get the last message
         const messages = chat.ai_messages || [];
-        const lastMessage = messages.length > 0 
-          ? messages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+        const lastMessage = messages.length > 0
+          ? messages
+            .map((msg: any) => ({
+              content: msg.response || msg.prompt || '',
+              timestamp: msg.responded_at || msg.created_at,
+            }))
+            .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
           : null;
 
         return {

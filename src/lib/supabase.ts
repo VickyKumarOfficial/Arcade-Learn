@@ -164,23 +164,26 @@ export type Database = {
         Row: {
           id: string
           chat_id: string
-          type: string
-          content: string
+          prompt: string | null
+          response: string | null
           created_at: string
+          responded_at: string | null
         }
         Insert: {
           id?: string
           chat_id: string
-          type: string
-          content: string
+          prompt?: string | null
+          response?: string | null
           created_at?: string
+          responded_at?: string | null
         }
         Update: {
           id?: string
           chat_id?: string
-          type?: string
-          content?: string
+          prompt?: string | null
+          response?: string | null
           created_at?: string
+          responded_at?: string | null
         }
       }
       parsed_resumes: {

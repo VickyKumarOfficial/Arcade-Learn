@@ -29,7 +29,7 @@ ALTER TABLE public.ai_feedback
   ADD COLUMN IF NOT EXISTS llm_response TEXT;
 
 UPDATE public.ai_feedback AS af
-SET llm_response = am.content
+SET llm_response = am.response
 FROM public.ai_messages AS am
 WHERE af.feedback_scope = 'message'
   AND af.message_id = am.id
