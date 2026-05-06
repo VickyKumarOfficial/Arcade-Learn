@@ -13,6 +13,22 @@ Create or modify the DB schema, verify frontend inputs, wire backend + LLM/MCP h
 
 ---
 
+## Implementation status (table tracker)
+Update this list as we finish each table.
+
+Legend: [x] done, [ ] pending, [~] in progress
+
+- [x] ai_chats (prompt/response model; migration executed)
+- [x] ai_messages (prompt/response model; migration executed)
+- [x] ai_feedback (kept as-is; no schema changes)
+- [x] parsed_resumes (kept as-is; no schema changes)
+- [x] jobs (kept as-is; no schema changes)
+- [x] survey_questions (kept as-is; no schema changes)
+- [x] profiles (kept as-is; no schema changes)
+- [x] user_details (extended profile data; new table)
+
+---
+
 ## Step 0: Schema intake (required)
 Provide the tables and columns you want. Use this template per table:
 

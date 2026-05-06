@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navigation from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,36 @@ interface Skill {
   level: 'Beginner' | 'Intermediate' | 'Advanced';
 }
 
+type SocialProfileLink = {
+  title: string;
+  url: string;
+};
+
+type SkillsPayload = {
+  core: Skill[];
+  languages: string[];
+  tools: string[];
+};
+
+type UserDetailsPayload = {
+  user_id: string;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  phone_no?: string | null;
+  location?: string | null;
+  role?: string | null;
+  bio?: string | null;
+  highest_edu?: string | null;
+  education_institution?: string | null;
+  current_company?: string | null;
+  social_profiles?: SocialProfileLink[] | null;
+  skills?: SkillsPayload | null;
+  interests?: string[] | null;
+  goals?: string[] | null;
+  learning_preferences?: string[] | null;
+};
+
 const Profile = () => {
   const { user, isAuthenticated, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -59,12 +90,14 @@ const Profile = () => {
 
   // Profile Data States
   const [personalDetails, setPersonalDetails] = useState({
+    middleName: "",
+    role: "",
     bio: "",
     location: "",
     dateOfBirth: "",
-    currentEducation: "",
+    highestEducation: "",
+    educationInstitution: "",
     currentCompany: "",
-    jobTitle: "",
     linkedinUrl: "",
     githubUrl: "",
     portfolioUrl: ""
@@ -101,6 +134,218 @@ const Profile = () => {
   const [newGoal, setNewGoal] = useState("");
   const [newPreference, setNewPreference] = useState("");
 
+  const normalizeText = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  };
+
+  const normalizeList = (values: string[]) =>
+    values
+      .map((value) => (typeof value === 'string' ? value.trim() : ''))
+      .filter((value) => value.length > 0);
+
+  const buildSocialProfiles = (): SocialProfileLink[] | null => {
+    const profiles: SocialProfileLink[] = [
+      { title: 'GitHub', url: personalDetails.githubUrl.trim() },
+      { title: 'LinkedIn', url: personalDetails.linkedinUrl.trim() },
+      { title: 'Portfolio', url: personalDetails.portfolioUrl.trim() },
+    ].filter((profile) => profile.url.length > 0);
+
+    return profiles.length ? profiles : null;
+  };
+
+  const buildSkillsPayload = (): SkillsPayload | null => {
+    const core = skills
+      .map((skill) => ({ name: skill.name.trim(), level: skill.level }))
+      .filter((skill) => skill.name.length > 0);
+    const languages = normalizeList(programmingLanguages);
+    const tools = normalizeList(frameworksTools);
+
+    if (!core.length && !languages.length && !tools.length) {
+      return null;
+    }
+
+    return { core, languages, tools };
+  };
+
+  const parseSocialProfiles = (value: unknown): SocialProfileLink[] => {
+    if (!value) {
+      return [];
+    }
+
+    if (Array.isArray(value)) {
+      return value
+        .map((entry) => ({
+          title: typeof entry?.title === 'string' ? entry.title : '',
+          url: typeof entry?.url === 'string' ? entry.url : '',
+        }))
+        .filter((entry) => entry.title && entry.url);
+    }
+
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        return parseSocialProfiles(parsed);
+      } catch {
+        return [];
+      }
+    }
+
+    if (typeof value === 'object') {
+      const record = value as Record<string, string>;
+      const profiles: SocialProfileLink[] = [];
+
+      if (record.github) {
+        profiles.push({ title: 'GitHub', url: record.github });
+      }
+      if (record.linkedin) {
+        profiles.push({ title: 'LinkedIn', url: record.linkedin });
+      }
+      if (record.portfolio) {
+        profiles.push({ title: 'Portfolio', url: record.portfolio });
+      }
+
+      return profiles;
+    }
+
+    return [];
+  };
+
+  const extractSocialUrl = (profiles: SocialProfileLink[], key: string) => {
+    const lowerKey = key.toLowerCase();
+    const match = profiles.find(
+      (profile) =>
+        typeof profile?.title === 'string' && profile.title.toLowerCase().includes(lowerKey),
+    );
+
+    return typeof match?.url === 'string' ? match.url : '';
+  };
+
+  const parseSkillsPayload = (value: unknown): SkillsPayload | null => {
+    if (!value) {
+      return null;
+    }
+
+    let parsed: any = value;
+    if (typeof value === 'string') {
+      try {
+        parsed = JSON.parse(value);
+      } catch {
+        return null;
+      }
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    const core = Array.isArray(parsed.core)
+      ? parsed.core
+          .map((skill: any) => ({
+            name: typeof skill?.name === 'string' ? skill.name : '',
+            level: ['Beginner', 'Intermediate', 'Advanced'].includes(skill?.level)
+              ? skill.level
+              : 'Beginner',
+          }))
+          .filter((skill: Skill) => skill.name)
+      : [];
+    const languages = Array.isArray(parsed.languages) ? normalizeList(parsed.languages) : [];
+    const tools = Array.isArray(parsed.tools) ? normalizeList(parsed.tools) : [];
+
+    return { core, languages, tools };
+  };
+
+  const saveUserDetails = async (payload: Partial<UserDetailsPayload>) => {
+    if (!user?.id) {
+      return false;
+    }
+
+    const cleanedPayload = Object.fromEntries(
+      Object.entries(payload).filter(([, value]) => value !== undefined),
+    );
+
+    const { error } = await supabase
+      .from('user_details')
+      .upsert({ user_id: user.id, ...cleanedPayload }, { onConflict: 'user_id' });
+
+    if (error) {
+      console.error('Failed to save user details:', error);
+      return false;
+    }
+
+    return true;
+  };
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadUserDetails = async () => {
+      const { data, error } = await supabase
+        .from('user_details')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Failed to load user details:', error);
+        return;
+      }
+
+      if (!data || cancelled) {
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        firstName: data.first_name ?? prev.firstName,
+        lastName: data.last_name ?? prev.lastName,
+        phone: data.phone_no ?? prev.phone,
+      }));
+
+      const socialProfiles = parseSocialProfiles(data.social_profiles);
+      const githubUrl = extractSocialUrl(socialProfiles, 'github');
+      const linkedinUrl = extractSocialUrl(socialProfiles, 'linkedin');
+      const portfolioUrl = extractSocialUrl(socialProfiles, 'portfolio');
+
+      setPersonalDetails((prev) => ({
+        ...prev,
+        middleName: data.middle_name ?? '',
+        role: data.role ?? '',
+        bio: data.bio ?? '',
+        location: data.location ?? '',
+        highestEducation: data.highest_edu ?? '',
+        educationInstitution: data.education_institution ?? '',
+        currentCompany: data.current_company ?? '',
+        githubUrl,
+        linkedinUrl,
+        portfolioUrl,
+      }));
+
+      const skillsPayload = parseSkillsPayload(data.skills);
+      if (skillsPayload) {
+        setSkills(skillsPayload.core);
+        setProgrammingLanguages(skillsPayload.languages);
+        setFrameworksTools(skillsPayload.tools);
+      }
+
+      setInterests({
+        areasOfInterest: Array.isArray(data.interests) ? data.interests : [],
+        careerGoals: Array.isArray(data.goals) ? data.goals : [],
+        learningPreferences: Array.isArray(data.learning_preferences) ? data.learning_preferences : [],
+      });
+    };
+
+    loadUserDetails();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   // Redirect non-authenticated users to AuthGuard
   if (!isAuthenticated) {
     return <AuthGuard 
@@ -131,6 +376,23 @@ const Profile = () => {
     setLoading(true);
     try {
       await updateProfile({ [field]: formData[field] });
+      const userDetailsUpdate: Partial<UserDetailsPayload> = {};
+
+      if (field === 'firstName') {
+        userDetailsUpdate.first_name = normalizeText(formData.firstName);
+      }
+
+      if (field === 'lastName') {
+        userDetailsUpdate.last_name = normalizeText(formData.lastName);
+      }
+
+      if (field === 'phone') {
+        userDetailsUpdate.phone_no = normalizeText(formData.phone);
+      }
+
+      if (Object.keys(userDetailsUpdate).length > 0) {
+        await saveUserDetails(userDetailsUpdate);
+      }
       setEditMode(prev => ({ ...prev, [field]: false }));
     } catch (error) {
       console.error(`Failed to update ${field}:`, error);
@@ -153,10 +415,46 @@ const Profile = () => {
     setEditingSection(section);
   };
 
-  const handleSaveSection = (section: string) => {
-    setEditingSection(null);
-    // TODO: Save to backend when ready
-    console.log('Saving section:', section);
+  const handleSaveSection = async (section: string) => {
+    setLoading(true);
+
+    let saved = false;
+
+    if (section === 'personal') {
+      saved = await saveUserDetails({
+        first_name: normalizeText(formData.firstName),
+        middle_name: normalizeText(personalDetails.middleName),
+        last_name: normalizeText(formData.lastName),
+        phone_no: normalizeText(formData.phone),
+        location: normalizeText(personalDetails.location),
+        role: normalizeText(personalDetails.role),
+        bio: normalizeText(personalDetails.bio),
+        highest_edu: normalizeText(personalDetails.highestEducation),
+        education_institution: normalizeText(personalDetails.educationInstitution),
+        current_company: normalizeText(personalDetails.currentCompany),
+        social_profiles: buildSocialProfiles(),
+      });
+    }
+
+    if (section === 'skills') {
+      saved = await saveUserDetails({
+        skills: buildSkillsPayload(),
+      });
+    }
+
+    if (section === 'interests') {
+      saved = await saveUserDetails({
+        interests: normalizeList(interests.areasOfInterest),
+        goals: normalizeList(interests.careerGoals),
+        learning_preferences: normalizeList(interests.learningPreferences),
+      });
+    }
+
+    if (saved) {
+      setEditingSection(null);
+    }
+
+    setLoading(false);
   };
 
   const handleCancelSection = () => {
@@ -403,7 +701,7 @@ const Profile = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Name Fields */}
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-3 gap-6">
                   {renderEditableField(
                     "firstName",
                     "First Name",
@@ -411,6 +709,29 @@ const Profile = () => {
                     user?.firstName || "",
                     "Enter your first name"
                   )}
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Middle Name
+                    </Label>
+                    {editingSection === 'personal' ? (
+                      <Input
+                        value={personalDetails.middleName}
+                        onChange={(e) => setPersonalDetails({
+                          ...personalDetails,
+                          middleName: e.target.value,
+                        })}
+                        placeholder="Enter your middle name"
+                      />
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg border">
+                        <p className="text-gray-900 dark:text-white">
+                          {personalDetails.middleName || "No middle name provided"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                   
                   {renderEditableField(
                     "lastName",
@@ -479,18 +800,69 @@ const Profile = () => {
                   <div className="space-y-3">
                     <Label className="text-sm font-medium flex items-center gap-2">
                       <GraduationCap className="h-4 w-4" />
-                      Current Education
+                      Highest Education
                     </Label>
                     {editingSection === 'personal' ? (
                       <Input
-                        value={personalDetails.currentEducation}
-                        onChange={(e) => setPersonalDetails({...personalDetails, currentEducation: e.target.value})}
-                        placeholder="e.g., B.Tech CSE, Year 3"
+                        value={personalDetails.highestEducation}
+                        onChange={(e) => setPersonalDetails({
+                          ...personalDetails,
+                          highestEducation: e.target.value,
+                        })}
+                        placeholder="e.g., B.Tech CSE"
                       />
                     ) : (
                       <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg border">
                         <p className="text-gray-900 dark:text-white">
-                          {personalDetails.currentEducation || "Not specified"}
+                          {personalDetails.highestEducation || "Not specified"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      Education Institution
+                    </Label>
+                    {editingSection === 'personal' ? (
+                      <Input
+                        value={personalDetails.educationInstitution}
+                        onChange={(e) => setPersonalDetails({
+                          ...personalDetails,
+                          educationInstitution: e.target.value,
+                        })}
+                        placeholder="School / College / University"
+                      />
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg border">
+                        <p className="text-gray-900 dark:text-white">
+                          {personalDetails.educationInstitution || "Not specified"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Role
+                    </Label>
+                    {editingSection === 'personal' ? (
+                      <Input
+                        value={personalDetails.role}
+                        onChange={(e) => setPersonalDetails({
+                          ...personalDetails,
+                          role: e.target.value,
+                        })}
+                        placeholder="Student, Teacher, Researcher, etc."
+                      />
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg border">
+                        <p className="text-gray-900 dark:text-white">
+                          {personalDetails.role || "Not specified"}
                         </p>
                       </div>
                     )}

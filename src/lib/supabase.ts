@@ -70,6 +70,68 @@ export type Database = {
           updated_at?: string
         }
       }
+      user_details: {
+        Row: {
+          user_id: string
+          first_name: string | null
+          middle_name: string | null
+          last_name: string | null
+          phone_no: string | null
+          location: string | null
+          role: string | null
+          bio: string | null
+          highest_edu: string | null
+          education_institution: string | null
+          current_company: string | null
+          social_profiles: any | null
+          skills: any | null
+          interests: string[] | null
+          goals: string[] | null
+          learning_preferences: string[] | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          first_name?: string | null
+          middle_name?: string | null
+          last_name?: string | null
+          phone_no?: string | null
+          location?: string | null
+          role?: string | null
+          bio?: string | null
+          highest_edu?: string | null
+          education_institution?: string | null
+          current_company?: string | null
+          social_profiles?: any | null
+          skills?: any | null
+          interests?: string[] | null
+          goals?: string[] | null
+          learning_preferences?: string[] | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          first_name?: string | null
+          middle_name?: string | null
+          last_name?: string | null
+          phone_no?: string | null
+          location?: string | null
+          role?: string | null
+          bio?: string | null
+          highest_edu?: string | null
+          education_institution?: string | null
+          current_company?: string | null
+          social_profiles?: any | null
+          skills?: any | null
+          interests?: string[] | null
+          goals?: string[] | null
+          learning_preferences?: string[] | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       user_game_data: {
         Row: {
           id: string

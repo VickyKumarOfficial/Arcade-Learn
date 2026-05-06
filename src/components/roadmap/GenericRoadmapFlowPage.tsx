@@ -188,6 +188,12 @@ function formatIndianLakhSalary(salary?: string | null): string {
   });
 }
 
+function parseProgressTimestamp(value?: string | null): number {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function getSeededSaveCount(jobId: string): number {
   let hash = 0;
   for (let i = 0; i < jobId.length; i += 1) {
@@ -543,11 +549,30 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         return;
       }
 
+      const localUpdatedAt = parseProgressTimestamp(localProgress.updated_at);
+      const remoteUpdatedAt = remoteProgress
+        ? parseProgressTimestamp(remoteProgress.updated_at)
+        : 0;
+      const remoteIsNewer = Boolean(remoteProgress && remoteUpdatedAt > localUpdatedAt);
+
       const mergedProgress = remoteProgress
-        ? adaptiveRoadmapProgressService.mergeProgress(localProgress, remoteProgress)
+        ? (remoteIsNewer
+          ? remoteProgress
+          : adaptiveRoadmapProgressService.mergeProgress(localProgress, remoteProgress))
         : localProgress;
 
       adaptiveRoadmapProgressService.saveProgress(mergedProgress);
+
+      if (!remoteIsNewer) {
+        const shouldSyncLocal = adaptiveRoadmapProgressService.shouldUseRemoteSync(progressUserId)
+          && (Boolean(remoteProgress)
+            ? localUpdatedAt > remoteUpdatedAt
+            : hasLocalProgress);
+
+        if (shouldSyncLocal) {
+          syncRoadmapProgressToBackend(mergedProgress);
+        }
+      }
 
       const recoveredLevel = hasLocalProgress
         ? mergedProgress.selected_level
@@ -592,25 +617,14 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
   ]);
 
   const syncRoadmapProgressToBackend = useCallback(
-    (progress: AdaptiveRoadmapUserProgress, options?: { notifyAnonymous?: boolean }) => {
-      const shouldNotifyAnonymous = options?.notifyAnonymous ?? false;
-
+    (progress: AdaptiveRoadmapUserProgress) => {
       if (!adaptiveRoadmapProgressService.shouldUseRemoteSync(progress.user_id)) {
-        if (shouldNotifyAnonymous) {
-          toast.info('Sign in to enable cloud progress sync', {
-            id: 'roadmap-sync-anonymous',
-            description: 'Roadmap progress is saved locally right now. Sign in to store it in the database.',
-          });
-        }
         return;
       }
 
       void adaptiveRoadmapProgressService.syncProgressToBackend(progress).then((synced) => {
         if (!synced) {
-          toast.error('Roadmap sync failed', {
-            id: 'roadmap-sync-failed',
-            description: 'Could not save roadmap progress to backend. Check server connectivity and try again.',
-          });
+          console.warn('[roadmap] Progress sync failed.');
         }
       });
     },
@@ -642,7 +656,7 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
 
     const syncedProgress = adaptiveRoadmapProgressService.updateSelectedLevel(loadedProgress, level);
     adaptiveRoadmapProgressService.saveProgress(syncedProgress);
-    syncRoadmapProgressToBackend(syncedProgress, { notifyAnonymous: true });
+    syncRoadmapProgressToBackend(syncedProgress);
 
     setFrontendProgress(syncedProgress);
     setEffectiveSkillLevel(syncedProgress.effective_level);

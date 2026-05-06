@@ -16,6 +16,28 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Create user_details table (extended profile details)
+CREATE TABLE IF NOT EXISTS public.user_details (
+  user_id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+  first_name TEXT,
+  middle_name TEXT,
+  last_name TEXT,
+  phone_no TEXT,
+  location TEXT,
+  role TEXT,
+  bio TEXT,
+  highest_edu TEXT,
+  education_institution TEXT,
+  current_company TEXT,
+  social_profiles JSONB,
+  skills JSONB,
+  interests TEXT[] DEFAULT '{}',
+  goals TEXT[] DEFAULT '{}',
+  learning_preferences TEXT[] DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Set up Row Level Security (RLS) policies
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -139,6 +161,7 @@ CREATE INDEX IF NOT EXISTS idx_learning_events_timestamp ON public.learning_even
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_game_data ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_survey ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
@@ -158,6 +181,16 @@ CREATE POLICY "Users can update own profile" ON public.profiles
 
 CREATE POLICY "Users can insert own profile" ON public.profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- User details policies
+CREATE POLICY "Users can view own user details" ON public.user_details
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own user details" ON public.user_details
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own user details" ON public.user_details
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- User game data policies
 CREATE POLICY "Users can view own game data" ON public.user_game_data
@@ -240,6 +273,10 @@ $$ LANGUAGE plpgsql;
 -- Create triggers for updated_at
 CREATE TRIGGER set_updated_at_profiles
   BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE TRIGGER set_updated_at_user_details
+  BEFORE UPDATE ON public.user_details
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 CREATE TRIGGER set_updated_at_user_game_data
