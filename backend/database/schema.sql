@@ -16,6 +16,22 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Create roadmaps catalog table
+CREATE TABLE IF NOT EXISTS public.roadmaps (
+  id TEXT PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT[] DEFAULT '{}',
+  estimated_hours INTEGER DEFAULT 0,
+  cover_img_url TEXT,
+  version TEXT,
+  total_nodes INTEGER DEFAULT 0,
+  total_sub_nodes INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Create user_details table (extended profile details)
 CREATE TABLE IF NOT EXISTS public.user_details (
   user_id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -147,6 +163,7 @@ CREATE TABLE IF NOT EXISTS public.learning_events (
 );
 
 -- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_roadmaps_category ON public.roadmaps USING GIN (category);
 CREATE INDEX IF NOT EXISTS idx_user_game_data_user_id ON public.user_game_data(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_game_data_total_xp ON public.user_game_data(total_xp DESC);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON public.user_achievements(user_id);
@@ -273,6 +290,10 @@ $$ LANGUAGE plpgsql;
 -- Create triggers for updated_at
 CREATE TRIGGER set_updated_at_profiles
   BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE TRIGGER set_updated_at_roadmaps
+  BEFORE UPDATE ON public.roadmaps
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 CREATE TRIGGER set_updated_at_user_details

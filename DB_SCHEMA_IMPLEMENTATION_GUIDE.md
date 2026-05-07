@@ -26,6 +26,7 @@ Legend: [x] done, [ ] pending, [~] in progress
 - [x] survey_questions (kept as-is; no schema changes)
 - [x] profiles (kept as-is; no schema changes)
 - [x] user_details (extended profile data; new table)
+- [x] roadmaps (catalog table; migration created)
 
 ---
 

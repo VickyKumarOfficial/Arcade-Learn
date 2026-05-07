@@ -70,6 +70,50 @@ export type Database = {
           updated_at?: string
         }
       }
+      roadmaps: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          description: string
+          category: string[]
+          estimated_hours: number
+          cover_img_url: string | null
+          version: string | null
+          total_nodes: number
+          total_sub_nodes: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          slug: string
+          title: string
+          description: string
+          category?: string[]
+          estimated_hours?: number
+          cover_img_url?: string | null
+          version?: string | null
+          total_nodes?: number
+          total_sub_nodes?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          title?: string
+          description?: string
+          category?: string[]
+          estimated_hours?: number
+          cover_img_url?: string | null
+          version?: string | null
+          total_nodes?: number
+          total_sub_nodes?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
       user_details: {
         Row: {
           user_id: string
