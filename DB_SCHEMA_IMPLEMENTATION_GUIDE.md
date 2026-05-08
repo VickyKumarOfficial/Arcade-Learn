@@ -11,6 +11,13 @@ Create or modify the DB schema, verify frontend inputs, wire backend + LLM/MCP h
 5) LLM/MCP wiring
 6) End-to-end test
 
+## Rules
+- Do not change the README file.
+- After I give the table name and the cols then debate with me that it satisfies everything in terms of not conflicting with other tables, code, recommendation sys and in terms of scaling as well.
+- After we come on to one finalizing point then I will say to implement it only and only start with the implementation!
+- Keep tracker updates minimal and only mark the table name/status in the implementation list when possible.
+- Do not proceed further if something is uncleared. Debate and proceed!
+
 ---
 
 ## Implementation status (table tracker)
@@ -27,6 +34,7 @@ Legend: [x] done, [ ] pending, [~] in progress
 - [x] profiles (kept as-is; no schema changes)
 - [x] user_details (extended profile data; new table)
 - [x] roadmaps (catalog table; migration created)
+- [x] roadmap_nodes (roadmap node catalog; schema added)
 
 ---
 
