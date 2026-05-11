@@ -249,14 +249,30 @@ export function PlaceholdersAndVanishInput({
         )}
       />
 
-      <button
+      <motion.button
         disabled={!value || disabled}
         type="submit"
         className={cn(
-          "absolute right-2 top-1/2 z-50 -translate-y-1/2 h-8 w-8 rounded-full disabled:bg-gray-100 bg-black dark:bg-zinc-900 dark:disabled:bg-zinc-800 transition duration-200 flex items-center justify-center",
+          "absolute right-5 top-1/2 z-50 -translate-y-1/2 h-9 w-9 rounded-full overflow-hidden disabled:bg-gray-100 bg-black dark:bg-zinc-900 dark:disabled:bg-zinc-800 transition duration-200 flex items-center justify-center",
           buttonClassName,
         )}
+        whileHover={
+          value && !disabled
+            ? { backgroundColor: 'rgba(245,245,245,0.96)', color: '#111827' }
+            : undefined
+        }
+        transition={{ type: 'spring', stiffness: 300, damping: 1 }}
       >
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-1 rounded-full bg-white/8 dark:bg-white/10"
+          initial={false}
+          animate={{
+            opacity: value ? 1 : 0,
+            scale: value ? 1 : 0.6,
+          }}
+          transition={{ duration: 0.24, ease: "easeOut" }}
+        />
         <motion.svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"
@@ -267,11 +283,23 @@ export function PlaceholdersAndVanishInput({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-gray-300 h-5 w-10"
+          className="relative z-10 text-gray-300 h-5 w-10 origin-center"
+          initial={false}
+          animate={{
+            rotate: value ? -90 : 0,
+            y: value ? -0.5 : 0,
+          }}
+          whileHover={value && !disabled ? { y: -3.5 } : undefined}
+          transition={{
+            type: "spring",
+            stiffness: 250,
+            damping: 22,
+          }}
         >
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <motion.path
             d="M5 12l14 0"
+            style={{ transformOrigin: '12px 12px' }}
             initial={{
               strokeDasharray: "50%",
               strokeDashoffset: "50%",
@@ -287,7 +315,7 @@ export function PlaceholdersAndVanishInput({
           <path d="M13 18l6 -6" />
           <path d="M13 6l6 6" />
         </motion.svg>
-      </button>
+      </motion.button>
 
       <div className="absolute inset-0 flex items-center rounded-full pointer-events-none">
         <AnimatePresence mode="wait">
