@@ -176,6 +176,35 @@ export type Database = {
           updated_at?: string
         }
       }
+      user_roadmap_credit_summary: {
+        Row: {
+          id: string
+          user_id: string
+          roadmap_id: string
+          earned_credits: number
+          total_credits: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          roadmap_id: string
+          earned_credits?: number
+          total_credits?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          roadmap_id?: string
+          earned_credits?: number
+          total_credits?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
       user_game_data: {
         Row: {
           id: string

@@ -615,19 +615,45 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     resolveAdaptiveModule,
   ]);
 
+  const computeCreditsForProgress = useCallback(
+    (progress: AdaptiveRoadmapUserProgress) => {
+      const uniqueSectionIds = new Set(config.mainSectionIds);
+      const completedIds = new Set(progress.completed_node_ids);
+      let total = 0;
+      let earned = 0;
+
+      uniqueSectionIds.forEach((id) => {
+        const subNodes = ALL_NODE_DETAILS[id]?.subNodes ?? [];
+        total += subNodes.length;
+        subNodes.forEach((subNode) => {
+          if (completedIds.has(subNode.id)) {
+            earned += 1;
+          }
+        });
+      });
+
+      return { totalCredits: total, earnedCredits: earned };
+    },
+    [config.mainSectionIds],
+  );
+
   const syncRoadmapProgressToBackend = useCallback(
     (progress: AdaptiveRoadmapUserProgress) => {
       if (!adaptiveRoadmapProgressService.shouldUseRemoteSync(progress.user_id)) {
         return;
       }
 
-      void adaptiveRoadmapProgressService.syncProgressToBackend(progress).then((synced) => {
+      const creditsSummary = computeCreditsForProgress(progress);
+
+      void adaptiveRoadmapProgressService
+        .syncProgressToBackend(progress, creditsSummary)
+        .then((synced) => {
         if (!synced) {
           console.warn('[roadmap] Progress sync failed.');
         }
       });
     },
-    [],
+    [adaptiveRoadmapProgressService, computeCreditsForProgress],
   );
 
   const confirmSkillLevelSelection = useCallback(async () => {
@@ -1345,6 +1371,24 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
     [config.mainSectionIds, completedNodeIds],
   );
 
+  const { totalCredits, earnedCredits } = useMemo(() => {
+    const uniqueSectionIds = new Set(config.mainSectionIds);
+    let total = 0;
+    let earned = 0;
+
+    uniqueSectionIds.forEach((id) => {
+      const subNodes = ALL_NODE_DETAILS[id]?.subNodes ?? [];
+      total += subNodes.length;
+      subNodes.forEach((subNode) => {
+        if (completedNodeIds.has(subNode.id)) {
+          earned += 1;
+        }
+      });
+    });
+
+    return { totalCredits: total, earnedCredits: earned };
+  }, [config.mainSectionIds, completedNodeIds]);
+
   const isProjectsLocked =
     modules.lockGate && completedSectionCount < config.mainSectionIds.length;
 
@@ -1805,6 +1849,12 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
               </div>
               <span className="font-semibold text-white text-sm leading-tight">{config.title}</span>
             </div>
+            {totalCredits > 0 && (
+              <div className="ml-2 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
+                <span className="text-[10px] uppercase tracking-wide text-zinc-400">Credits</span>
+                <span className="text-xs font-semibold text-white">{earnedCredits}/{totalCredits}</span>
+              </div>
+            )}
           </div>
 
           <div className="ml-auto flex items-center gap-4">

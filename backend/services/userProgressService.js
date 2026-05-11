@@ -306,6 +306,7 @@ class UserProgressService {
     try {
       const roadmapId = payload?.roadmapId;
       const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+      const credits = payload?.credits ?? null;
 
       if (!userId || !roadmapId) {
         return { success: false, error: 'userId and roadmapId are required.' };
@@ -359,6 +360,29 @@ class UserProgressService {
       if (error) {
         console.error('Error syncing roadmap progress details:', error);
         return { success: false, error: error.message };
+      }
+
+      if (credits && Number.isFinite(Number(credits.earnedCredits))) {
+        const earnedCredits = Math.max(0, Math.round(Number(credits.earnedCredits)));
+        const totalCredits = Math.max(0, Math.round(Number(credits.totalCredits ?? 0)));
+
+        const { error: creditsError } = await this.supabase
+          .from('user_roadmap_credit_summary')
+          .upsert(
+            {
+              user_id: userId,
+              roadmap_id: roadmapId,
+              earned_credits: earnedCredits,
+              total_credits: totalCredits,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,roadmap_id' },
+          );
+
+        if (creditsError) {
+          console.error('Error syncing roadmap credit summary:', creditsError);
+          return { success: false, error: creditsError.message };
+        }
       }
 
       return { success: true, data: { upserted: normalizedRows.length } };

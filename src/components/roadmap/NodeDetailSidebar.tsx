@@ -141,6 +141,7 @@ export default function NodeDetailSidebar({
   const section = shouldUseModuleContent ? dynamicSection : (sectionData?.section ?? dynamicSection);
   const mainCredits = subNodes.length;
   const formatCredits = (count: number) => `${count} credit${count === 1 ? '' : 's'}`;
+  const showCredits = !preferModuleContent;
   const mainQuizContext = useMemo(() => {
     const flattened = subNodes.flatMap((node) => node.whatYoullLearn ?? []);
     return Array.from(new Set(flattened.map((point) => point.trim()).filter(Boolean)));
@@ -221,7 +222,7 @@ export default function NodeDetailSidebar({
                       <h2 className="text-2xl font-bold text-white leading-tight">
                         {section?.label ?? 'Loading…'}
                       </h2>
-                      {section && mainCredits > 0 && (
+                      {section && mainCredits > 0 && showCredits && (
                         <span className="text-sm font-medium text-indigo-200/80">
                           {formatCredits(mainCredits)}
                         </span>
@@ -322,9 +323,11 @@ export default function NodeDetailSidebar({
                       >
                         {node.label}
                       </span>
-                      <span className="text-xs font-medium text-indigo-200/80">
-                        {formatCredits(1)}
-                      </span>
+                      {showCredits && (
+                        <span className="text-xs font-medium text-indigo-200/80">
+                          {formatCredits(1)}
+                        </span>
+                      )}
 
                       <motion.span
                         animate={{ rotate: isOpen ? 180 : 0 }}

@@ -34,7 +34,10 @@ Legend: [x] done, [ ] pending, [~] in progress
 - [x] profiles (kept as-is; no schema changes)
 - [x] user_details (extended profile data; new table)
 - [x] roadmaps (catalog table; migration created)
+- [x] ai_chats_deleted (Shows the deleted chats)
+- [x] ai_messages_deleted (Shows the deleted chat's prompt and response)
 - [x] roadmap_nodes (roadmap node catalog; schema added)
+- [x] user_roadmap_credit_summary
 
 ---
 

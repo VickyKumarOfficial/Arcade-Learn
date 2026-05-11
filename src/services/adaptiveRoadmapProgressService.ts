@@ -41,6 +41,11 @@ interface RoadmapProgressSyncEntry {
   currentLevel: AdaptiveSkillLevel;
 }
 
+interface RoadmapCreditsSummary {
+  earnedCredits: number;
+  totalCredits: number;
+}
+
 let hasWarnedRoadmapProgressNetwork = false;
 
 function logRoadmapProgressNetworkWarning(context: string, error: unknown) {
@@ -415,7 +420,10 @@ class AdaptiveRoadmapProgressService {
     return Array.from(entriesByComponentId.values());
   }
 
-  async syncProgressToBackend(progress: AdaptiveRoadmapUserProgress): Promise<boolean> {
+  async syncProgressToBackend(
+    progress: AdaptiveRoadmapUserProgress,
+    creditsSummary?: RoadmapCreditsSummary,
+  ): Promise<boolean> {
     if (!this.shouldUseRemoteSync(progress.user_id)) {
       return false;
     }
@@ -431,6 +439,7 @@ class AdaptiveRoadmapProgressService {
         body: JSON.stringify({
           roadmapId: progress.roadmap_key,
           entries,
+          credits: creditsSummary,
         }),
       });
 

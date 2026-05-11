@@ -153,6 +153,18 @@ CREATE TABLE IF NOT EXISTS public.user_roadmap_progress (
   UNIQUE(user_id, roadmap_id, component_id)
 );
 
+-- Create user roadmap credit summary table
+CREATE TABLE IF NOT EXISTS public.user_roadmap_credit_summary (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  roadmap_id TEXT NOT NULL,
+  earned_credits INTEGER NOT NULL DEFAULT 0 CHECK (earned_credits >= 0),
+  total_credits INTEGER NOT NULL DEFAULT 0 CHECK (total_credits >= 0),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, roadmap_id)
+);
+
 -- Create learning events table for analytics
 CREATE TABLE IF NOT EXISTS public.learning_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -173,6 +185,8 @@ CREATE INDEX IF NOT EXISTS idx_certificates_user_id ON public.certificates(user_
 CREATE INDEX IF NOT EXISTS idx_certificates_verification_code ON public.certificates(verification_code);
 CREATE INDEX IF NOT EXISTS idx_user_roadmap_progress_user_id ON public.user_roadmap_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_roadmap_progress_roadmap_id ON public.user_roadmap_progress(roadmap_id);
+CREATE INDEX IF NOT EXISTS idx_user_roadmap_credit_user_id ON public.user_roadmap_credit_summary(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roadmap_credit_roadmap_id ON public.user_roadmap_credit_summary(roadmap_id);
 CREATE INDEX IF NOT EXISTS idx_learning_events_user_id ON public.learning_events(user_id);
 CREATE INDEX IF NOT EXISTS idx_learning_events_timestamp ON public.learning_events(timestamp DESC);
 
@@ -185,6 +199,7 @@ ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_roadmap_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_roadmap_credit_summary ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.learning_events ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS Policies
@@ -271,6 +286,16 @@ CREATE POLICY "Users can update own progress" ON public.user_roadmap_progress
 CREATE POLICY "Users can insert own progress" ON public.user_roadmap_progress
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- User roadmap credit summary policies
+CREATE POLICY "Users can view own roadmap credits" ON public.user_roadmap_credit_summary
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own roadmap credits" ON public.user_roadmap_credit_summary
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own roadmap credits" ON public.user_roadmap_credit_summary
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- Learning events policies
 CREATE POLICY "Users can view own events" ON public.learning_events
   FOR SELECT USING (auth.uid() = user_id);
@@ -310,6 +335,10 @@ CREATE TRIGGER set_updated_at_subscriptions
 
 CREATE TRIGGER set_updated_at_user_roadmap_progress
   BEFORE UPDATE ON public.user_roadmap_progress
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE TRIGGER set_updated_at_user_roadmap_credit_summary
+  BEFORE UPDATE ON public.user_roadmap_credit_summary
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Create view for leaderboard (optimized query)
