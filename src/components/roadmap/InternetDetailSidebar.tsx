@@ -121,12 +121,12 @@ export default function InternetDetailSidebar({ open, activeNodeId, onClose, onM
                     <Globe className="w-6 h-6 text-white" />
                   </span> */}
                   <div>
-                    <p className="text-xs font-medium text-indigo-300/80 uppercase tracking-widest">
-                      Module overview
-                    </p>
                     <h2 className="text-2xl font-bold text-white leading-tight">
                       {INTERNET_SECTION.label}
                     </h2>
+                    <p className="text-xs font-medium text-indigo-300/80 uppercase tracking-widest">
+                      Module overview
+                    </p>
                   </div>
                 </div>
 

@@ -139,6 +139,8 @@ export default function NodeDetailSidebar({
   const shouldUseModuleContent = Boolean(moduleContent) && preferModuleContent;
   const subNodes = shouldUseModuleContent ? dynamicSubNodes : (sectionData?.subNodes ?? dynamicSubNodes);
   const section = shouldUseModuleContent ? dynamicSection : (sectionData?.section ?? dynamicSection);
+  const mainCredits = subNodes.length;
+  const formatCredits = (count: number) => `${count} credit${count === 1 ? '' : 's'}`;
   const mainQuizContext = useMemo(() => {
     const flattened = subNodes.flatMap((node) => node.whatYoullLearn ?? []);
     return Array.from(new Set(flattened.map((point) => point.trim()).filter(Boolean)));
@@ -215,12 +217,19 @@ export default function NodeDetailSidebar({
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3.5">
                   <div>
-                    <p className="text-xs font-medium text-indigo-300/80 uppercase tracking-widest">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <h2 className="text-2xl font-bold text-white leading-tight">
+                        {section?.label ?? 'Loading…'}
+                      </h2>
+                      {section && mainCredits > 0 && (
+                        <span className="text-sm font-medium text-indigo-200/80">
+                          {formatCredits(mainCredits)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-5 text-xs font-medium text-indigo-150/40 uppercase tracking-widest">
                       Module overview
                     </p>
-                    <h2 className="text-2xl font-bold text-white leading-tight">
-                      {section?.label ?? 'Loading…'}
-                    </h2>
                   </div>
                 </div>
 
@@ -235,7 +244,7 @@ export default function NodeDetailSidebar({
               </div>
 
               {section && (
-                <p className="mt-4 text-sm text-gray-400 leading-relaxed">
+                <p className="mt-1 text-sm text-gray-400 leading-relaxed">
                   {section.description}
                 </p>
               )}
@@ -312,6 +321,9 @@ export default function NodeDetailSidebar({
                                     ${isOpen ? 'text-white' : 'text-gray-300'}`}
                       >
                         {node.label}
+                      </span>
+                      <span className="text-xs font-medium text-indigo-200/80">
+                        {formatCredits(1)}
                       </span>
 
                       <motion.span

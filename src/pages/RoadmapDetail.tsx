@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
-  CheckCircle, Circle, Clock, ArrowLeft, ExternalLink, 
+  CheckCircle, Circle, Clock, ExternalLink, 
   Trophy, Target, Lock, Star, AlertCircle, BarChart2, Briefcase
 } from "lucide-react";
 import { roadmaps } from "@/data/roadmaps";
@@ -226,15 +226,6 @@ const RoadmapDetail = () => {
       
       <div className="pt-16 sm:pt-20 pb-12">
         <div className="container mx-auto px-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/roadmaps')}
-            className="mb-6 hover:bg-white/50 dark:hover:bg-gray-800/50"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Roadmaps
-          </Button>
-
           {/* Header Section */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border-0">
             <div className="flex flex-col lg:flex-row items-start gap-8">

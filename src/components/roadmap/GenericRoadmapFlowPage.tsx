@@ -9,7 +9,6 @@ import 'reactflow/dist/style.css';
 
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   BookOpen,
   CheckSquare,
   ChevronDown,
@@ -1772,18 +1771,6 @@ export default function GenericRoadmapFlowPage({ config }: GenericRoadmapFlowPag
         />
 
         <div className="px-5 py-3 flex items-center gap-4 flex-wrap">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/roadmaps')}
-            className="gap-1.5 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors px-2.5"
-          >
-            <ArrowLeft size={15} />
-            <span className="text-xs font-medium">Back</span>
-          </Button>
-
-          <div className="h-8 w-px bg-zinc-700" />
-
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
