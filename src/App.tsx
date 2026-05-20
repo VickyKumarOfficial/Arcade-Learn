@@ -21,7 +21,8 @@ const Resume = lazy(() => import("./pages/Resume"));
 const ResumeBuilder = lazy(() => import("./pages/ResumeBuilder"));
 const Jobs = lazy(() => import("./pages/Jobs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const SignIn = lazy(() => import("@/pages/SignIn"));
+const Login = lazy(() => import("@/pages/Login"));
+const Signup = lazy(() => import("@/pages/Signup"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const FAQs = lazy(() => import("@/pages/FAQs"));
 const ContactUs = lazy(() => import("@/pages/ContactUs"));
@@ -76,8 +77,8 @@ const App = () => (
                       <Route path="/ai/doubt-solving" element={<AIDoubtSolving />} />
                       <Route path="/ai/roadmap-generation" element={<AIRoadmapGeneration />} />
                       <Route path="/practice" element={<CodingPractice />} />
-                      <Route path="/signin" element={<SignIn />} />
-                      <Route path="/signup" element={<SignIn initialMode="register" />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/signup" element={<Signup />} />
                       <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
