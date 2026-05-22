@@ -49,44 +49,44 @@ const App = () => (
       <AuthProvider>
         <SurveyProvider>
           <GameTestProvider>
-              <TooltipProvider>
-               {/* <DevelopmentBanner /> - Removed to utilize space, uncomment if needed in future */}
-                <Toaster />
-                <Sonner position="bottom-right" richColors duration={6500} />
-                <BrowserRouter>
-                  <Suspense fallback={<RouteFallback />}>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/roadmaps" element={<Roadmaps />} />
-                      <Route path="/roadmap/:id" element={<RoadmapDetailTest />} />
-                      <Route path="/roadmap/frontend-react/flow" element={<FrontendRoadmapFlow />} />
-                      <Route path="/roadmap/backend-nodejs/flow" element={<BackendRoadmapFlow />} />
-                      <Route path="/roadmap/fullstack-mern/flow" element={<FullstackMernRoadmapFlow />} />
-                      <Route path="/roadmap/frontend-react/mentor" element={<MentorBooking />} />
-                      <Route path="/roadmap/backend-nodejs/mentor" element={<MentorBooking />} />
-                      <Route path="/roadmap/fullstack-mern/mentor" element={<MentorBooking />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/aim" element={<Aim />} />
-                      <Route path="/resume" element={<Resume />} />
-                      <Route path="/resume-builder" element={<ResumeBuilder />} />
-                      <Route path="/jobs" element={<Jobs />} />
-                      <Route path="/faqs" element={<FAQs />} />
-                      <Route path="/contactus" element={<ContactUs />} />
-                      <Route path="/ai/chat" element={<AIChatPage />} />
-                      <Route path="/ai/doubt-solving" element={<AIDoubtSolving />} />
-                      <Route path="/ai/roadmap-generation" element={<AIRoadmapGeneration />} />
-                      <Route path="/practice" element={<CodingPractice />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/signup" element={<Signup />} />
-                      <Route path="/auth/callback" element={<AuthCallback />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                  <SurveyModal />
-                </BrowserRouter>
-              </TooltipProvider>
-            </GameTestProvider>
+            <TooltipProvider>
+              {/* <DevelopmentBanner /> - Removed to utilize space, uncomment if needed in future */}
+              <Toaster />
+              <Sonner position="bottom-right" richColors duration={6500} />
+              <BrowserRouter>
+                <Suspense fallback={<RouteFallback />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/roadmaps" element={<Roadmaps />} />
+                    <Route path="/roadmap/:id" element={<RoadmapDetailTest />} />
+                    <Route path="/roadmap/frontend-react/flow" element={<FrontendRoadmapFlow />} />
+                    <Route path="/roadmap/backend-nodejs/flow" element={<BackendRoadmapFlow />} />
+                    <Route path="/roadmap/fullstack-mern/flow" element={<FullstackMernRoadmapFlow />} />
+                    <Route path="/roadmap/frontend-react/mentor" element={<MentorBooking />} />
+                    <Route path="/roadmap/backend-nodejs/mentor" element={<MentorBooking />} />
+                    <Route path="/roadmap/fullstack-mern/mentor" element={<MentorBooking />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/aim" element={<Aim />} />
+                    <Route path="/resume" element={<Resume />} />
+                    <Route path="/resume-builder" element={<ResumeBuilder />} />
+                    <Route path="/jobs" element={<Jobs />} />
+                    <Route path="/faqs" element={<FAQs />} />
+                    <Route path="/contactus" element={<ContactUs />} />
+                    <Route path="/ai/chat" element={<AIChatPage />} />
+                    <Route path="/ai/doubt-solving" element={<AIDoubtSolving />} />
+                    <Route path="/ai/roadmap-generation" element={<AIRoadmapGeneration />} />
+                    <Route path="/practice" element={<CodingPractice />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+                <SurveyModal />
+              </BrowserRouter>
+            </TooltipProvider>
+          </GameTestProvider>
         </SurveyProvider>
       </AuthProvider>
     </DarkModeProvider>

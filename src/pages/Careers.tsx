@@ -307,7 +307,7 @@ const Careers = () => {
                 {/* CTA Buttons */}
                 <div className="flex flex-col gap-3">
                   <Button 
-                    onClick={() => navigate('/signin')}
+                    onClick={() => navigate('/login')}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 text-sm"
                   >
                     <LogIn className="mr-2 h-4 w-4" />
@@ -367,7 +367,7 @@ const Careers = () => {
                 {/* CTA Buttons */}
                 <div className="flex flex-col gap-3">
                   <Button 
-                    onClick={() => navigate('/signin')}
+                    onClick={() => navigate('/login')}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 text-sm"
                   >
                     <LogIn className="mr-2 h-4 w-4" />

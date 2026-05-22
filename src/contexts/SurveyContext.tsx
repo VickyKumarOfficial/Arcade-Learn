@@ -27,7 +27,7 @@ export const SURVEY_QUESTIONS: SurveyQuestion[] = [
   {
     id: 'goal',
     question: 'What are your main goals for joining ArcadeLearn? (Select all that apply)',
-    options: ['Get a job', 'Switch careers', 'Upskill for current job', 'Build a project/startup', 'Just exploring', 'Learn new technologies'],
+    options: ['Get a job', 'Switch careers', 'Upskill for current job', 'Build a project/startup', 'Exploring tech'],
     type: 'multiple',
     maxSelections: 3
   },

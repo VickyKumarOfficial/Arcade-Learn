@@ -25,11 +25,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   session: Session | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: Omit<User, 'id'> & { password: string }) => Promise<void>;
+  register: (userData: Omit<User, 'id'> & { password: string }) => Promise<{ status: 'signed_in' | 'verification_required' }>;
   logout: () => Promise<void>;
   loginWithProvider: (provider: 'google' | 'github') => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
   updateProfile: (userData: Partial<Omit<User, 'id'>>) => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -43,6 +44,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const getRedirectBase = () => window.location.origin;
   const authDebug = import.meta.env.DEV && import.meta.env.VITE_DEBUG_AUTH === 'true';
   const lastLoggedSessionTokenRef = useRef<string | null>(null);
   const [authState, setAuthState] = useState<AuthState>({
@@ -127,7 +129,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   // Helper function to convert Supabase user to our User type
-  const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User> => {
+  const convertSupabaseUser = useCallback(async (supabaseUser: SupabaseUser): Promise<User> => {
     // For faster login, just return basic user info from auth metadata
     // Profile data can be loaded separately if needed
     return {
@@ -138,59 +140,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       phone: supabaseUser.user_metadata?.phone || null,
       avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
     };
-  };
+  }, []);
 
-  // Check for existing session on app load
-  useEffect(() => {
-    const getSession = async () => {
-      try {
-        // Check if we have valid Supabase environment variables
-        if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
-          console.warn('⚠️ Supabase not configured. Running in demo mode.');
-          commitAuthState({
-            user: null,
-            isLoading: false,
-            isAuthenticated: false,
-            session: null,
-          });
-          return;
-        }
+  const refreshSession = useCallback(async () => {
+    try {
+      // Check if we have valid Supabase environment variables
+      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+        console.warn('⚠️ Supabase not configured. Running in demo mode.');
+        commitAuthState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false,
+          session: null,
+        });
+        return;
+      }
 
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          commitAuthState({
-            user: null,
-            isLoading: false,
-            isAuthenticated: false,
-            session: null,
-          });
-          return;
-        }
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
+        commitAuthState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false,
+          session: null,
+        });
+        return;
+      }
 
-        if (session?.user) {
-          ensureProfileExistsForUser(session.user).catch((err) => {
-            console.warn('Failed to ensure profile exists from getSession:', err);
-          });
+      if (session?.user) {
+        ensureProfileExistsForUser(session.user).catch((err) => {
+          console.warn('Failed to ensure profile exists from getSession:', err);
+        });
 
-          const user = await convertSupabaseUser(session.user);
-          commitAuthState({
-            user,
-            isLoading: false,
-            isAuthenticated: !!user,
-            session,
-          });
-        } else {
-          commitAuthState({
-            user: null,
-            isLoading: false,
-            isAuthenticated: false,
-            session: null,
-          });
-        }
-      } catch (error) {
-        console.error('Error in getSession:', error);
+        const user = await convertSupabaseUser(session.user);
+        commitAuthState({
+          user,
+          isLoading: false,
+          isAuthenticated: !!user,
+          session,
+        });
+      } else {
         commitAuthState({
           user: null,
           isLoading: false,
@@ -198,9 +189,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           session: null,
         });
       }
-    };
+    } catch (error) {
+      console.error('Error in getSession:', error);
+      commitAuthState({
+        user: null,
+        isLoading: false,
+        isAuthenticated: false,
+        session: null,
+      });
+    }
+  }, [commitAuthState, convertSupabaseUser, ensureProfileExistsForUser]);
 
-    getSession();
+  // Check for existing session on app load
+  useEffect(() => {
+    refreshSession();
 
     // Listen for auth changes (only if we have valid Supabase configuration)
     let subscription: any = null;
@@ -266,7 +268,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         subscription.unsubscribe();
       }
     };
-  }, [authDebug, commitAuthState, ensureProfileExistsForUser]);
+  }, [authDebug, commitAuthState, ensureProfileExistsForUser, refreshSession]);
 
   const login = async (email: string, password: string) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
@@ -319,7 +321,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             first_name: userData.firstName,
             last_name: userData.lastName,
             phone: userData.phone,
-          }
+          },
+          emailRedirectTo: `${getRedirectBase()}/signup`,
         }
       });
 
@@ -350,7 +353,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (!authData.session) {
         // Keep account created, but require verification before sign-in.
-        throw new Error('Email not confirmed. Please check your email and verify your account before signing in.');
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return { status: 'verification_required' } as const;
       }
 
       // 3. Clear loading state and update auth state
@@ -367,6 +371,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated: true,
         session: authData.session
       }));
+
+      return { status: 'signed_in' } as const;
       
     } catch (error: any) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
@@ -379,6 +385,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: email,
+        options: {
+          emailRedirectTo: `${getRedirectBase()}/signup`,
+        },
       });
       if (error) throw error;
       return;
@@ -540,6 +549,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loginWithProvider,
         resendVerificationEmail,
         updateProfile,
+        refreshSession,
       }}
     >
       {children}

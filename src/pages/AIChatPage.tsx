@@ -754,7 +754,7 @@ const AIChatPage = () => {
               Please sign in to access the AI chat feature.
             </p>
             <Button 
-              onClick={() => window.location.href = '/signin'}
+              onClick={() => window.location.href = '/login'}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Sign In

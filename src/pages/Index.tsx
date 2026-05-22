@@ -7,7 +7,6 @@ import { ThreeDMarqueeDemoSecond } from "@/components/3d-marquee-demo-2";
 import FAQSection from "@/components/FAQSection";
 import Footer from "@/components/Footer";
 import BackToTopButton from "@/components/BackToTopButton";
-import SignIn from "./SignIn";
 import dashboardPreview from "@/assets/dashboard-preview.png";
 
 const Index = () => {

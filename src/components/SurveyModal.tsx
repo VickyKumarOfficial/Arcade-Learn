@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Sparkles, Check, X } from 'lucide-react';
 import { useSurvey } from '@/contexts/SurveyContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 
 export const SurveyModal: React.FC = () => {
   const [submitError, setSubmitError] = useState('');
@@ -25,8 +26,10 @@ export const SurveyModal: React.FC = () => {
     canProceed,
   } = useSurvey();
 
-  // Only show survey for authenticated users
-  if (!isAuthenticated || !state.isVisible || state.isCompleted) {
+  const location = useLocation();
+
+  // Only show survey for authenticated users, not on the signup page, and only if they haven't completed it
+  if (!isAuthenticated || !state.isVisible || state.isCompleted || location.pathname === '/signup') {
     return null;
   }
 

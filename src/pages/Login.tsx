@@ -1,7 +1,7 @@
-import { useState, type ComponentType } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { motion } from 'motion/react';
 import { Circle, Chrome, Eye, EyeOff, Github } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
@@ -12,6 +12,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, loginWithProvider } = useAuth();
 
   const heroContainer = {
@@ -33,6 +34,20 @@ export default function Login() {
       transition: { duration: 0.5 },
     },
   };
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (!errorParam) return;
+
+    const errorMessages: Record<string, string> = {
+      auth_failed: 'Google sign-in failed. Please try again.',
+      no_session: 'Unable to establish session. Please try signing in again.',
+      callback_failed: 'Authentication callback failed. Please try again.',
+      no_token: 'Authentication token not received. Please try again.',
+    };
+
+    setError(errorMessages[errorParam] || 'An error occurred during sign-in. Please try again.');
+  }, [searchParams]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

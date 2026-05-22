@@ -1,8 +1,10 @@
-import { useMemo, useState, type ComponentType } from 'react';
+import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import { motion } from 'motion/react';
 import { Check, Circle, Chrome, Eye, EyeOff, Github } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSurvey } from '@/contexts/SurveyContext';
+import { InlineSurvey } from '@/components/InlineSurvey';
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,9 +14,67 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+  const [verificationRequested, setVerificationRequested] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+
   const navigate = useNavigate();
-  const { register, loginWithProvider } = useAuth();
+  const { register, loginWithProvider, isAuthenticated, resendVerificationEmail, refreshSession } = useAuth();
+  const { state: surveyState } = useSurvey();
+  
+  const showSurvey = isAuthenticated && !surveyState.isCompleted;
+  const stepOneDone = isAuthenticated;
+  const stepOnePending = verificationRequested && !isAuthenticated;
+  const stepOneActive = !isAuthenticated && !verificationRequested;
+  const stepTwoDone = surveyState.isCompleted;
+  const stepTwoActive = isAuthenticated && !surveyState.isCompleted;
+  const stepThreeDone = surveyState.isCompleted;
+
+  useEffect(() => {
+    if (isAuthenticated && surveyState.isCompleted) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, surveyState.isCompleted, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const pendingEmail = localStorage.getItem('arcade-signup-pending-email');
+    if (pendingEmail) {
+      setVerificationRequested(true);
+      setVerificationEmail(pendingEmail);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      setVerificationRequested(false);
+      setVerificationEmail('');
+      localStorage.removeItem('arcade-signup-pending-email');
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!verificationRequested || isAuthenticated) return;
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'arcade-learn-auth') {
+        refreshSession().catch(() => null);
+      }
+    };
+
+    const handleFocus = () => {
+      refreshSession().catch(() => null);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [verificationRequested, isAuthenticated, refreshSession]);
 
   const heroContainer = {
     hidden: { opacity: 0 },
@@ -107,7 +167,13 @@ export default function Signup() {
     setError('');
     setLoading(true);
     try {
-      await register({ email, password, firstName, lastName });
+      const result = await register({ email, password, firstName, lastName });
+      if (result.status === 'verification_required') {
+        setVerificationRequested(true);
+        setVerificationEmail(email);
+        localStorage.setItem('arcade-signup-pending-email', email);
+        return;
+      }
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
@@ -128,6 +194,33 @@ export default function Signup() {
     } catch (err: any) {
       setError(err.message || `Failed to sign up with ${provider}`);
       setLoading(false);
+    }
+  };
+
+  const handleManualRefresh = async () => {
+    setIsRefreshingSession(true);
+    try {
+      await refreshSession();
+    } finally {
+      setIsRefreshingSession(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    const targetEmail = verificationEmail || email;
+    if (!targetEmail) {
+      setError('Please enter your email to resend the verification link.');
+      return;
+    }
+
+    setIsResendingEmail(true);
+    setError('');
+    try {
+      await resendVerificationEmail(targetEmail);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend verification email.');
+    } finally {
+      setIsResendingEmail(false);
     }
   };
 
@@ -166,9 +259,24 @@ export default function Signup() {
           </motion.div>
 
           <motion.div variants={heroItem} className="space-y-3">
-            <StepItem number="1" text="Register your identity" active />
-            <StepItem number="2" text="Answer quick survey" />
-            <StepItem number="3" text="Start your journey" />
+            <StepItem
+              number="1"
+              text="Register your identity"
+              active={stepOneActive}
+              pending={stepOnePending}
+              done={stepOneDone}
+            />
+            <StepItem
+              number="2"
+              text="Answer quick survey"
+              active={stepTwoActive}
+              done={stepTwoDone}
+            />
+            <StepItem
+              number="3"
+              text="Start your journey"
+              done={stepThreeDone}
+            />
           </motion.div>
         </motion.div>
       </section>
@@ -181,108 +289,154 @@ export default function Signup() {
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
           <div className="space-y-2">
-            <h2 className="text-3xl font-medium tracking-tight">Create New Profile</h2>
-            <p className="text-white/40 text-sm">Input your basic details to begin the journey.</p>
+            <h2 className="text-3xl font-medium tracking-tight">
+              {showSurvey ? 'Tell us about you' : 'Create New Profile'}
+            </h2>
+            <p className="text-white/40 text-sm">
+              {showSurvey ? 'This helps us personalize your experience.' : 'Input your basic details to begin the journey.'}
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <SocialButton icon={Chrome} label="Google" onClick={() => handleOAuth('google')} />
-            <SocialButton icon={Github} label="Github" onClick={() => handleOAuth('github')} />
-          </div>
-
-          <div className="relative flex items-center">
-            <div className="w-full border-t border-white/10" />
-            <span className="absolute left-1/2 -translate-x-1/2 bg-black px-4 text-xs font-medium text-white/40 uppercase tracking-widest">
-              Or
-            </span>
-          </div>
-
-          <form
-            className="space-y-5"
-            onSubmit={handleSubmit}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InputGroup label="First Name" placeholder="Nova" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-              <InputGroup label="Last Name" placeholder="Sterling" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-            </div>
-
-            <InputGroup label="Email" placeholder="you@arcadelearn.com" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-white">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a secure password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="w-full bg-[var(--color-brand-gray)] border border-white/10 rounded-xl h-11 px-4 text-white caret-white placeholder:text-white/30 focus:border-white/30 focus:ring-1 focus:ring-white/20 outline-none"
-                />
+          {showSurvey ? (
+            <InlineSurvey />
+          ) : verificationRequested && !isAuthenticated ? (
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-white">Verify your email to continue</p>
+                <p className="text-xs text-white/70">
+                  We sent a confirmation link to{' '}
+                  <span className="text-white">{verificationEmail || email}</span>. Open it to unlock Step 2
+                  and continue the survey in this tab.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshingSession}
+                  className="h-10 rounded-xl bg-white px-4 text-xs font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {isRefreshingSession ? 'Checking...' : 'I already verified'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={isResendingEmail}
+                  className="h-10 rounded-xl border border-white/15 px-4 text-xs font-semibold text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isResendingEmail ? 'Resending...' : 'Resend email'}
                 </button>
               </div>
+              {error && (
+                <p className="text-xs text-red-400">
+                  {error}
+                </p>
+              )}
+              <p className="text-[11px] text-white/50">
+                Tip: if the confirmation opened in another tab, you can return here and click “I already verified.”
+              </p>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <SocialButton icon={Chrome} label="Google" onClick={() => handleOAuth('google')} />
+                <SocialButton icon={Github} label="Github" onClick={() => handleOAuth('github')} />
+              </div>
 
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs text-white/50">
-                <span>Password strength</span>
-                <span className={strengthLevel === 'strong' ? 'text-emerald-300' : strengthLevel === 'normal' ? 'text-orange-300' : 'text-red-300'}>
-                  {strengthLabel}
+              <div className="relative flex items-center">
+                <div className="w-full border-t border-white/10" />
+                <span className="absolute left-1/2 -translate-x-1/2 bg-black px-4 text-xs font-medium text-white/40 uppercase tracking-widest">
+                  Or
                 </span>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="h-2 flex-1 min-w-[140px] rounded-full bg-white/10 overflow-hidden">
-                  <motion.div
-                    className={`h-full ${strengthColor}`}
-                    animate={{ width: `${strengthPercent}%` }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                  />
+
+              <form
+                className="space-y-5"
+                onSubmit={handleSubmit}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <InputGroup label="First Name" placeholder="Nova" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                  <InputGroup label="Last Name" placeholder="Sterling" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {passwordChecks.map((rule) => {
-                    const met = satisfiedChecks.includes(rule.id);
-                    return (
+
+                <InputGroup label="Email" placeholder="you@arcadelearn.com" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create a secure password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className="w-full bg-[var(--color-brand-gray)] border border-white/10 rounded-xl h-11 px-4 text-white caret-white placeholder:text-white/30 focus:border-white/30 focus:ring-1 focus:ring-white/20 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs text-white/50">
+                    <span>Password strength</span>
+                    <span className={strengthLevel === 'strong' ? 'text-emerald-300' : strengthLevel === 'normal' ? 'text-orange-300' : 'text-red-300'}>
+                      {strengthLabel}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="h-2 flex-1 min-w-[140px] rounded-full bg-white/10 overflow-hidden">
                       <motion.div
-                        key={rule.id}
-                        className="inline-flex items-center gap-1.5 text-[11px] text-white/50"
-                        animate={{ opacity: met ? 1 : 0.6, y: met ? 0 : 2 }}
-                        transition={{ duration: 0.25, ease: 'easeOut' }}
-                      >
-                        <span
-                          className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border ${
-                            met ? 'border-emerald-400 bg-emerald-400' : 'border-white/15'
-                          }`}
-                        >
-                          {met && <Check className="h-3 w-3 text-black" />}
-                        </span>
-                        {rule.label}
-                      </motion.div>
-                    );
-                  })}
+                        className={`h-full ${strengthColor}`}
+                        animate={{ width: `${strengthPercent}%` }}
+                        transition={{ duration: 0.4, ease: 'easeOut' }}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {passwordChecks.map((rule) => {
+                        const met = satisfiedChecks.includes(rule.id);
+                        return (
+                          <motion.div
+                            key={rule.id}
+                            className="inline-flex items-center gap-1.5 text-[11px] text-white/50"
+                            animate={{ opacity: met ? 1 : 0.6, y: met ? 0 : 2 }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                          >
+                            <span
+                              className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border ${met ? 'border-emerald-400 bg-emerald-400' : 'border-white/15'
+                                }`}
+                            >
+                              {met && <Check className="h-3 w-3 text-black" />}
+                            </span>
+                            {rule.label}
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {error && (
-              <div className="text-red-400 text-sm">
-                {error}
-              </div>
-            )}
+                {error && (
+                  <div className="text-red-400 text-sm">
+                    {error}
+                  </div>
+                )}
 
-            <button
-               type="submit"
-               disabled={!isStrong || loading}
-               className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] mt-4 transition disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-white"
-            >
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  disabled={!isStrong || loading}
+                  className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] mt-4 transition disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-white"
+                >
+                  {loading ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </form>
+            </>
+          )}
 
           <p className="text-sm text-white/40">
             Member of the team?{' '}
@@ -300,25 +454,36 @@ function StepItem({
   number,
   text,
   active = false,
+  done = false,
+  pending = false,
 }: {
   number: string;
   text: string;
   active?: boolean;
+  done?: boolean;
+  pending?: boolean;
 }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${
-        active
+      className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${active
           ? 'bg-white text-black border border-white'
-          : 'bg-brand-gray text-white border-none'
-      }`}
+          : pending
+            ? 'bg-white/5 text-white border border-amber-400/30'
+            : 'bg-brand-gray text-white border-none'
+        }`}
     >
       <span
         className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-          active ? 'bg-black text-white' : 'bg-white/10 text-white/40'
-        }`}
+          done
+            ? 'bg-emerald-400 text-black'
+            : active
+              ? 'bg-black text-white'
+              : pending
+                ? 'bg-amber-400/20 text-amber-100 border border-amber-400/40'
+                : 'bg-white/10 text-white/40'
+          }`}
       >
-        {number}
+        {done ? <Check className="h-4 w-4" /> : number}
       </span>
       <span className="text-sm font-medium">{text}</span>
     </div>

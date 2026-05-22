@@ -20,13 +20,13 @@ const AuthCallback = () => {
 
         if (error) {
           console.error('❌ Error getting session after OAuth:', error);
-          navigate('/signin?error=auth_failed');
+          navigate('/login?error=auth_failed');
           return;
         }
 
         if (!session || !session.user) {
           console.error('❌ No session found after OAuth callback');
-          navigate('/signin?error=no_session');
+          navigate('/login?error=no_session');
           return;
         }
 
@@ -82,7 +82,7 @@ const AuthCallback = () => {
         
       } catch (error) {
         console.error('❌ Unexpected error in auth callback:', error);
-        navigate('/signin?error=callback_failed');
+        navigate('/login?error=callback_failed');
       }
     };
 

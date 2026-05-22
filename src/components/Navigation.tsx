@@ -333,7 +333,7 @@ const Navigation: React.FC<NavigationProps> = ({
                   variant="ghost"
                   size="sm"
                   className="text-white hover:bg-white/10 rounded-full px-4 py-2"
-                  onClick={() => navigate('/signin')}
+                  onClick={() => navigate('/login')}
                 >
                   Log In
                 </Button>
@@ -479,7 +479,7 @@ const Navigation: React.FC<NavigationProps> = ({
                       variant="outline"
                       className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => {
-                        navigate('/signin');
+                        navigate('/login');
                         setIsMobileMenuOpen(false);
                       }}
                     >

@@ -151,7 +151,7 @@ const Dashboard = () => {
                 
                 <div className="space-y-3">
                   <Button 
-                    onClick={() => navigate('/signin')}
+                    onClick={() => navigate('/login')}
                     className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
                     size="lg"
                   >

@@ -70,7 +70,7 @@ export const AuthGuard = ({
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button 
-              onClick={() => navigate('/signin')}
+              onClick={() => navigate('/login')}
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-12"
             >
               <LogIn className="mr-2 h-5 w-5" />
