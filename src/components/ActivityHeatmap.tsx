@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Flame, TrendingUp, Calendar, Award } from 'lucide-react';
+import { Flame, Calendar } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { BACKEND_URL } from '@/config/env';
@@ -320,6 +319,9 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
 
   console.log('✅ ActivityHeatmap: Rendering with userId:', userId);
 
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const activeWeekDays = stats ? Math.min(stats.currentStreak, 7) : 0;
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -333,9 +335,9 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Main Grid Layout: Heatmap on left, Stats on right */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Heatmap Container - Takes 2 columns on large screens */}
-          <div className="lg:col-span-2 relative">
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.55fr)_minmax(360px,1fr)] lg:items-stretch">
+          {/* Heatmap Container */}
+          <div className="relative">
             {/* Always render heatmap div for Heat.js to find */}
             <div 
               ref={heatmapRef} 
@@ -367,59 +369,59 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ userId, year }) => {
             )}
           </div>
 
-          {/* Statistics Grid - 2x2 on right side */}
+          {/* Expanded Dark Weekly Streak Panel */}
           {stats && (
-            <div className="grid grid-cols-2 gap-4">
-              {/* Current Streak */}
-              <div className="flex flex-col items-center justify-center p-4 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <Flame className="h-5 w-5 text-orange-500" />
-                  <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            <div className="self-stretch h-full min-h-[220px] overflow-hidden rounded-xl border border-slate-700/90 bg-gradient-to-b from-slate-900 to-slate-950 px-4 py-3 text-slate-100 shadow-sm">
+              <div className="flex h-full flex-col justify-between">
+                <div className="space-y-1.5 text-center">
+                  <p className="text-5xl font-extrabold leading-none text-violet-400">
                     {stats.currentStreak}
-                  </span>
+                  </p>
+                  <p className="text-base font-semibold text-violet-300">Day Streak</p>
                 </div>
-                <span className="text-xs text-orange-700 dark:text-orange-300 font-medium">
-                  Day Streak
-                </span>
-              </div>
 
-              {/* Total Activities */}
-              <div className="flex flex-col items-center justify-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {stats.totalActivities}
-                  </span>
-                </div>
-                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
-                  Total Activities
-                </span>
-              </div>
+                <p className="px-2 text-center text-sm text-slate-300">
+                  {stats.currentStreak >= stats.longestStreak && stats.currentStreak > 0
+                    ? "This is the longest streak you've ever had"
+                    : `${Math.max(stats.longestStreak - stats.currentStreak, 0)} days to match your best streak`}
+                </p>
 
-              {/* Longest Streak */}
-              <div className="flex flex-col items-center justify-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <Award className="h-5 w-5 text-purple-500" />
-                  <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {stats.longestStreak}
-                  </span>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {weekDays.map((day, index) => {
+                    const active = index >= 7 - activeWeekDays;
+                    return (
+                      <div key={day} className="text-center">
+                      <div
+                        className={`mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-full border ${
+                          active
+                            ? 'border-violet-400/60 bg-violet-500/20'
+                            : 'border-slate-700 bg-slate-800/80'
+                        }`}
+                      >
+                        <Flame
+                          className={`h-3.5 w-3.5 ${active ? 'text-violet-300' : 'text-slate-500'}`}
+                        />
+                      </div>
+                      <p
+                        className={`text-[10px] leading-tight ${
+                          active ? 'text-slate-200' : 'text-slate-500'
+                        }`}
+                      >
+                        {day}
+                      </p>
+                      <span
+                        className={`mt-1 inline-block h-1.5 w-1.5 rounded-full ${
+                          active ? 'bg-violet-400' : 'bg-slate-700'
+                        }`}
+                      />
+                    </div>
+                    );
+                  })}
                 </div>
-                <span className="text-xs text-purple-700 dark:text-purple-300 font-medium">
-                  Best Streak
-                </span>
-              </div>
 
-              {/* Most Active Month */}
-              <div className="flex flex-col items-center justify-center p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-5 w-5 text-green-500" />
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    {stats.mostActiveMonth}
-                  </span>
-                </div>
-                <span className="text-xs text-green-700 dark:text-green-300 font-medium">
-                  Most Active ({stats.mostActiveCount})
-                </span>
+                <p className="text-center text-xs text-slate-400">
+                  {stats.totalActivities} total activities
+                </p>
               </div>
             </div>
           )}
