@@ -33,11 +33,11 @@ const ResumeBuilderContent = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/resume')}
+            onClick={() => navigate('/dashboard')}
             className="mb-4 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Resume Parser
+            Back to Dashboard
           </Button>
           
           <div className="flex items-center gap-3 mb-2">

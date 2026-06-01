@@ -28,6 +28,7 @@ import {
   Sparkles
 } from "lucide-react";
 import axios from "axios";
+import type { Resume } from "@/types/resume";
 import { getUserLevelTag, getStarProgress } from "@/lib/gamification";
 import Navigation from "@/components/Navigation";
 import { UserStatsCard } from "@/components/UserStatsCard";
@@ -47,10 +48,97 @@ import {
 } from "@/components/StyledBadges";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
 
+interface ActiveResumeRecord {
+  file_name?: string;
+  file_url?: string | null;
+  resume_data?: Resume | null;
+}
+
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+const buildResumePreviewHtml = (resume: Resume, fileName?: string) => {
+  const profile = resume.profile || {};
+  const experiences = (resume.workExperiences || [])
+    .map((exp) => `
+      <section class="block">
+        <h3>${escapeHtml(exp.jobTitle || 'Role')}</h3>
+        <p class="muted">${escapeHtml(exp.company || '')}${exp.date ? ` • ${escapeHtml(exp.date)}` : ''}</p>
+        ${(exp.descriptions || []).map((desc) => `<li>${escapeHtml(desc)}</li>`).join('')}
+      </section>
+    `)
+    .join('');
+
+  const education = (resume.educations || [])
+    .map((edu) => `
+      <section class="block">
+        <h3>${escapeHtml(edu.institution || 'Institution')}</h3>
+        <p class="muted">${escapeHtml(edu.degree || '')}${edu.date ? ` • ${escapeHtml(edu.date)}` : ''}</p>
+      </section>
+    `)
+    .join('');
+
+  const projects = (resume.projects || [])
+    .map((proj) => `
+      <section class="block">
+        <h3>${escapeHtml(proj.name || 'Project')}</h3>
+        <p>${escapeHtml(proj.description || '')}</p>
+      </section>
+    `)
+    .join('');
+
+  const skills = (resume.skills?.featuredSkills || []).map((skill) => `<span class="chip">${escapeHtml(skill)}</span>`).join('');
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(fileName || 'Resume')}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; color: #111827; background: #fff; }
+      h1 { margin-bottom: 6px; }
+      h2 { margin-top: 24px; font-size: 18px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+      h3 { margin: 0; font-size: 15px; }
+      .muted { color: #6b7280; margin: 4px 0 0; }
+      .header { margin-bottom: 12px; }
+      .block { margin: 12px 0; }
+      ul { margin: 8px 0 0 18px; padding: 0; }
+      li { margin-bottom: 4px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .chip { border: 1px solid #d1d5db; border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>${escapeHtml(profile.name || 'Resume')}</h1>
+      <p class="muted">${escapeHtml(profile.email || '')}${profile.phone ? ` • ${escapeHtml(profile.phone)}` : ''}${profile.location ? ` • ${escapeHtml(profile.location)}` : ''}</p>
+    </div>
+
+    <h2>Work Experience</h2>
+    ${experiences || '<p class="muted">No work experience added.</p>'}
+
+    <h2>Education</h2>
+    ${education || '<p class="muted">No education added.</p>'}
+
+    <h2>Skills</h2>
+    <div class="chips">${skills || '<p class="muted">No skills added.</p>'}</div>
+
+    <h2>Projects</h2>
+    ${projects || '<p class="muted">No projects added.</p>'}
+  </body>
+</html>`;
+};
+
 const Dashboard = () => {
   const [showAllAchievements, setShowAllAchievements] = useState(false);
   const [hasResume, setHasResume] = useState<boolean | null>(null);
   const [resumeLoading, setResumeLoading] = useState(true);
+  const [activeResume, setActiveResume] = useState<ActiveResumeRecord | null>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const { state } = useGameTest();
@@ -66,11 +154,15 @@ const Dashboard = () => {
       }
 
       try {
-        const response = await axios.get(
+        const [statusResponse, activeResumeResponse] = await Promise.all([
+          axios.get(
           `${BACKEND_URL}/api/user/${user.id}/resume/status`
-        );
+          ),
+          axios.get(`${BACKEND_URL}/api/user/${user.id}/resume/active`),
+        ]);
         
-        setHasResume(response.data.hasResume);
+        setHasResume(statusResponse.data.hasResume);
+        setActiveResume(activeResumeResponse.data || null);
         setResumeLoading(false);
       } catch (error) {
         console.error('Error checking resume status:', error);
@@ -217,6 +309,29 @@ const Dashboard = () => {
 
   const totalUnlockedBadges = state.userData.badges.filter(b => b.unlocked).length;
 
+  const handleViewResume = () => {
+    const fileUrl = activeResume?.file_url;
+    if (fileUrl && /^(https?:|blob:|data:)/i.test(fileUrl)) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const resumeData = activeResume?.resume_data;
+    if (resumeData) {
+      const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+      if (previewWindow) {
+        previewWindow.document.open();
+        previewWindow.document.write(
+          buildResumePreviewHtml(resumeData, activeResume?.file_name || 'Resume Preview')
+        );
+        previewWindow.document.close();
+      }
+      return;
+    }
+
+    navigate('/resume-builder');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -294,65 +409,119 @@ const Dashboard = () => {
                   Upload Resume
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="min-h-[320px]">
                 {resumeLoading ? (
-                  <div className="text-center py-8">
+                  <div className="h-full min-h-[260px] flex flex-col items-center justify-center text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Checking resume...</p>
                   </div>
                 ) : hasResume ? (
-                  <div className="text-center space-y-4">
-                    <div className="text-6xl">✅</div>
-                    <div>
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
-                        Resume Uploaded
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Your resume is parsed and ready for job matching
+                  <div className="h-full min-h-[260px] flex flex-col justify-between gap-4">
+                    <div className="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50/70 dark:bg-green-950/20 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/15">
+                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                          </div>
+                          <div>
+                            <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                              Resume Uploaded
+                            </div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Your resume is parsed and ready for job matching
+                            </div>
+                          </div>
+                        </div>
+                        <Badge className="bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30">
+                          Active
+                        </Badge>
                       </div>
                     </div>
-                    <Button 
-                      onClick={() => navigate('/aim')}
+
+                    <div className="rounded-lg border border-blue-200/60 dark:border-blue-800/50 bg-blue-50/70 dark:bg-blue-950/20 p-3 text-sm text-blue-700 dark:text-blue-300">
+                      Keep your resume updated for better role relevance.
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        onClick={handleViewResume}
+                        className="w-full bg-black hover:bg-black/90 text-white dark:bg-black dark:hover:bg-black/90"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        View Resume
+                      </Button>
+                      <Button 
+                        onClick={() => navigate('/aim')}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Update Resume
+                      </Button>
+                    </div>
+
+                    <Button
+                      onClick={() => navigate('/resume-builder')}
                       variant="outline"
                       className="w-full"
                     >
-                      <FileText className="w-4 h-4 mr-2" />
-                      View Resume
+                      Build Resume
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <div className="text-6xl mb-3">📄</div>
-                      <div className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        No Resume Yet
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Upload your resume to get personalized job recommendations
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                        <Sparkles className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                        <p>90%+ parsing accuracy</p>
-                      </div>
-                      <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                        <Sparkles className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                        <p>AI-powered job matching</p>
-                      </div>
-                      <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                        <Sparkles className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                        <p>Instant recommendations</p>
+                  <div className="h-full min-h-[260px] flex flex-col justify-between gap-4">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/40 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/15">
+                          <FileText className="w-6 h-6 text-blue-500" />
+                        </div>
+                        <div>
+                          <div className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                            No Resume Yet
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Upload your resume to unlock personalized job recommendations
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <Button 
-                      onClick={() => navigate('/aim')}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Resume Now
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white/70 dark:bg-gray-900/40">
+                        <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <Sparkles className="h-4 w-4 text-yellow-500" />
+                          90%+ parsing
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white/70 dark:bg-gray-900/40">
+                        <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <Target className="h-4 w-4 text-blue-500" />
+                          AI matching
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white/70 dark:bg-gray-900/40">
+                        <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <Briefcase className="h-4 w-4 text-green-500" />
+                          Instant recs
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        onClick={() => navigate('/aim')}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Resume
+                      </Button>
+                      <Button
+                        onClick={() => navigate('/resume-builder')}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        Build Resume
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>

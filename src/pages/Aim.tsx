@@ -10,7 +10,6 @@ import { BACKEND_URL } from '@/config/env';
 import { 
   FileText,
   Upload,
-  Wand2,
   ArrowRight,
   Target,
   Sparkles,
@@ -506,7 +505,7 @@ const Aim = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-1 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Browse Job Board</CardTitle>
@@ -520,24 +519,6 @@ const Aim = () => {
                   >
                     <Briefcase className="h-4 w-4 mr-2" />
                     View All Jobs
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Build Custom Resume</CardTitle>
-                  <CardDescription>Create a professional resume from scratch</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    onClick={() => navigate('/resume-builder')} 
-                    className="w-full"
-                    variant="outline"
-                  >
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    Resume Builder
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
