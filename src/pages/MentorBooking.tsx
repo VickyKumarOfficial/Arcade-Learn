@@ -211,7 +211,7 @@ export default function MentorBooking() {
   const canContinue = useMemo(() => {
     if (step === 0) return Boolean(mode);
     if (step === 1) {
-      if (mode === 'human') return Boolean(selectedMentor && selectedSlot);
+      if (mode === 'human') return Boolean(selectedMentor);
       return Boolean(selectedAIFocus);
     }
     if (step === 2) return goal.trim().length >= 3 && Boolean(level);
@@ -295,7 +295,7 @@ export default function MentorBooking() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col overflow-x-hidden">
       <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate(backRoute)}>
@@ -309,9 +309,9 @@ export default function MentorBooking() {
       </header>
 
       <main className="flex-1 pt-8 pb-20 px-4">
-        <div className="max-w-7xl mx-auto overflow-x-auto">
-          <section className="flex flex-row items-start gap-6 min-w-[1080px]">
-            <Card className="order-2 w-[320px] md:w-[340px] xl:w-[360px] shrink-0 border border-border bg-card h-fit sticky top-24">
+        <div className="max-w-7xl mx-auto min-w-0">
+          <section className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px]">
+            <Card className="order-2 lg:order-2 w-full lg:w-[340px] xl:w-[360px] shrink-0 border border-border bg-card h-fit sticky top-24">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Session Summary</CardTitle>
                 <CardDescription>Live details update as you complete each step.</CardDescription>
@@ -321,6 +321,12 @@ export default function MentorBooking() {
                   <UserRound className="w-4 h-4 text-muted-foreground" />
                   <span>Type: {mode === 'human' ? 'Human Mentor' : mode === 'ai' ? 'AI Coach' : 'Not selected'}</span>
                 </p>
+                {mode === 'human' && (
+                  <p className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <span>Mentor: {selectedMentor?.name || 'Not selected'}</span>
+                  </p>
+                )}
                 <p className="flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-muted-foreground" />
                   <span>Date: {mode === 'human' && selectedMentor ? formatDateLabel(selectedDate) : 'N/A'}</span>
@@ -331,7 +337,7 @@ export default function MentorBooking() {
                 </p>
                 <p className="flex items-center gap-2">
                   <Target className="w-4 h-4 text-muted-foreground" />
-                  <span>Goal: {goal.trim() || 'Add your primary goal'}</span>
+                  <span className="min-w-0 flex-1 truncate">Goal: {goal.trim() || 'Add your primary goal'}</span>
                 </p>
 
                 <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
@@ -348,8 +354,8 @@ export default function MentorBooking() {
               </CardContent>
             </Card>
 
-            <div className="order-1 flex-1 min-w-[720px] space-y-6">
-              <Card className="border border-border bg-card">
+            <div className="order-1 min-w-0 space-y-6">
+              <Card className="min-w-0 border border-border bg-card">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-2xl">Book Your 1:1 Mentorship Session</CardTitle>
                   <CardDescription>
@@ -381,8 +387,8 @@ export default function MentorBooking() {
               </Card>
 
               {!confirmation && (
-                <Card className="border border-border bg-card">
-                  <CardContent className="p-5 sm:p-6 space-y-6">
+                <Card className="border border-border bg-card min-w-0 overflow-x-hidden">
+                  <CardContent className="p-5 sm:p-6 space-y-6 min-w-0">
                     {step === 0 && (
                       <div className="space-y-4">
                         <h2 className="text-lg font-semibold">Step 1: Choose Session Type</h2>
@@ -582,13 +588,15 @@ export default function MentorBooking() {
                           </select>
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="min-w-0 max-w-full space-y-1.5 overflow-hidden">
                           <label className="text-xs text-muted-foreground">Notes for Mentor/Coach</label>
                           <Textarea
                             rows={4}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="Add repo links, blockers, or topics you want to cover."
+                            wrap="soft"
+                            className="overflow-x-hidden whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
                           />
                         </div>
                       </div>
@@ -611,9 +619,13 @@ export default function MentorBooking() {
                               {AI_FOCUS_AREAS.find((item) => item.id === selectedAIFocus)?.title || 'Not selected'}
                             </p>
                           )}
-                          <p><span className="text-muted-foreground">Goal:</span> {goal.trim() || 'Not provided'}</p>
+                          <p className="break-words [overflow-wrap:anywhere]"><span className="text-muted-foreground">Goal:</span> {goal.trim() || 'Not provided'}</p>
                           <p><span className="text-muted-foreground">Level:</span> {level || 'Not provided'}</p>
-                          {notes.trim() && <p><span className="text-muted-foreground">Notes:</span> {notes.trim()}</p>}
+                          {notes.trim() && (
+                            <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                              <span className="text-muted-foreground">Notes:</span> {notes.trim()}
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -652,9 +664,9 @@ export default function MentorBooking() {
 
                     <div className="rounded-lg border border-emerald-500/30 bg-background/70 p-4 text-sm space-y-2">
                       <p>{confirmation.summary}</p>
-                      <p>Goal: {goal.trim()}</p>
+                      <p className="break-words [overflow-wrap:anywhere]">Goal: {goal.trim()}</p>
                       <p>Level: {level}</p>
-                      {notes.trim() && <p>Notes: {notes.trim()}</p>}
+                      {notes.trim() && <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">Notes: {notes.trim()}</p>}
                     </div>
 
                     <div className="flex flex-wrap gap-2">

@@ -59,9 +59,27 @@
     font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   }
 
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  html {
+    background: hsl(var(--background));
+    color-scheme: dark;
+  }
+
+  #root {
+    min-height: 100vh;
+    background: hsl(var(--background));
+  }
+
   body {
     @apply bg-background text-foreground;
-    overflow-y: scroll; /* Always show scrollbar to prevent layout shifts */
+    overflow-y: auto;
   }
 }
 
