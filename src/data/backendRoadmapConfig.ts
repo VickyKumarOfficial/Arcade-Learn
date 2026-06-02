@@ -82,7 +82,7 @@ const BACKEND_CAREER_FEATURES = [
     icon: ClipboardCheck,
     accent: 'from-violet-500/25 to-fuchsia-500/20 border-violet-500/30',
     actionType: 'navigate' as const,
-    actionTarget: '/practice',
+    actionTarget: '/placement-prep/backend-nodejs',
   },
 ] as const;
 

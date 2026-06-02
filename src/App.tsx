@@ -34,6 +34,7 @@ const FrontendRoadmapFlow = lazy(() => import("@/pages/FrontendRoadmapFlow"));
 const BackendRoadmapFlow = lazy(() => import("@/pages/BackendRoadmapFlow"));
 const FullstackMernRoadmapFlow = lazy(() => import("@/pages/FullstackMernRoadmapFlow"));
 const MentorBooking = lazy(() => import("@/pages/MentorBooking"));
+const PlacementPrep = lazy(() => import("@/pages/PlacementPrep"));
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,8 @@ const App = () => (
                     <Route path="/roadmap/frontend-react/mentor" element={<MentorBooking />} />
                     <Route path="/roadmap/backend-nodejs/mentor" element={<MentorBooking />} />
                     <Route path="/roadmap/fullstack-mern/mentor" element={<MentorBooking />} />
+                    <Route path="/placement-prep" element={<PlacementPrep />} />
+                    <Route path="/placement-prep/:roadmapKey" element={<PlacementPrep />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/aim" element={<Aim />} />
