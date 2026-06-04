@@ -88,7 +88,8 @@ const TestimonialsColumnsSection = () => {
 
   return (
     <section className="relative overflow-hidden bg-background px-4 py-20">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(37,99,235,0.2),transparent_30%),radial-gradient(circle_at_80%_20%,rgba(14,165,233,0.12),transparent_28%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,hsl(var(--background))_0%,rgba(7,12,22,0.72)_22%,rgba(7,12,22,0.62)_72%,hsl(var(--background))_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(37,99,235,0.1),transparent_28%),radial-gradient(circle_at_82%_28%,rgba(14,165,233,0.06),transparent_26%)]" />
 
       <div className="relative z-10 mx-auto max-w-7xl">
         <motion.div
@@ -101,7 +102,7 @@ const TestimonialsColumnsSection = () => {
           <div className="rounded-full border border-blue-400/25 bg-blue-500/10 px-4 py-1 text-sm font-medium text-blue-200">
             Learner stories
           </div>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Proof that guided roadmaps turn into real career wins
           </h2>
           <p className="mt-5 text-sm leading-6 text-muted-foreground sm:text-base">
