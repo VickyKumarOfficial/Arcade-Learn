@@ -39,7 +39,7 @@ const TestimonialsColumn = ({
             {columnTestimonials.map((testimonial) => (
               <article
                 key={`${testimonial.id}-${setIndex}`}
-                className="group w-full rounded-3xl border border-white/10 bg-slate-950/80 p-5 text-left shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur transition hover:border-blue-400/35 hover:bg-slate-950"
+                className="group w-full rounded-3xl border border-white/10 bg-card/80 p-5 text-left shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur transition hover:border-blue-400/35 hover:bg-card"
               >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-1 text-amber-300">
@@ -112,9 +112,9 @@ const TestimonialsColumnsSection = () => {
         </motion.div>
 
         <div className="mx-auto mt-12 grid max-h-[720px] max-w-6xl grid-cols-1 gap-5 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)] md:grid-cols-2 lg:grid-cols-3">
-          <TestimonialsColumn testimonials={firstColumn} duration={18} />
-          <TestimonialsColumn testimonials={secondColumn} className="hidden md:block" duration={22} reverse />
-          <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={20} />
+          <TestimonialsColumn testimonials={firstColumn} duration={30} />
+          <TestimonialsColumn testimonials={secondColumn} className="hidden md:block" duration={35} reverse />
+          <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={33} />
         </div>
       </div>
     </section>
