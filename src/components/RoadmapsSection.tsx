@@ -75,7 +75,14 @@ const RoadmapsSection = ({ onInteraction, isFullPage = false }: RoadmapsSectionP
   });
 
   return (
-    <section id="roadmaps" className="pt-18 sm:pt-22 pb-16 sm:pb-20 overflow-x-hidden relative" style={{ background: 'linear-gradient(to bottom, #000000 0%, hsl(0, 0%, 4%) 100%)' }}>
+    <section
+      id="roadmaps"
+      className="pt-18 sm:pt-22 pb-16 sm:pb-20 overflow-x-hidden relative bg-background"
+      style={{
+        background:
+          'linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--card)) 48%, hsl(var(--background)) 100%)',
+      }}
+    >
       <div className="w-full px-2 sm:px-4 max-w-none">
         {/* Only show heading when not on full Roadmaps page (i.e., on home page) */}
         {!isFullPage && (
