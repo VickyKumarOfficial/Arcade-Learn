@@ -60,14 +60,21 @@ That makes retrieval narrower, cheaper, and more accurate than starting with the
 ### High-Level Flow
 
 ```text
+Roadmap/curriculum content
+  -> corpus builder
+  -> chunking
+  -> Google Gemini embeddings
+  -> Supabase pgvector storage
+
 Learner question
-  -> Detect chat surface
-  -> Load secure user context when authenticated
-  -> Retrieve relevant roadmap/curriculum chunks when needed
-  -> Build grounded prompt
-  -> Call OpenRouter
-  -> Return answer, optionally with sources
+  -> embed query with same Google embedding model
+  -> retrieve relevant Supabase pgvector chunks
+  -> build grounded prompt with retrieved context
+  -> call existing OpenRouter LLM flow
+  -> return answer, optionally with sources
 ```
+
+RAG must remain an optional context layer. If embedding, retrieval, or context assembly fails, the system should fall back to the existing LLM prompt flow instead of breaking chat.
 
 ### Surface-Specific Behavior
 
@@ -76,6 +83,34 @@ Learner question
 | Roadmap Doubt Solver | RAG + roadmap context | Narrow scope, high relevance, fewer hallucinations |
 | General AI Chat | Secure user context grounding | Already supports authenticated backend context |
 | General AI Chat later | Intent router + selective RAG | Avoids unnecessary retrieval for generic programming questions |
+
+### Finalized Provider Choice
+
+Use Google Gemini embeddings for quality and Supabase for vector storage/search.
+
+Recommended configuration:
+
+```text
+RAG_EMBEDDING_PROVIDER=google
+GOOGLE_EMBEDDING_API_KEY=
+GOOGLE_EMBEDDING_MODEL=gemini-embedding-2
+RAG_EMBEDDING_DIMENSIONS=1536
+```
+
+Why this choice:
+
+- Keeps the existing `rag_chunks.embedding vector(1536)` schema.
+- Supports higher-quality retrieval than smaller local/Supabase-only embedding models.
+- Avoids hosting Ollama or managing local model infrastructure in production.
+- Allows longer input support than common 384/512-token-focused small models.
+- Keeps retrieval storage/search inside Supabase pgvector.
+
+Budget guardrails:
+
+- Use a dedicated Google AI project/API key for embeddings.
+- Set Google billing budget alerts and quota limits before large book ingestion.
+- Batch ingestion slowly and skip unchanged chunks using `contentHash`.
+- Keep provider usage isolated behind one embedding adapter so it can be swapped later if needed.
 
 ## Implementation Plan
 
@@ -98,9 +133,16 @@ Important requirements:
 
 - Use RLS.
 - Use `updated_at` triggers for mutable tables.
-- Use service-role-only writes.
+- Use service-role-only access for RAG internals.
 - Keep user-specific private progress out of the vector index.
 - Store source metadata such as roadmap key, topic ID, source type, and content hash.
+- Keep `rag_chunks.embedding` as `vector(1536)` for Google Gemini embeddings.
+
+Current status:
+
+- Migration file exists at `database/rag_pipeline_schema.sql`.
+- The migration has been run manually in Supabase SQL Editor.
+- No existing app/chat/progress tables are modified by this schema.
 
 ### Phase 2: Add Embedding Provider Adapter
 
@@ -113,19 +155,26 @@ backend/services/rag/
 Recommended environment variables:
 
 ```text
-EMBEDDING_API_KEY=
-EMBEDDING_BASE_URL=
-EMBEDDING_MODEL=
-EMBEDDING_DIMENSIONS=1536
+RAG_EMBEDDING_PROVIDER=google
+GOOGLE_EMBEDDING_API_KEY=
+GOOGLE_EMBEDDING_MODEL=gemini-embedding-2
+RAG_EMBEDDING_DIMENSIONS=1536
 ```
 
 The adapter should:
 
 - validate required env vars
-- accept plain text input
+- accept document text and query text
+- format document/query inputs consistently for retrieval
 - return numeric embedding arrays
+- verify the returned vector length is exactly `1536`
 - fail clearly when provider config is missing
-- remain provider-agnostic so the project is not locked into one embedding vendor
+- remain provider-agnostic at the service boundary so retrieval does not depend on Google-specific code
+
+Important consistency rule:
+
+- Corpus chunks and user queries must be embedded with the same model family and compatible formatting.
+- Do not mix Supabase `gte-small`, Ollama, Hugging Face, and Google vectors in the same `embedding` column.
 
 ### Phase 3: Build the Roadmap Knowledge Corpus
 
@@ -161,6 +210,15 @@ Chunking guidance:
 - Keep one topic or one subtopic per chunk where possible.
 - Do not mix unrelated roadmap sections in the same chunk.
 - Preserve source title and roadmap key for filtering.
+- For books later, split by book -> chapter -> section -> chunk and store page/chapter metadata.
+- Avoid embedding private user progress; inject user context at request time instead.
+
+Current status:
+
+- Dry-run corpus builder exists at `backend/services/rag/roadmapCorpusBuilder.js`.
+- Dry-run script exists at `backend/scripts/rag-ingest-dry-run.mjs`.
+- Current dry-run output: 141 roadmap topic sources/chunks.
+- Roadmap counts: frontend 52, backend 44, fullstack-mern 45.
 
 ### Phase 4: Add Ingestion Script
 
@@ -194,6 +252,26 @@ Dry-run should show:
 - number of chunks needing embeddings
 - number of chunks to deactivate
 
+Current dry-run command:
+
+```text
+npm --prefix backend run rag:ingest:dry-run
+```
+
+For samples, run from `backend/`:
+
+```text
+node scripts/rag-ingest-dry-run.mjs --samples
+```
+
+Next ingestion step:
+
+- Add Google embedding adapter.
+- Add Supabase RAG repository service.
+- Add real `rag:ingest` command that defaults to dry-run unless `--write` is explicitly passed.
+- Upsert `rag_sources` first, then `rag_chunks`.
+- Only generate embeddings for chunks whose `contentHash` changed or whose embedding is missing.
+
 ### Phase 5: Add Retrieval Service
 
 Add a retrieval service that accepts:
@@ -212,6 +290,8 @@ Retrieval behavior:
 - retrieve top relevant chunks by vector similarity
 - ignore inactive chunks
 - return source metadata with each result
+- embed the query using the same Google embedding adapter
+- if query embedding fails, return no RAG context and let the caller use LLM fallback
 
 Recommended default:
 
@@ -252,6 +332,8 @@ Fallback behavior:
 - If retrieval fails, log the retrieval error.
 - Continue with the existing non-RAG roadmap prompt.
 - Tell the LLM not to invent ArcadeLearn-specific curriculum facts.
+- If Google embedding fails, do not fail the chat request; skip RAG and continue with current OpenRouter flow.
+- If Supabase vector search fails, do not fail the chat request; skip RAG and continue with current OpenRouter flow.
 
 ### Phase 7: Improve General AI Chat User Context
 
@@ -374,7 +456,7 @@ npm run build
 npm --prefix backend run openrouter:runtime-check
 npm --prefix backend run openrouter:config-check
 npm --prefix backend run openrouter:check
-npm --prefix backend run rag:ingest -- --dry-run
+npm --prefix backend run rag:ingest:dry-run
 ```
 
 ## Important Guardrails
@@ -385,13 +467,19 @@ npm --prefix backend run rag:ingest -- --dry-run
 - Do not break existing frontend request/response contracts.
 - Do not expose internal metadata, tool names, raw JSON, or internal IDs to learners.
 - Do not edit `README.md`; use this file as the RAG-specific implementation guide.
+- Do not change `rag_chunks.embedding` dimensions unless all stored/query embeddings are regenerated with the new dimension.
+- Do not mix embedding providers in one vector column.
+- Do not let RAG failure block normal OpenRouter answers.
 
 ## Final Recommendation
 
 The cleanest implementation path is:
 
 ```text
-Roadmap Doubt Solver RAG
+Google embedding adapter
+  -> Supabase RAG ingestion
+  -> Supabase retrieval service
+  -> Roadmap Doubt Solver RAG
   -> Better General Chat user context
   -> General Chat intent router
   -> Selective General Chat RAG
