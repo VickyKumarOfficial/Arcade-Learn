@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, MessageCircleQuestion, Send, Sparkles, X } from 'lucide-react';
-import { roadmapDoubtService } from '@/services/roadmapDoubtService';
+import { roadmapDoubtService, type RoadmapDoubtDebugItem, type RoadmapDoubtDebugTrace } from '@/services/roadmapDoubtService';
 import FormattedText from '@/components/FormattedText';
 
 type ChatRole = 'assistant' | 'user';
@@ -10,6 +10,7 @@ interface RoadmapDoubtMessage {
   id: string;
   role: ChatRole;
   content: string;
+  debug?: RoadmapDoubtDebugTrace;
 }
 
 interface RoadmapDoubtAssistantProps {
@@ -19,12 +20,76 @@ interface RoadmapDoubtAssistantProps {
   activeTopicDescription?: string | null;
 }
 
-function makeMessage(role: ChatRole, content: string): RoadmapDoubtMessage {
+function makeMessage(role: ChatRole, content: string, debug?: RoadmapDoubtDebugTrace): RoadmapDoubtMessage {
   return {
     id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     role,
     content,
+    debug,
   };
+}
+
+const loadingDebugSteps = [
+  {
+    title: 'RAG status',
+    detail: 'Roadmap RAG retrieval is not connected yet — using the fallback roadmap prompt.',
+  },
+  {
+    title: 'LLM status',
+    detail: 'OpenRouter is thinking through the roadmap doubt.',
+  },
+];
+
+function getDebugStyles(status: RoadmapDoubtDebugItem['status']) {
+  if (status === 'success') {
+    return 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200';
+  }
+
+  if (status === 'failed') {
+    return 'border-rose-400/30 bg-rose-500/10 text-rose-200';
+  }
+
+  if (status === 'fallback' || status === 'not_connected' || status === 'skipped') {
+    return 'border-amber-400/30 bg-amber-500/10 text-amber-100';
+  }
+
+  return 'border-indigo-400/30 bg-indigo-500/10 text-indigo-100';
+}
+
+function DebugTracePill({
+  label,
+  item,
+}: {
+  label: string;
+  item?: RoadmapDoubtDebugItem;
+}) {
+  if (!item) return null;
+
+  return (
+    <div className={`rounded-lg border px-2.5 py-2 ${getDebugStyles(item.status)}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em]">{label}</span>
+        <span className="rounded-full bg-black/20 px-2 py-0.5 text-[10px] uppercase tracking-wide">
+          {item.status.replace('_', ' ')}
+        </span>
+      </div>
+      <p className="mt-1 text-[11px] leading-relaxed opacity-90">{item.message}</p>
+      {typeof item.chunkCount === 'number' && (
+        <p className="mt-1 text-[10px] opacity-80">Chunks used: {item.chunkCount}</p>
+      )}
+    </div>
+  );
+}
+
+function DebugTracePanel({ trace }: { trace?: RoadmapDoubtDebugTrace }) {
+  if (!trace?.rag && !trace?.llm) return null;
+
+  return (
+    <div className="mt-2 space-y-2">
+      <DebugTracePill label="RAG" item={trace.rag} />
+      <DebugTracePill label="LLM" item={trace.llm} />
+    </div>
+  );
 }
 
 export default function RoadmapDoubtAssistant({
@@ -38,6 +103,7 @@ export default function RoadmapDoubtAssistant({
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<RoadmapDoubtMessage[]>([]);
   const [serviceError, setServiceError] = useState<string | null>(null);
+  const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const starterMessage = useMemo(
@@ -58,6 +124,19 @@ export default function RoadmapDoubtAssistant({
     if (!scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStepIndex(0);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setLoadingStepIndex((prev) => (prev + 1) % loadingDebugSteps.length);
+    }, 1300);
+
+    return () => window.clearInterval(interval);
+  }, [loading]);
 
   const submit = async () => {
     const question = input.trim();
@@ -93,12 +172,12 @@ export default function RoadmapDoubtAssistant({
       setServiceError(errorText);
       setMessages((prev) => [
         ...prev,
-        makeMessage('assistant', 'I hit a temporary issue while solving that doubt. Please try again in a moment.'),
+        makeMessage('assistant', 'I hit a temporary issue while solving that doubt. Please try again in a moment.', result.debug),
       ]);
       return;
     }
 
-    setMessages((prev) => [...prev, makeMessage('assistant', result.response!)]);
+    setMessages((prev) => [...prev, makeMessage('assistant', result.response!, result.debug)]);
   };
 
   const onEnterSubmit: KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
@@ -177,10 +256,13 @@ export default function RoadmapDoubtAssistant({
                           </div>
                         )}
                         {message.role === 'assistant' ? (
-                          <FormattedText
-                            content={message.content}
-                            className="[&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_p]:text-sm [&_p]:leading-6 [&_p]:mb-2 [&_ul]:my-2 [&_ol]:my-2 [&_li]:text-sm [&_li]:leading-6 [&_pre]:my-2 [&_pre_code]:text-xs"
-                          />
+                          <>
+                            <FormattedText
+                              content={message.content}
+                              className="[&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_p]:text-sm [&_p]:leading-6 [&_p]:mb-2 [&_ul]:my-2 [&_ol]:my-2 [&_li]:text-sm [&_li]:leading-6 [&_pre]:my-2 [&_pre_code]:text-xs"
+                            />
+                            <DebugTracePanel trace={message.debug} />
+                          </>
                         ) : (
                           <div>{message.content}</div>
                         )}
@@ -190,8 +272,25 @@ export default function RoadmapDoubtAssistant({
 
                   {loading && (
                     <div className="flex justify-start">
-                      <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-zinc-300">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Thinking...
+                      <div className="max-w-[85%] rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-zinc-300">
+                        <div className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-indigo-300" /> Debug thinking trace
+                        </div>
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={loadingStepIndex}
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.22 }}
+                            className="mt-2 rounded-lg border border-indigo-400/20 bg-indigo-500/10 px-2.5 py-2 text-xs text-indigo-100"
+                          >
+                            <p className="font-semibold">{loadingDebugSteps[loadingStepIndex].title}</p>
+                            <p className="mt-1 text-[11px] leading-relaxed text-indigo-100/80">
+                              {loadingDebugSteps[loadingStepIndex].detail}
+                            </p>
+                          </motion.div>
+                        </AnimatePresence>
                       </div>
                     </div>
                   )}

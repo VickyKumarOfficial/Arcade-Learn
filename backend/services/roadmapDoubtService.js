@@ -90,6 +90,17 @@ export const roadmapDoubtService = {
         success: true,
         provider: 'openrouter',
         response: completion.text,
+        debug: {
+          rag: {
+            status: 'not_connected',
+            message: 'RAG retrieval is not connected to the Roadmap Doubt Solver yet; response used the normal roadmap prompt.',
+          },
+          llm: {
+            status: 'success',
+            provider: 'openrouter',
+            message: 'OpenRouter completed the roadmap doubt response.',
+          },
+        },
       };
     } catch (error) {
       console.error('OpenRouter roadmap doubt provider error:', error);
@@ -99,6 +110,17 @@ export const roadmapDoubtService = {
         success: false,
         statusCode: mapped.statusCode,
         error: mapped.error,
+        debug: {
+          rag: {
+            status: 'not_connected',
+            message: 'RAG retrieval is not connected to the Roadmap Doubt Solver yet.',
+          },
+          llm: {
+            status: 'failed',
+            provider: 'openrouter',
+            message: mapped.error,
+          },
+        },
       };
     }
   },

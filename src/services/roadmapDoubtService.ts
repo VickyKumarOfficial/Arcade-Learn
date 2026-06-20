@@ -20,6 +20,27 @@ export interface AskRoadmapDoubtResponse {
   response?: string;
   provider?: 'openrouter';
   error?: string;
+  debug?: RoadmapDoubtDebugTrace;
+}
+
+export type RoadmapDoubtDebugStatus =
+  | 'running'
+  | 'success'
+  | 'failed'
+  | 'fallback'
+  | 'skipped'
+  | 'not_connected';
+
+export interface RoadmapDoubtDebugItem {
+  status: RoadmapDoubtDebugStatus;
+  message: string;
+  provider?: string;
+  chunkCount?: number;
+}
+
+export interface RoadmapDoubtDebugTrace {
+  rag?: RoadmapDoubtDebugItem;
+  llm?: RoadmapDoubtDebugItem;
 }
 
 class RoadmapDoubtService {
@@ -61,6 +82,7 @@ class RoadmapDoubtService {
         return {
           success: false,
           error: result?.error || `Request failed with status ${response.status}.`,
+          debug: result?.debug,
         };
       }
 
@@ -68,6 +90,7 @@ class RoadmapDoubtService {
         success: true,
         response: result.response,
         provider: result.provider,
+        debug: result.debug,
       };
     } catch (error: any) {
       console.error('Roadmap doubt request failed:', error);
