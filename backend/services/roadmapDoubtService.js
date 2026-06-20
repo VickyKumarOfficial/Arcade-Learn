@@ -1,4 +1,5 @@
 import { mapOpenRouterError, openRouterProvider } from './openRouterProvider.js';
+import { ragRetrievalService } from './rag/ragRetrievalService.js';
 
 const OPENROUTER_MODEL = process.env.OPENROUTER_ROADMAP_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free';
 const OPENROUTER_MAX_TOKENS = Number.isFinite(Number(process.env.OPENROUTER_MAX_TOKENS))
@@ -27,7 +28,31 @@ function normalizeHistory(history) {
     }));
 }
 
-function buildSystemPrompt({ roadmapTitle, roadmapKey, activeTopic }) {
+function formatRagContext(chunks) {
+  if (!Array.isArray(chunks) || chunks.length === 0) {
+    return '';
+  }
+
+  return chunks
+    .map((chunk, index) => {
+      const title = chunk.topicTitle || chunk.sectionTitle || chunk.chunkKey;
+      const similarity = Number.isFinite(Number(chunk.similarity))
+        ? ` Similarity: ${Number(chunk.similarity).toFixed(3)}.`
+        : '';
+
+      return `Source ${index + 1}: ${title}
+Roadmap: ${chunk.roadmapKey || 'unknown'}
+Section: ${chunk.sectionTitle || 'unknown'}
+${similarity}
+Content:
+${chunk.content}`;
+    })
+    .join('\n\n---\n\n');
+}
+
+function buildSystemPrompt({ roadmapTitle, roadmapKey, activeTopic, ragChunks }) {
+  const ragContext = formatRagContext(ragChunks);
+
   return `You are Nova, an on-page roadmap doubt-solving assistant for ArcadeLearn.
 Answer with practical, concise guidance and focus on helping the learner move forward.
 
@@ -40,7 +65,12 @@ Response rules:
 - Prefer direct actionable answers.
 - If asked for code, provide compact runnable snippets.
 - If the doubt is unclear, ask one short clarifying question.
-- Keep tone supportive and avoid unnecessary verbosity.`;
+- Keep tone supportive and avoid unnecessary verbosity.
+- If ArcadeLearn RAG context is provided, use it as the most trusted source for roadmap-specific answers.
+- If ArcadeLearn RAG context is not provided or does not cover the question, answer generally but do not invent ArcadeLearn-specific curriculum details.
+
+ArcadeLearn RAG context:
+${ragContext || 'No retrieved RAG context available for this request.'}`;
 }
 
 function buildUserMessage({ question, activeTopic, activeTopicDescription }) {
@@ -67,7 +97,40 @@ export const roadmapDoubtService = {
   }) {
     const normalizedHistory = normalizeHistory(history);
     const safeQuestion = String(question || '').trim().slice(0, 3000);
-    const systemPrompt = buildSystemPrompt({ roadmapTitle, roadmapKey, activeTopic });
+    const ragResult = await ragRetrievalService.retrieveRoadmapContext({
+      query: `${activeTopic || ''}\n${activeTopicDescription || ''}\n${safeQuestion}`,
+      roadmapKey,
+      limit: 5,
+      threshold: 0.2,
+    });
+    const ragChunks = ragResult.success ? ragResult.chunks : [];
+    const ragDebug = (() => {
+      if (ragResult.success && ragChunks.length > 0) {
+        return {
+          status: 'success',
+          message: `RAG retrieved ${ragChunks.length} roadmap chunk${ragChunks.length === 1 ? '' : 's'} for grounding.`,
+          provider: ragResult.debug?.provider || 'google',
+          chunkCount: ragChunks.length,
+        };
+      }
+
+      if (ragResult.success) {
+        return {
+          status: 'fallback',
+          message: 'RAG found no strong matching roadmap chunks; response used the normal roadmap prompt fallback.',
+          provider: ragResult.debug?.provider || 'google',
+          chunkCount: 0,
+        };
+      }
+
+      return {
+        status: 'failed',
+        message: `RAG retrieval failed; response used the normal roadmap prompt fallback. ${ragResult.error || ''}`.trim(),
+        provider: 'google',
+        chunkCount: 0,
+      };
+    })();
+    const systemPrompt = buildSystemPrompt({ roadmapTitle, roadmapKey, activeTopic, ragChunks });
     const userMessage = buildUserMessage({
       question: safeQuestion,
       activeTopic,
@@ -91,10 +154,7 @@ export const roadmapDoubtService = {
         provider: 'openrouter',
         response: completion.text,
         debug: {
-          rag: {
-            status: 'not_connected',
-            message: 'RAG retrieval is not connected to the Roadmap Doubt Solver yet; response used the normal roadmap prompt.',
-          },
+          rag: ragDebug,
           llm: {
             status: 'success',
             provider: 'openrouter',
@@ -111,10 +171,7 @@ export const roadmapDoubtService = {
         statusCode: mapped.statusCode,
         error: mapped.error,
         debug: {
-          rag: {
-            status: 'not_connected',
-            message: 'RAG retrieval is not connected to the Roadmap Doubt Solver yet.',
-          },
+          rag: ragDebug,
           llm: {
             status: 'failed',
             provider: 'openrouter',

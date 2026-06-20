@@ -32,11 +32,11 @@ function makeMessage(role: ChatRole, content: string, debug?: RoadmapDoubtDebugT
 const loadingDebugSteps = [
   {
     title: 'RAG status',
-    detail: 'Roadmap RAG retrieval is not connected yet — using the fallback roadmap prompt.',
+    detail: 'Searching ArcadeLearn roadmap chunks for relevant context.',
   },
   {
     title: 'LLM status',
-    detail: 'OpenRouter is thinking through the roadmap doubt.',
+    detail: 'OpenRouter will answer with retrieved context when available.',
   },
 ];
 
