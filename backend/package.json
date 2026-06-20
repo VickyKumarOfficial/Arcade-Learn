@@ -10,6 +10,7 @@
     "openrouter:config-check": "node scripts/openrouter-config-check.mjs",
     "openrouter:check": "npm run openrouter:runtime-check && npm run openrouter:config-check",
     "rag:ingest:dry-run": "node scripts/rag-ingest-dry-run.mjs",
+    "rag:ingest": "node scripts/rag-ingest.mjs",
     "phase10:postcutover-consistency": "npm run openrouter:check",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "echo \"No build step required for Node.js\" && exit 0"
