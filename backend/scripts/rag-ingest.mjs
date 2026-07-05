@@ -4,12 +4,21 @@ function parseArgs(argv) {
   const args = argv.slice(2);
   const limitIndex = args.findIndex((arg) => arg === '--limit');
   const limitValue = limitIndex >= 0 ? Number(args[limitIndex + 1]) : null;
+  const delayIndex = args.findIndex((arg) => arg === '--delay-ms');
+  const delayValue = delayIndex >= 0 ? Number(args[delayIndex + 1]) : null;
 
   return {
     write: args.includes('--write'),
     samples: args.includes('--samples'),
     limit: Number.isFinite(limitValue) && limitValue > 0 ? Math.floor(limitValue) : null,
+    delayMs: Number.isFinite(delayValue) && delayValue >= 0 ? Math.floor(delayValue) : 1200,
   };
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 function countBy(items, key) {
@@ -72,7 +81,36 @@ async function planWrite({ sources, chunks, repository }) {
   };
 }
 
-async function runWrite({ sources, chunks, limit }) {
+function isQuotaError(error) {
+  const message = String(error?.message || error || '').toLowerCase();
+  return message.includes('quota') || message.includes('rate limit') || message.includes('429');
+}
+
+async function embedWithRetry({ provider, chunk, index, total }) {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      console.log(`Embedding chunk ${index + 1}/${total}: ${chunk.chunkKey}`);
+      return await provider.embedDocument({
+        title: chunk.metadata?.sourceTitle || chunk.topicTitle || chunk.chunkKey,
+        content: chunk.content,
+      });
+    } catch (error) {
+      if (!isQuotaError(error) || attempt === maxAttempts) {
+        throw error;
+      }
+
+      const waitMs = 65_000;
+      console.warn(`Embedding quota hit. Waiting ${Math.round(waitMs / 1000)}s before retry ${attempt + 1}/${maxAttempts}.`);
+      await sleep(waitMs);
+    }
+  }
+
+  throw new Error('Embedding retry failed unexpectedly.');
+}
+
+async function runWrite({ sources, chunks, limit, delayMs }) {
   const [{ ragRepository }, { googleEmbeddingProvider }] = await Promise.all([
     import('../services/rag/ragRepository.js'),
     import('../services/rag/googleEmbeddingProvider.js'),
@@ -96,6 +134,10 @@ async function runWrite({ sources, chunks, limit }) {
     console.log(`\nLimit active: embedding/writing first ${limit} of ${chunksToEmbed.length} changed chunks.`);
   }
 
+  if (delayMs > 0) {
+    console.log(`Embedding throttle: ${delayMs}ms between chunks.`);
+  }
+
   const sourceWriteSet = new Map();
   for (const source of sourcesToUpsert) {
     sourceWriteSet.set(source.sourceKey, source);
@@ -111,25 +153,27 @@ async function runWrite({ sources, chunks, limit }) {
   const existingSources = await ragRepository.getSourcesByKeys(sources.map((source) => source.sourceKey));
   const sourcesByKey = new Map([...existingSources, ...sourceResult.sourcesByKey]);
 
-  const embeddedChunks = [];
   for (const [index, chunk] of limitedChunksToEmbed.entries()) {
-    console.log(`Embedding chunk ${index + 1}/${limitedChunksToEmbed.length}: ${chunk.chunkKey}`);
-    const embedding = await googleEmbeddingProvider.embedDocument({
-      title: chunk.metadata?.sourceTitle || chunk.topicTitle || chunk.chunkKey,
-      content: chunk.content,
+    if (index > 0 && delayMs > 0) {
+      await sleep(delayMs);
+    }
+
+    const embedding = await embedWithRetry({
+      provider: googleEmbeddingProvider,
+      chunk,
+      index,
+      total: limitedChunksToEmbed.length,
     });
 
-    embeddedChunks.push({
+    await ragRepository.upsertChunks([{
       ...chunk,
       embedding: embedding.values,
-    });
+    }], sourcesByKey);
   }
-
-  const chunkResult = await ragRepository.upsertChunks(embeddedChunks, sourcesByKey);
 
   console.log('\nWrite complete');
   console.log(`Sources upserted: ${sourceResult.upserted}`);
-  console.log(`Chunks upserted: ${chunkResult.upserted}`);
+  console.log(`Chunks upserted: ${limitedChunksToEmbed.length}`);
 }
 
 async function main() {
@@ -158,6 +202,7 @@ async function main() {
     sources,
     chunks,
     limit: options.limit,
+    delayMs: options.delayMs,
   });
 }
 
