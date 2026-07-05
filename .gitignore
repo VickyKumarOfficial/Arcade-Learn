@@ -25,6 +25,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.continue
 
 ROADMAP_FLOW_IMPLEMENTATION.md
 schema-archive-2026-05-05
