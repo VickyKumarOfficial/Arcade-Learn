@@ -89,22 +89,32 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Editor Toolbar */}
-      <div className="flex items-center justify-between p-2 border-b bg-background/95 relative z-10">
-        <div className="flex items-center gap-2">
-          {/* Language Selector */}
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border border-border/70 bg-background/95 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b bg-gradient-to-r from-background via-background to-muted/20 px-4 py-4 sm:px-5">
+        <div>
+          <p className="mb-2 text-[11px] uppercase tracking-[0.35em] text-muted-foreground">
+            Monaco + Piston
+          </p>
+          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+            Code Runner Studio
+          </h2>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            Updated editor shell with tighter panel sizing so the workspace fits cleanly inside the practice layout.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-3">
           {supportedLanguages.length > 1 && onLanguageChange ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 gap-1">
+                <Button variant="outline" size="sm" className="h-10 gap-1.5 rounded-full px-4">
                   <span className="text-sm font-medium">
                     {LANGUAGE_INFO[language]?.label || language}
                   </span>
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Language</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {supportedLanguages.map((lang) => (
@@ -119,145 +129,140 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <span className="text-sm font-medium text-muted-foreground">
+            <div className="rounded-full border bg-muted/40 px-4 py-2 text-sm font-medium text-muted-foreground">
               {LANGUAGE_INFO[language]?.label || language}
-            </span>
+            </div>
           )}
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {/* Font Controls Group */}
-          <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1">
+
+          <div className="flex items-center gap-1 rounded-full border bg-muted/30 p-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => changeFontSize(-2)}
               disabled={fontSize <= 10}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 rounded-full p-0"
               title={`Decrease font size (${fontSize}px)`}
             >
-              <ZoomOut className="h-3 w-3" />
+              <ZoomOut className="h-3.5 w-3.5" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
               onClick={() => changeFontSize(2)}
               disabled={fontSize >= 24}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 rounded-full p-0"
               title={`Increase font size (${fontSize}px)`}
             >
-              <ZoomIn className="h-3 w-3" />
+              <ZoomIn className="h-3.5 w-3.5" />
             </Button>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onReset}
+              disabled={isRunning}
+              className="h-10 rounded-full px-4"
+            >
+              <RotateCcw className="h-4 w-4 mr-1.5" />
+              Reset
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onReset}
-            disabled={isRunning}
-            className="h-8"
-          >
-            <RotateCcw className="h-4 w-4 mr-1" />
-            Reset
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRun}
+              disabled={isRunning}
+              className="h-10 rounded-full px-4"
+            >
+              {isRunning ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4 mr-1.5" />
+              )}
+              Run
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRun}
-            disabled={isRunning}
-            className="h-8"
-          >
-            {isRunning ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <Play className="h-4 w-4 mr-1" />
-            )}
-            Run
-          </Button>
-
-          <Button
-            variant="default"
-            size="sm"
-            onClick={onSubmit}
-            disabled={isRunning}
-            className="h-8 bg-green-600 hover:bg-green-700"
-          >
-            {isRunning ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4 mr-1" />
-            )}
-            Submit
-          </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onSubmit}
+              disabled={isRunning}
+              className="h-10 rounded-full bg-green-600 px-4 hover:bg-green-700"
+            >
+              {isRunning ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4 mr-1.5" />
+              )}
+              Submit
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Monaco Editor */}
-      <div className="flex-1 min-h-0">
-        <Editor
-          height="100%"
-          language={language}
-          value={code}
-          onChange={handleEditorChange}
-          onMount={handleEditorDidMount}
-          theme={isDarkMode ? 'vs-dark' : 'light'}
-          options={{
-            fontSize,
-            fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace",
-            fontLigatures: true,
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            lineNumbers: 'on',
-            glyphMargin: false,
-            folding: true,
-            lineDecorationsWidth: 10,
-            lineNumbersMinChars: 3,
-            renderLineHighlight: 'line',
-            scrollbar: {
-              vertical: 'auto',
-              horizontal: 'auto',
-              verticalScrollbarSize: 10,
-              horizontalScrollbarSize: 10,
-            },
-            overviewRulerBorder: false,
-            hideCursorInOverviewRuler: true,
-            automaticLayout: true,
-            tabSize: 2,
-            wordWrap: 'on',
-            padding: { top: 16, bottom: 16 },
-            suggest: {
-              showKeywords: true,
-              showSnippets: true,
-            },
-          }}
-          loading={
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          }
-        />
+      <div className="flex min-h-0 flex-1 p-4 sm:p-5">
+        <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-border/70 bg-background">
+          <Editor
+            height="100%"
+            language={language}
+            value={code}
+            onChange={handleEditorChange}
+            onMount={handleEditorDidMount}
+            theme={isDarkMode ? 'vs-dark' : 'light'}
+            options={{
+              fontSize,
+              fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace",
+              fontLigatures: true,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              lineNumbers: 'on',
+              glyphMargin: false,
+              folding: true,
+              lineDecorationsWidth: 10,
+              lineNumbersMinChars: 3,
+              renderLineHighlight: 'line',
+              scrollbar: {
+                vertical: 'auto',
+                horizontal: 'auto',
+                verticalScrollbarSize: 10,
+                horizontalScrollbarSize: 10,
+              },
+              overviewRulerBorder: false,
+              hideCursorInOverviewRuler: true,
+              automaticLayout: true,
+              tabSize: 2,
+              wordWrap: 'on',
+              padding: { top: 16, bottom: 16 },
+              suggest: {
+                showKeywords: true,
+                showSnippets: true,
+              },
+            }}
+            loading={
+              <div className="flex h-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            }
+          />
+        </div>
       </div>
 
-      {/* Keyboard Shortcuts Hint */}
-      <div className="flex items-center justify-end gap-4 px-3 py-1.5 border-t text-xs text-muted-foreground bg-muted/30">
+      <div className="flex shrink-0 items-center justify-between gap-4 border-t bg-muted/20 px-4 py-2 text-xs text-muted-foreground sm:px-5">
         <span>
-          <kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Ctrl</kbd>
+          <kbd className="rounded border bg-background px-1.5 py-0.5 text-[10px]">Ctrl</kbd>
           {' + '}
-          <kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Enter</kbd>
+          <kbd className="rounded border bg-background px-1.5 py-0.5 text-[10px]">Enter</kbd>
           {' Run'}
         </span>
         <span>
-          <kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Ctrl</kbd>
+          <kbd className="rounded border bg-background px-1.5 py-0.5 text-[10px]">Ctrl</kbd>
           {' + '}
-          <kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Shift</kbd>
+          <kbd className="rounded border bg-background px-1.5 py-0.5 text-[10px]">Shift</kbd>
           {' + '}
-          <kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Enter</kbd>
+          <kbd className="rounded border bg-background px-1.5 py-0.5 text-[10px]">Enter</kbd>
           {' Submit'}
         </span>
       </div>
