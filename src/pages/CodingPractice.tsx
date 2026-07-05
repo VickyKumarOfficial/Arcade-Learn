@@ -109,7 +109,7 @@ const CodingPractice: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen flex flex-col bg-background">
       {/* Backdrop blur overlay for navbar area only */}
       {navbarVisible && (
         <div 
@@ -144,7 +144,7 @@ const CodingPractice: React.FC = () => {
       {/* Spacer - smaller since navbar is hidden by default */}
       <div className="shrink-0 h-2" />
       
-      <div className="flex-1 flex min-h-0 overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Problem List Sidebar - 3D Sliding Overlay */}
         <div className={`fixed left-0 z-30 transition-all duration-500 ease-out transform ${
           showProblemList 
@@ -218,7 +218,7 @@ const CodingPractice: React.FC = () => {
         </Sheet>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Top Bar */}
           <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 relative z-10">
             <div className="flex items-center gap-3">
@@ -267,7 +267,7 @@ const CodingPractice: React.FC = () => {
 
           {/* Stats View */}
           {activeView === 'stats' && (
-            <div className="flex-1 min-h-0 overflow-auto p-6">
+            <div className="flex-1 overflow-auto p-6">
               <div className="max-w-4xl mx-auto">
                 <div className="mb-6">
                   <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -285,9 +285,9 @@ const CodingPractice: React.FC = () => {
 
           {/* Practice View - Resizable Panels */}
           {activeView === 'practice' && (
-            <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 overflow-hidden">
+            <ResizablePanelGroup direction="horizontal" className="flex-1">
             {/* Problem Description Panel */}
-            <ResizablePanel defaultSize={35} minSize={25} className="min-h-0 overflow-hidden">
+            <ResizablePanel defaultSize={35} minSize={25}>
               <ProblemPanel
                 problem={currentProblem}
                 viewedHints={viewedHints}
@@ -298,10 +298,10 @@ const CodingPractice: React.FC = () => {
             <ResizableHandle withHandle />
 
             {/* Code Editor and Results */}
-            <ResizablePanel defaultSize={65} minSize={40} className="min-h-0 overflow-hidden">
-              <ResizablePanelGroup direction="vertical" className="min-h-0 overflow-hidden">
+            <ResizablePanel defaultSize={65} minSize={40}>
+              <ResizablePanelGroup direction="vertical">
                 {/* Code Editor */}
-                <ResizablePanel defaultSize={60} minSize={30} className="min-h-0 overflow-hidden">
+                <ResizablePanel defaultSize={60} minSize={30}>
                   <CodeEditor
                     code={code}
                     onChange={setCode}
@@ -318,7 +318,7 @@ const CodingPractice: React.FC = () => {
                 <ResizableHandle withHandle />
 
                 {/* Execution Results */}
-                <ResizablePanel defaultSize={40} minSize={20} className="min-h-0 overflow-hidden">
+                <ResizablePanel defaultSize={40} minSize={20}>
                   <ExecutionPanel
                     result={submissionResult}
                     isRunning={isRunning}
